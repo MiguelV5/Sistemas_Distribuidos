@@ -1,0 +1,31 @@
+version: '3.9'
+name: tp0
+services:
+
+  server:
+    container_name: server
+    image: server:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./server/config.ini:/config.ini:ro
+    networks:
+      - testing_net
+
+  netcat-client:
+    container_name: netcat-client
+    image: netcat-sv-tester:latest
+    entrypoint: ./sv-test.sh
+    networks:
+      - testing_net
+    depends_on:
+      - server
+
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.125.0/24
