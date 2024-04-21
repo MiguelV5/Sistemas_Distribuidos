@@ -12,7 +12,7 @@
 
 ---
 
-## Grupo Ferris-Appreciators-2
+## Grupo 1
 
 ### Integrantes
 
