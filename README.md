@@ -40,16 +40,25 @@ Dicho conjunto de procesos se comunica mediante el uso de un middleware de mensa
 
 Para ejecutar los procesos se emplea docker-compose, el cual se encarga de levantar todos los servicios necesarios para el correcto funcionamiento del sistema.
 
-Para ello, se debe ejecutar el siguiente comando en la raíz del proyecto:
+El Makefile incluye las siguientes acciones utilizables para ejecucion, monitoreo y limpieza del sistema:
 
 ```bash
 make docker-compose-up
 ```
 
-Para detener la aplicación:
-    
+```bash
+make docker-compose-logs
+```
+
 ```bash
 make docker-compose-down
+```
+
+Adicionalmente, se incluye un script de bash para creación dinámica del archivo docker-compose.yaml, el cual permite la configuración de la cantidad de workers para los procesos parametrizables:
+(Si no se proveen valores, se toman los valores por defecto de 1 worker)
+
+```bash
+C_DEC_PA_WORKERS=3 C_REV_PB_WORKERS=3 MERGER_WORKERS=3 ./create-compose.sh
 ```
 
 ## Informe
