@@ -39,8 +39,8 @@ class Client:
                     line = file.readline()
                     batch += line + "\n"
                     if not line:
-                       completed = True
-                       break
+                        completed = True
+                        break
                 self._connection_handler.send_message(batch)   
                 response = self._connection_handler.read_message()
                 if response != "OK":
