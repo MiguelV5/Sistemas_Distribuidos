@@ -2,7 +2,10 @@ SHELL := /bin/bash
 PWD := $(shell pwd)
 
 docker-image:
-	
+	#
+	# TODO: Add corresponding build commands per process
+	#
+
 	# Execute this command from time to time to clean up intermediate stages generated
 	# during client build. Don't leave uncommented to avoid rebuilding the client image every 
 	# time the docker-compose-up command is executed, even when client code has not changed

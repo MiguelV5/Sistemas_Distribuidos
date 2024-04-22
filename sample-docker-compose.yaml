@@ -1,0 +1,152 @@
+name: tp1
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    build:
+      context: ./rabbitmq
+      dockerfile: Dockerfile
+    networks:
+      - testing_net
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  server:
+    container_name: server
+    image: server:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - REVIEWS_OUTPUT_QUEUE=scraped_reviews_q
+      - BOOKS_OUTPUT_QUEUE=scraped_books_q
+      - QUERY1_INPUT_QUEUE=query1_result_q
+      - QUERY2_INPUT_QUEUE=query2_result_q
+      - QUERY3_INPUT_QUEUE=query3_result_q
+      - QUERY4_INPUT_QUEUE=query4_result_q
+      - QUERY5_INPUT_QUEUE=query5_result_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  client:
+    container_name: client
+    image: client:latest
+    entrypoint: python3 /main.py
+    volumes:
+      - ./data:/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - REVIEWS_PATH=/data/books_rating.csv
+      - BOOKS_PATH=/data/books.csv
+    networks:
+      - testing_net
+    depends_on:
+      server:
+        condition: service_started
+
+  book_sanitizer:
+    container_name: book_sanitizer
+    image: book_sanitizer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - BOOKS_INPUT_QUEUE=scraped_books_q
+      - BOOKS_OUTPUT_QUEUE=sanitized_books_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  year_preprocessor:
+    container_name: year_preprocessor
+    image: year_preprocessor:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - BOOKS_INPUT_QUEUE=sanitized_books_q
+      - BOOKS_OUTPUT_QUEUE_1=preprocessed_books_y_q_1 # NOTE FOR BASH SCRIPT: always the same, does not depend on enumeration
+      - BOOKS_OUTPUT_QUEUE_2=preprocessed_books_y_q_2 # NOTE FOR BASH SCRIPT: always the same, does not depend on enumeration
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  decade_preprocessor:
+    container_name: decade_preprocessor
+    image: decade_preprocessor:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - BOOKS_INPUT_QUEUE=preprocessed_books_y_q_1
+      - BOOKS_OUTPUT_QUEUE_0=preprocessed_books_d_q_0 # NOTE FOR BASH SCRIPT: (ONLY THIS ONE) always the same, does not depend on enumeration
+      - BOOKS_OUTPUT_QUEUE_1=preprocessed_books_d_q_1
+      - BOOKS_OUTPUT_QUEUE_2=preprocessed_books_d_q_2
+      - BOOKS_OUTPUT_QUEUE_3=preprocessed_books_d_q_3
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  review_sanitizer:
+    container_name: review_sanitizer
+    image: review_sanitizer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - REVIEWS_INPUT_QUEUE=scraped_reviews_q
+      - REVIEWS_OUTPUT_QUEUE_1=sanitized_reviews_q_1
+      - REVIEWS_OUTPUT_QUEUE_2=sanitized_reviews_q_2
+      - REVIEWS_OUTPUT_QUEUE_3=sanitized_reviews_q_3
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  merger:
+    container_name: merger
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - REVIEWS_INPUT_QUEUE_1=sanitized_reviews_q_1
+      - REVIEWS_INPUT_QUEUE_2=sanitized_reviews_q_2
+      - REVIEWS_INPUT_QUEUE_3=sanitized_reviews_q_3
+      - BOOKS_INPUT_QUEUE_1=preprocessed_books_d_q_1
+      - BOOKS_INPUT_QUEUE_2=preprocessed_books_d_q_2
+      - BOOKS_INPUT_QUEUE_3=preprocessed_books_d_q_3
+      - COMPACT_REVIEWS_OUTPUT_QUEUE=merged_compact_reviews_q
+      - FULL_REVIEWS_OUTPUT_QUEUE=merged_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  #
+
+
+  # ... TO COMPLETE
+
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.125.0/24
