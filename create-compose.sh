@@ -22,7 +22,7 @@ add_rabbitmq() {
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 20s
 " >> docker-compose.yaml
 }
 

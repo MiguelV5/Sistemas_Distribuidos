@@ -16,7 +16,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 20s
 
   
   server:
@@ -102,9 +102,7 @@ services:
       - INPUT_QUEUE_OF_BOOKS=towards_preprocessor__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS_EX=towards_expander__preprocessed_books_with_decade_q
       - OUTPUT_QUEUE_OF_BOOKS_1=preprocessed_books_with_decade_q_1
-      - OUTPUT_QUEUE_OF_BOOKS_2=preprocessed_books_with_decade_q_2
-      - OUTPUT_QUEUE_OF_BOOKS_3=preprocessed_books_with_decade_q_3
-      - NUM_OF_DYN_OUTPUT_QUEUES=3
+      - NUM_OF_DYN_OUTPUT_QUEUES=1
     networks:
       - testing_net
     depends_on:
@@ -121,9 +119,7 @@ services:
       - LOGGING_LEVEL=DEBUG
       - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS_1=sanitized_reviews_q_1
-      - OUTPUT_QUEUE_OF_REVIEWS_2=sanitized_reviews_q_2
-      - OUTPUT_QUEUE_OF_REVIEWS_3=sanitized_reviews_q_3
-      - NUM_OF_DYN_OUTPUT_QUEUES=3
+      - NUM_OF_DYN_OUTPUT_QUEUES=1
     networks:
       - testing_net
     depends_on:
@@ -140,40 +136,6 @@ services:
       - LOGGING_LEVEL=DEBUG
       - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
-      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_reviews_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  merger_2:
-    container_name: merger
-    image: merger:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
-      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
-      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_reviews_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  merger_3:
-    container_name: merger
-    image: merger:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
-      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_reviews_q
     networks:
@@ -242,9 +204,7 @@ services:
       - LOGGING_LEVEL=DEBUG
       - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q
       - OUTPUT_QUEUE_OF_AUTHORS_1=expanded_authors_q_1
-      - OUTPUT_QUEUE_OF_AUTHORS_2=expanded_authors_q_2
-      - OUTPUT_QUEUE_OF_AUTHORS_3=expanded_authors_q_3
-      - NUM_OF_DYN_OUTPUT_QUEUES=3
+      - NUM_OF_DYN_OUTPUT_QUEUES=1
     networks:
       - testing_net
     depends_on:
@@ -260,36 +220,6 @@ services:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_1
-      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  counter_of_decades_per_author_2:
-    container_name: counter_of_decades_per_author_2
-    image: counter_of_decades_per_author:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_2
-      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  counter_of_decades_per_author_3:
-    container_name: counter_of_decades_per_author_3
-    image: counter_of_decades_per_author:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_3
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
     networks:
       - testing_net
@@ -339,9 +269,7 @@ services:
       - LOGGING_LEVEL=DEBUG
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS_1=compact_reviews_filtered_by_decade_q_1
-      - OUTPUT_QUEUE_OF_REVIEWS_2=compact_reviews_filtered_by_decade_q_2
-      - OUTPUT_QUEUE_OF_REVIEWS_3=compact_reviews_filtered_by_decade_q_3
-      - NUM_OF_DYN_OUTPUT_QUEUES=3
+      - NUM_OF_DYN_OUTPUT_QUEUES=1
     networks:
       - testing_net
     depends_on:
@@ -357,36 +285,6 @@ services:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_1
-      - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  counter_of_reviews_per_book_2:
-    container_name: counter_of_reviews_per_book_2
-    image: counter_of_reviews_per_book:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_2
-      - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  counter_of_reviews_per_book_3:
-    container_name: counter_of_reviews_per_book_3
-    image: counter_of_reviews_per_book:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_3
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
     networks:
       - testing_net
