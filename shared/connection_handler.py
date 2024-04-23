@@ -3,8 +3,8 @@ from shared.stream import Stream
 
 class ConnectionHandler:
     
-    def __init__ (self, socket):
-        self._stream = Stream(socket)
+    def __init__(self, sock):
+        self._stream = Stream(sock)
         
     def send_message(self, message: str):
         """
@@ -22,7 +22,7 @@ class ConnectionHandler:
         """
         Reads a message from the client stream.
         """
-        logging.info(f"action: read_message_size | result: in_progress")
+        logging.info("action: read_message_size | result: in_progress")
         try: 
             size_of_message = int.from_bytes(self._stream.recv(4), byteorder='big')
             logging.debug(f"action: read_message_size | result: success | size: {size_of_message}")

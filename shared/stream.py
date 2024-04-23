@@ -2,9 +2,9 @@ import logging
 import socket
 
 class Stream:
-    def __init__(self, socket):
-        self._socket = socket
-        addr = socket.getpeername()
+    def __init__(self, sock: socket.socket):
+        self._socket = sock
+        addr = sock.getpeername()
         
     def send(self, message):
         """
