@@ -1,7 +1,7 @@
 import logging
 from shared.stream import Stream
 
-class ConnectionHandler:
+class DirectConnectionHandler:
     
     def __init__(self, sock):
         self._stream = Stream(sock)

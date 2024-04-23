@@ -1,5 +1,5 @@
 import logging
-from shared.connection_handler import ConnectionHandler
+from shared.direct_connection_handler import DirectConnectionHandler
 import socket
 
 class Client:
@@ -13,11 +13,11 @@ class Client:
         
     def start(self):
         logging.info("Starting client")
-        #init connection with server using ip and port, using tcp socket
+        # init connection with server using ip and port, using tcp socket
         try:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((self._server_ip, self._server_port))           
-            self._connection_handler = ConnectionHandler(server_socket)
+            self._connection_handler = DirectConnectionHandler(server_socket)
             logging.info("Connected to server at {}:{}".format(self._server_ip, self._server_port))
             self.send_file_data(self._books_file)
             self.send_file_data(self._reviews_file)        
