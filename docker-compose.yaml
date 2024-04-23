@@ -1,13 +1,7 @@
-#!/bin/bash
-
-add_compose_header() {
-    echo "name: tp1
+name: tp1
 services:
-" > docker-compose.yaml
-}
 
-add_rabbitmq() {
-    echo "
+
   rabbitmq:
     container_name: rabbitmq
     build:
@@ -16,18 +10,15 @@ add_rabbitmq() {
     networks:
       - testing_net
     ports:
-      - \"15672:15672\"
+      - "15672:15672"
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 40s
-" >> docker-compose.yaml
-}
 
-add_server() {
-    echo "  
+  
   server:
     container_name: server
     image: server:latest
@@ -47,11 +38,8 @@ add_server() {
     depends_on:
       rabbitmq:
         condition: service_healthy
-" >> docker-compose.yaml
-}
 
-add_client() {
-    echo "
+
   client:
     container_name: client
     image: client:latest
@@ -70,12 +58,8 @@ add_client() {
         condition: service_started
 
   # ================================================================
-" >> docker-compose.yaml
-}
 
 
-add_preprocessors() {
-    echo "
   book_sanitizer:
     container_name: book_sanitizer
     image: book_sanitizer:latest
@@ -106,10 +90,8 @@ add_preprocessors() {
     depends_on:
       rabbitmq:
         condition: service_healthy
-" >> docker-compose.yaml
 
 
-    echo "
   decade_preprocessor:
     container_name: decade_preprocessor
     image: decade_preprocessor:latest
@@ -118,11 +100,11 @@ add_preprocessors() {
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
       - INPUT_QUEUE_OF_BOOKS=towards_preprocessor__preprocessed_books_with_year_q
-      - OUTPUT_QUEUE_OF_BOOKS_EX=towards_expander__preprocessed_books_with_decade_q" >> docker-compose.yaml
-    for ((i=1; i<=$MERGER_WORKERS; i++)); do
-        echo "      - OUTPUT_QUEUE_OF_BOOKS_$i=preprocessed_books_with_decade_q_$i" >> docker-compose.yaml
-    done
-    echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$MERGER_WORKERS
+      - OUTPUT_QUEUE_OF_BOOKS_EX=towards_expander__preprocessed_books_with_decade_q
+      - OUTPUT_QUEUE_OF_BOOKS_1=preprocessed_books_with_decade_q_1
+      - OUTPUT_QUEUE_OF_BOOKS_2=preprocessed_books_with_decade_q_2
+      - OUTPUT_QUEUE_OF_BOOKS_3=preprocessed_books_with_decade_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
     networks:
       - testing_net
     depends_on:
@@ -137,47 +119,72 @@ add_preprocessors() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q" >> docker-compose.yaml
-      for ((i=1; i<=$MERGER_WORKERS; i++)); do
-          echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=sanitized_reviews_q_$i" >> docker-compose.yaml
-      done
-      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$MERGER_WORKERS
+      - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
+      - OUTPUT_QUEUE_OF_REVIEWS_1=sanitized_reviews_q_1
+      - OUTPUT_QUEUE_OF_REVIEWS_2=sanitized_reviews_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS_3=sanitized_reviews_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
     networks:
       - testing_net
     depends_on:
       rabbitmq:
         condition: service_healthy
-" >> docker-compose.yaml
-}
 
-add_mergers() {
-    for ((i=1; i<=$MERGER_WORKERS; i++)); do
-        echo "
-  merger_$i:
+
+  merger_1:
     container_name: merger
     image: merger:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_$i
-      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_$i
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_reviews_q
     networks:
       - testing_net
     depends_on:
       rabbitmq:
-        condition: service_healthy" >> docker-compose.yaml
-    done
-    echo "
+        condition: service_healthy
+
+  merger_2:
+    container_name: merger
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  merger_3:
+    container_name: merger
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   # ================================================================
-" >> docker-compose.yaml
-}
 
 
-add_query1_processes() {
-    echo "
   filter_of_books_by_year:
     container_name: filter_of_books_by_year
     image: filter_of_books_by_year:latest
@@ -224,12 +231,8 @@ add_query1_processes() {
         condition: service_healthy
 
   # ================================================================
-" >> docker-compose.yaml
-}
 
 
-add_query2_processes() {
-    echo "
   author_expander:
     container_name: author_expander
     image: author_expander:latest
@@ -237,37 +240,63 @@ add_query2_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q" >> docker-compose.yaml
-      for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
-          echo "      - OUTPUT_QUEUE_OF_AUTHORS_$i=expanded_authors_q_$i" >> docker-compose.yaml
-      done
-      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$C_DEC_PA_WORKERS
+      - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q
+      - OUTPUT_QUEUE_OF_AUTHORS_1=expanded_authors_q_1
+      - OUTPUT_QUEUE_OF_AUTHORS_2=expanded_authors_q_2
+      - OUTPUT_QUEUE_OF_AUTHORS_3=expanded_authors_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
     networks:
       - testing_net
     depends_on:
       rabbitmq:
         condition: service_healthy
-" >> docker-compose.yaml
 
-    for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
-        echo "
-  counter_of_decades_per_author_$i:
-    container_name: counter_of_decades_per_author_$i
+
+  counter_of_decades_per_author_1:
+    container_name: counter_of_decades_per_author_1
     image: counter_of_decades_per_author:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_$i
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_1
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
     networks:
       - testing_net
     depends_on:
       rabbitmq:
-        condition: service_healthy" >> docker-compose.yaml
-    done
+        condition: service_healthy
 
-    echo "
+  counter_of_decades_per_author_2:
+    container_name: counter_of_decades_per_author_2
+    image: counter_of_decades_per_author:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_2
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  counter_of_decades_per_author_3:
+    container_name: counter_of_decades_per_author_3
+    image: counter_of_decades_per_author:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_3
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   filter_of_authors_by_decade:
     container_name: filter_of_authors_by_decade
     image: filter_of_authors_by_decade:latest
@@ -299,12 +328,8 @@ add_query2_processes() {
         condition: service_healthy
 
   # ================================================================
-" >> docker-compose.yaml
-}
 
 
-add_query3_processes() {
-    echo "
   filter_of_compact_reviews_by_decade:
     container_name: filter_of_compact_reviews_by_decade
     image: filter_of_compact_reviews_by_decade:latest
@@ -312,37 +337,63 @@ add_query3_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q" >> docker-compose.yaml
-      for ((i=1; i<=$C_REV_PB_WORKERS; i++)); do
-          echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=compact_reviews_filtered_by_decade_q_$i" >> docker-compose.yaml
-      done
-      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$C_REV_PB_WORKERS
+      - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_REVIEWS_1=compact_reviews_filtered_by_decade_q_1
+      - OUTPUT_QUEUE_OF_REVIEWS_2=compact_reviews_filtered_by_decade_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS_3=compact_reviews_filtered_by_decade_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
     networks:
       - testing_net
     depends_on:
       rabbitmq:
         condition: service_healthy
-" >> docker-compose.yaml
 
-    for ((i=1; i<=$C_REV_PB_WORKERS; i++)); do
-        echo "
-  counter_of_reviews_per_book_$i:
-    container_name: counter_of_reviews_per_book_$i
+
+  counter_of_reviews_per_book_1:
+    container_name: counter_of_reviews_per_book_1
     image: counter_of_reviews_per_book:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_$i
+      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_1
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
     networks:
       - testing_net
     depends_on:
       rabbitmq:
-        condition: service_healthy" >> docker-compose.yaml
-    done
+        condition: service_healthy
 
-    echo "
+  counter_of_reviews_per_book_2:
+    container_name: counter_of_reviews_per_book_2
+    image: counter_of_reviews_per_book:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  counter_of_reviews_per_book_3:
+    container_name: counter_of_reviews_per_book_3
+    image: counter_of_reviews_per_book:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_3
+      - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   filter_of_books_by_review_count:
     container_name: filter_of_books_by_review_count
     image: filter_of_books_by_review_count:latest
@@ -375,12 +426,8 @@ add_query3_processes() {
         condition: service_healthy
 
   # ================================================================
-" >> docker-compose.yaml
-}
 
 
-add_query4_processes() {
-    echo "
   sorter_of_books_by_review_count:
     container_name: sorter_of_books_by_review_count
     image: sorter_of_books_by_review_count:latest
@@ -412,12 +459,8 @@ add_query4_processes() {
         condition: service_healthy
 
   # ================================================================
-" >> docker-compose.yaml
-}
 
 
-add_query5_processes() {
-    echo "
   filter_of_merged_reviews_by_book_genre:
     container_name: filter_of_merged_reviews_by_book_genre
     image: filter_of_merged_reviews_by_book_genre:latest
@@ -479,65 +522,12 @@ add_query5_processes() {
         condition: service_healthy
         
   # ================================================================
-" >> docker-compose.yaml
-}
 
 
-add_network() {
-    echo "
 networks:
   testing_net:
     ipam:
       driver: default
       config:
         - subnet: 172.25.125.0/24
-" >> docker-compose.yaml
-}
 
-check_params() {
-    # C_DEC_PA_WORKERS: Number of [Counters of Decades Per Author] Processes
-    # C_REV_PB_WORKERS: Number of [Counters of Reviews Per Book] Processes
-    # MERGER_WORKERS: Number of [Merger] Processes
-    if [ -z "$C_DEC_PA_WORKERS" ]; then
-        echo "Using default values for C_DEC_PA_WORKERS=1"
-        export C_DEC_PA_WORKERS=1
-    fi
-
-    if [ -z "$C_REV_PB_WORKERS" ]; then
-        echo "Using default values for C_REV_PB_WORKERS=1"
-        export C_REV_PB_WORKERS=1
-    fi
-
-    if [ -z "$MERGER_WORKERS" ]; then
-        echo "Using default values for MERGER_WORKERS=1"
-        export MERGER_WORKERS=1
-    fi
-    
-    local MAX_WORKERS=5
-    if [ $C_DEC_PA_WORKERS -gt $MAX_WORKERS ] || [ $C_REV_PB_WORKERS -gt $MAX_WORKERS ] || [ $MERGER_WORKERS -gt $MAX_WORKERS ]; then
-        echo "The maximum number of workers is $MAX_WORKERS"
-        exit 1
-    fi
-
-}
-
-
-
-# =========================================================================
-
-
-check_params
-add_compose_header
-add_rabbitmq
-add_server
-add_client
-add_preprocessors
-add_mergers
-add_query1_processes
-add_query2_processes
-add_query3_processes
-add_query4_processes
-add_query5_processes
-add_network
-
-echo ">>>   Successfully generated docker-compose.yaml   <<<"
