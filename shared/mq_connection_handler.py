@@ -1,6 +1,6 @@
 import pika
 
-class RabbitMQConnectionHandler:
+class MQConnectionHandler:
     def __init__(self, 
                  output_exchange_name: str, 
                  output_queues_to_bind: dict[str,list[str]], 
