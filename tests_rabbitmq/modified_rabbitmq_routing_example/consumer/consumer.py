@@ -7,15 +7,14 @@ import os
 # time.sleep(10)
 
 consumer_id = os.environ["CONSUMER_ID"]
-severities = os.environ["LOG_SEVERITY"].split(',')
-
+severity = os.environ["LOG_SEVERITY"]
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(host='rabbitmq'))
 channel = connection.channel()
 
 channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
 
-result = channel.queue_declare(queue=severities[0], durable=True)
+result = channel.queue_declare(queue=severity, durable=True)
 queue_name = result.method.queue
 
 print('[{}] Waiting for messages. To exit press CTRL+C'.format(consumer_id))

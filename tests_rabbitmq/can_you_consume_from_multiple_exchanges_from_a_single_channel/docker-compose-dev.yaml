@@ -15,7 +15,7 @@ services:
       retries: 5
       start_period: 20s
 
-  producer:
+  producer1:
     build:
       context: ./producer
       dockerfile: producer.dockerfile
@@ -23,11 +23,25 @@ services:
       - testing_net
     environment:
       - PYTHONUNBUFFERED=1
+      - EXCHANGE_NAME=exchange1
     depends_on:
       rabbitmq:
         condition: service_healthy
 
-  consumer1:
+  producer2:
+    build:
+      context: ./producer
+      dockerfile: producer.dockerfile
+    networks:
+      - testing_net
+    environment:
+      - PYTHONUNBUFFERED=1
+      - EXCHANGE_NAME=exchange2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  consumer:
     build:
       context: ./consumer
       dockerfile: consumer.dockerfile
@@ -36,21 +50,10 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CONSUMER_ID=1
-      - LOG_SEVERITY=info
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  consumer2:
-    build:
-      context: ./consumer
-      dockerfile: consumer.dockerfile
-    networks:
-      - testing_net
-    environment:
-      - PYTHONUNBUFFERED=1
-      - CONSUMER_ID=2
-      - LOG_SEVERITY=error
+      - LOG_SEVERITY1=info
+      - LOG_SEVERITY2=info
+      - EXCHANGE_NAME1=exchange1
+      - EXCHANGE_NAME2=exchange2
     depends_on:
       rabbitmq:
         condition: service_healthy
