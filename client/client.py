@@ -1,5 +1,5 @@
 import logging
-from shared.direct_connection_handler import DirectConnectionHandler
+from shared.direct_connection_handler import SocketConnectionHandler
 import socket
 
 class Client:
@@ -17,7 +17,7 @@ class Client:
         try:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((self._server_ip, self._server_port))           
-            self._connection_handler = DirectConnectionHandler(server_socket)
+            self._connection_handler = SocketConnectionHandler(server_socket)
             logging.info("Connected to server at {}:{}".format(self._server_ip, self._server_port))
             self.send_file_data(self._books_file)
             self.send_file_data(self._reviews_file)        
