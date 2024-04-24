@@ -1,5 +1,5 @@
 import logging
-from shared.direct_connection_handler import SocketConnectionHandler
+from shared.socket_connection_handler import SocketConnectionHandler
 import socket
 
 class Client:
