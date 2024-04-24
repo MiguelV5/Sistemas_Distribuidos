@@ -18,16 +18,15 @@ channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
 result = channel.queue_declare(queue=severities[0], durable=True)
 queue_name = result.method.queue
 
-for severity in severities:
-    channel.queue_bind(
-        exchange='direct_logs', queue=severity, routing_key=severity)
-
 print('[{}] Waiting for messages. To exit press CTRL+C'.format(consumer_id))
 
 def callback(ch, method, properties, body):
     print("[{}] Routing Key: {} - Message: {}".format(consumer_id, method.routing_key, body))
+    time.sleep(2)
+    print("[{}] Done".format(consumer_id))
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 channel.basic_consume(
-    queue=queue_name, on_message_callback=callback, auto_ack=True)
+    queue=queue_name, on_message_callback=callback)
 
 channel.start_consuming()
