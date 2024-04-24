@@ -35,13 +35,12 @@ add_server() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=query_results_ex
+      - OUTPUT_EXCHANGE_OF_REVIEWS=scraped_reviews_ex
+      - OUTPUT_EXCHANGE_OF_BOOKS=scraped_books_ex
       - OUTPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
-      - INPUT_QUEUE_OF_QUERY1=query1_results_q
-      - INPUT_QUEUE_OF_QUERY2=query2_results_q
-      - INPUT_QUEUE_OF_QUERY3=query3_results_q
-      - INPUT_QUEUE_OF_QUERY4=query4_results_q
-      - INPUT_QUEUE_OF_QUERY5=query5_results_q
+      - INPUT_QUEUE_OF_QUERY_RESULTS=query_results_q
     networks:
       - testing_net
     depends_on:
@@ -61,8 +60,6 @@ add_client() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - REVIEWS_PATH=/data/books_rating.csv
-      - BOOKS_PATH=/data/books.csv
     networks:
       - testing_net
     depends_on:
@@ -83,6 +80,8 @@ add_preprocessors() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=scraped_books_ex
+      - OUTPUT_EXCHANGE=sanitized_books_ex
       - INPUT_QUEUE_OF_BOOKS=scraped_books_q
       - OUTPUT_QUEUE_OF_BOOKS=sanitized_books_q
     networks:
@@ -98,6 +97,8 @@ add_preprocessors() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=sanitized_books_ex
+      - OUTPUT_EXCHANGE=preprocessed_books_with_year_ex
       - INPUT_QUEUE_OF_BOOKS=sanitized_books_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_PREPROC=towards_preprocessor__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_FILTER=towards_filter__preprocessed_books_with_year_q
@@ -117,8 +118,10 @@ add_preprocessors() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=preprocessed_books_with_year_ex
+      - OUTPUT_EXCHANGE=preprocessed_books_with_decade_ex
       - INPUT_QUEUE_OF_BOOKS=towards_preprocessor__preprocessed_books_with_year_q
-      - OUTPUT_QUEUE_OF_BOOKS_EX=towards_expander__preprocessed_books_with_decade_q" >> docker-compose.yaml
+      - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_EXPANDER=towards_expander__preprocessed_books_with_decade_q" >> docker-compose.yaml
     for ((i=1; i<=$MERGER_WORKERS; i++)); do
         echo "      - OUTPUT_QUEUE_OF_BOOKS_$i=preprocessed_books_with_decade_q_$i" >> docker-compose.yaml
     done
@@ -137,6 +140,8 @@ add_preprocessors() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=scraped_reviews_ex
+      - OUTPUT_EXCHANGE=sanitized_reviews_ex
       - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q" >> docker-compose.yaml
       for ((i=1; i<=$MERGER_WORKERS; i++)); do
           echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=sanitized_reviews_q_$i" >> docker-compose.yaml
@@ -160,10 +165,13 @@ add_mergers() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=merged_reviews_ex
       - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_$i
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_$i
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
     networks:
       - testing_net
     depends_on:
@@ -185,6 +193,8 @@ add_query1_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=preprocessed_books_with_year_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_year_range_ex
       - INPUT_QUEUE_OF_BOOKS=towards_filter__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_year_range_q
     networks:
@@ -200,6 +210,8 @@ add_query1_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=books_filtered_by_year_range_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_title_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_year_range_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
     networks:
@@ -215,8 +227,10 @@ add_query1_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=books_filtered_by_title_ex
+      - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
-      - OUTPUT_QUEUE_OF_QUERY1=query1_results_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
     depends_on:
@@ -237,6 +251,8 @@ add_query2_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=expanded_authors_ex
       - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q" >> docker-compose.yaml
       for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
           echo "      - OUTPUT_QUEUE_OF_AUTHORS_$i=expanded_authors_q_$i" >> docker-compose.yaml
@@ -258,6 +274,8 @@ add_query2_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=expanded_authors_ex
+      - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
     networks:
@@ -275,6 +293,8 @@ add_query2_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=authors_decades_count_ex
+      - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
     networks:
@@ -290,8 +310,10 @@ add_query2_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=authors_filtered_by_decade_ex
+      - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
-      - OUTPUT_QUEUE_OF_QUERY2=query2_results_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
     depends_on:
@@ -312,6 +334,8 @@ add_query3_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q" >> docker-compose.yaml
       for ((i=1; i<=$C_REV_PB_WORKERS; i++)); do
           echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=compact_reviews_filtered_by_decade_q_$i" >> docker-compose.yaml
@@ -333,6 +357,8 @@ add_query3_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
+      - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_$i
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
     networks:
@@ -350,6 +376,8 @@ add_query3_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=review_count_per_book_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_review_count_ex
       - INPUT_QUEUE_OF_BOOKS=review_count_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_QUERY3=towards_query3__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_sorter=towards_sorter__books_filtered_by_review_count_q
@@ -366,8 +394,10 @@ add_query3_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=books_filtered_by_review_count_ex
+      - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=towards_query3__books_filtered_by_review_count_q
-      - OUTPUT_QUEUE_OF_QUERY3=query3_results_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
     depends_on:
@@ -388,6 +418,8 @@ add_query4_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=books_filtered_by_review_count_ex
+      - OUTPUT_EXCHANGE=top_books_by_review_count_ex
       - INPUT_QUEUE_OF_BOOKS=towards_sorter__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
     networks:
@@ -403,8 +435,10 @@ add_query4_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=top_books_by_review_count_ex
+      - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
-      - OUTPUT_QUEUE_OF_QUERY4=query4_results_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
     depends_on:
@@ -425,8 +459,10 @@ add_query5_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=merged_reviews_q
-      - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_genre_q
+      - INPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
+      - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
     networks:
       - testing_net
     depends_on:
@@ -440,7 +476,9 @@ add_query5_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_genre_q
+      - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
+      - OUTPUT_EXCHANGE=sentiment_per_book_ex
+      - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
     networks:
       - testing_net
@@ -455,6 +493,8 @@ add_query5_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=sentiment_per_book_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
       - INPUT_QUEUE_OF_BOOKS=sentiment_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
     networks:
@@ -470,8 +510,10 @@ add_query5_processes() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - INPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
+      - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
-      - OUTPUT_QUEUE_OF_QUERY5=query5_results_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
     depends_on:

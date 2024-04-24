@@ -5,7 +5,8 @@ class MQConnectionHandler:
                  output_exchange_name: str, 
                  output_queues_to_bind: dict[str,list[str]], 
                  input_exchange_name: str | None, 
-                 input_queues_to_recv_from: list[str] | None
+                 input_queues_to_recv_from: list[str] | None,
+                 aux_input_exchange_name: str | None = None
                  ):
         """
         Creates a connection to a RabbitMQ server and declares the necessary exchanges and queues.
@@ -15,6 +16,8 @@ class MQConnectionHandler:
         - input_queues_to_recv_from: The list values are the names of the queues that we want to consume from. The exchange that the queue is bound to is the one that is declared in the input_exchange_name parameter.
         
         Although input parameters may be None, they can only be so in the rare case in which the handler is used solely for sending messages.
+
+        - aux_input_exchange_name: Extremely rare usage, thus optional. Only used when the channel must consume from an additional exchange. To be used with proper message handling as it makes the start_consuming method to consume from the related queues of both exchanges.
         """
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
         self.channel = self.connection.channel()
@@ -23,14 +26,17 @@ class MQConnectionHandler:
         # A flow is defined as the combination of an exchange, a queue and their corresponding binding.
         self.__declare_output_flows(output_exchange_name, output_queues_to_bind)
         if input_exchange_name is not None:
-            self.__declare_input_flows(input_exchange_name, input_queues_to_recv_from)
+            self.__declare_input_flows(input_exchange_name, input_queues_to_recv_from, aux_input_exchange_name)
 
 
     def __declare_input_flows(self, 
                               input_exchange_name: str, 
-                              input_queues_to_recv_from: list[str]
+                              input_queues_to_recv_from: list[str],
+                              aux_input_exchange_name: str | None = None
                               ):
         self.channel.exchange_declare(exchange=input_exchange_name, exchange_type='direct')
+        if aux_input_exchange_name is not None:
+            self.channel.exchange_declare(exchange=aux_input_exchange_name, exchange_type='direct')
         for queue_name in input_queues_to_recv_from:
             self.channel.queue_declare(queue=queue_name, durable=True)
     
