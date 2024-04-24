@@ -44,7 +44,7 @@ class Server:
         finally:
             client_sock.close()
             
-    def __handle_file_data(self, connection_handler, queue_name):
+    def __handle_file_data(self, connection_handler: SocketConnectionHandler, queue_name: str):
         try:           
             while True:
                 message = connection_handler.read_message()
