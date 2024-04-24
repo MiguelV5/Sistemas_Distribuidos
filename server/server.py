@@ -30,7 +30,35 @@ class Server:
             process.join()  
             
     def __handle_client_connection(self, client_sock):
-        connection_handler = SocketConnectionHandler(client_sock)
-        message = connection_handler.read_message()   
-        logging.info(f"action: handle_client_connection | result: success | message: {message}")
-        connection_handler.send_message("Ok")
+        try:
+            connection_handler = SocketConnectionHandler(client_sock)
+            message = connection_handler.read_message()
+            if message == "Start: books":
+                logging.info("Starting books data receiving")
+                self.__handle_file_data(connection_handler, self.output_queue_of_books )
+            elif message == "Start: reviews":
+                logging.info("Starting reviews data receiving")
+                self.__handle_file_data(connection_handler, self.output_queue_of_reviews)
+        except Exception as e:
+            logging.error("Error handling client connection: {}".format(str(e)))
+        finally:
+            client_sock.close()
+            
+    def __handle_file_data(self, connection_handler, queue_name):
+        try:           
+            while True:
+                message = connection_handler.read_message()
+                if message == "EOF":
+                    break
+                connection_handler.send_message("OK")
+                self.__process_data(message, queue_name)
+        except Exception as e:
+            logging.error("Error handling file data: {}".format(str(e)))
+            connection_handler.send_message("Error")
+            
+    def __process_data(self, data, queue_name):
+        try:
+            # TODO: Implement sending the message to the queue using the MQConnectionHandler
+            pass
+        except Exception as e:
+            raise Exception("Error processing data: {}".format(str(e)))

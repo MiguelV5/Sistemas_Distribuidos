@@ -1,6 +1,7 @@
 import logging
 from shared.socket_connection_handler import SocketConnectionHandler
 import socket
+import multiprocessing
 
 class Client:
     def __init__(self, server_ip, server_port, reviews_file, books_file, batch_size):
@@ -19,19 +20,19 @@ class Client:
             server_socket.connect((self._server_ip, self._server_port))           
             self._connection_handler = SocketConnectionHandler(server_socket)
             logging.info("Connected to server at {}:{}".format(self._server_ip, self._server_port))
-            self.send_file_data(self._books_file)
-            self.send_file_data(self._reviews_file)        
+            self.send_file_data(self._books_file, "books")
+            self.send_file_data(self._reviews_file, "reviews")        
         except Exception as e:
             logging.error("Failed to connect to server: {}".format(str(e)))
             
-    def send_file_data(self, file):
+    def send_file_data(self, file, file_content):
         """
         Sends the file data to the server
         """
         logging.info(f"Sending data to server. File: {file}")
         with open(file, 'r') as file:
             # read the data from the csv file, start sending from the second line, sending in batches of configurable size and awaiting confirmation from the server before sending the next batch. This should read line by line, since we don't have infinite memory.
-        
+            self._connection_handler.send_message(f"Start: {file_content}")
             completed = False
             while not completed:
                 batch = ""
@@ -47,5 +48,6 @@ class Client:
                     logging.error("Server response: {}".format(response))
                     break  
         logging.info(f"Finish data sent to server. File: {file}")
+        self._connection_handler.send_message("EOF")
 
         
