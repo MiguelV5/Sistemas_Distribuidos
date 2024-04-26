@@ -2,8 +2,8 @@ import pika
 
 class MQConnectionHandler:
     def __init__(self, 
-                 output_exchange_name: str, 
-                 output_queues_to_bind: dict[str,list[str]], 
+                 output_exchange_name: str | None, 
+                 output_queues_to_bind: dict[str,list[str]] | None, 
                  input_exchange_name: str | None, 
                  input_queues_to_recv_from: list[str] | None,
                  aux_input_exchange_name: str | None = None
@@ -15,16 +15,17 @@ class MQConnectionHandler:
         - output_queues_to_bind: The dict keys are the names of the queues and the values are lists with the routing keys that each queue is interested on receiving. The exchange that the queues are bound to is the one defined in the output_exchange_name parameter. The binding is done by the producer to guarantee that the messages are not lost in case the consumer is not running.
         - input_queues_to_recv_from: The list values are the names of the queues that we want to consume from. The exchange that the queue is bound to is the one that is declared in the input_exchange_name parameter.
         
-        Although input parameters may be None, they can only be so in the rare case in which the handler is used solely for sending messages.
+        Although parameters may be None, they can only be so in the rare case in which the handler is used solely for either sending only or receiving only. (Example of usage: server process)
 
-        - aux_input_exchange_name: Extremely rare usage, thus optional. Only used when the channel must consume from an additional exchange. To be used with proper message handling as it makes the start_consuming method to consume from the related queues of both exchanges.
+        - aux_input_exchange_name: Rare usage, thus optional. Only used when the channel must consume from an additional exchange. To be used with proper message handling as it makes the start_consuming method to consume from the related queues of both exchanges. (Example of usage: merger process)
         """
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
         self.channel = self.connection.channel()
 
         # Notation: 
         # A flow is defined as the combination of an exchange, a queue and their corresponding binding.
-        self.__declare_output_flows(output_exchange_name, output_queues_to_bind)
+        if output_exchange_name is not None:
+            self.__declare_output_flows(output_exchange_name, output_queues_to_bind)
         if input_exchange_name is not None:
             self.__declare_input_flows(input_exchange_name, input_queues_to_recv_from, aux_input_exchange_name)
 
