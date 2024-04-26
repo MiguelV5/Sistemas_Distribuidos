@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 PWD := $(shell pwd)
 
-docker-image:
+docker-image-build:
 	docker build -f ./server/Dockerfile -t "server:latest" .
 	docker build -f ./client/Dockerfile -t "client:latest" .
 
@@ -33,21 +33,40 @@ docker-image:
 	docker build -f ./filter_of_books_by_sentiment_quantile/Dockerfile -t "filter_of_books_by_sentiment_quantile:latest" .
 	docker build -f ./query5_result_generator/Dockerfile -t "query5_result_generator:latest" .
 
-	# Execute this command from time to time to clean up intermediate stages generated
-	# during client build. Don't leave uncommented to avoid rebuilding the client image every 
-	# time the docker-compose-up command is executed, even when client code has not changed
-	# docker rmi `docker images --filter label=intermediateStageToBeDeleted=true -q`
-.PHONY: docker-image
+.PHONY: docker-image-build
 
-docker-compose-up: docker-image
+docker-compose-up: docker-image-build
 	docker compose -f docker-compose.yaml up -d --build --remove-orphans
 .PHONY: docker-compose-up
 
 docker-compose-down:
 	docker compose -f docker-compose.yaml stop -t 3
 	docker compose -f docker-compose.yaml down
+	docker image prune -f
 .PHONY: docker-compose-down
 
 docker-compose-logs:
 	docker compose -f docker-compose.yaml logs -f
 .PHONY: docker-compose-logs
+
+# ==============================================================================
+
+## Temporary targets for testing purposes
+
+test-docker-image-build:
+	docker build -f ./server/Dockerfile -t "server:latest" .
+	docker build -f ./client/Dockerfile -t "client:latest" .
+
+test-compose-up: test-docker-image-build
+	docker compose -f testing-compose.yaml up -d --build --remove-orphans
+.PHONY: test-compose-up
+
+test-compose-down:
+	docker compose -f testing-compose.yaml stop -t 3
+	docker compose -f testing-compose.yaml down
+.PHONY: test-compose-down
+
+test-compose-logs:
+	docker compose -f testing-compose.yaml logs -f
+
+# ==============================================================================
