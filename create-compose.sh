@@ -35,12 +35,12 @@ add_server() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - SERVER_PORT=8080
       - INPUT_EXCHANGE=query_results_ex
-      - OUTPUT_EXCHANGE_OF_REVIEWS=scraped_reviews_ex
-      - OUTPUT_EXCHANGE_OF_BOOKS=scraped_books_ex
+      - INPUT_QUEUE_OF_QUERY_RESULTS=query_results_q
+      - OUTPUT_EXCHANGE_OF_DATA=scraped_data_ex
       - OUTPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
-      - INPUT_QUEUE_OF_QUERY_RESULTS=query_results_q
     networks:
       - testing_net
     depends_on:
@@ -60,6 +60,12 @@ add_client() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
+      - SERVER_IP=server
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL=INFO
+      - REVIEWS_FILE_PATH=/data/books_rating.csv
+      - BOOKS_FILE_PATH=/data/books_data.csv
+      - BATCH_SIZE=200
     networks:
       - testing_net
     depends_on:
@@ -80,7 +86,7 @@ add_preprocessors() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_EXCHANGE=scraped_books_ex
+      - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_books_ex
       - INPUT_QUEUE_OF_BOOKS=scraped_books_q
       - OUTPUT_QUEUE_OF_BOOKS=sanitized_books_q
@@ -140,7 +146,7 @@ add_preprocessors() {
     environment:
       - PYTHONUNBUFFERED=1
       - LOGGING_LEVEL=DEBUG
-      - INPUT_EXCHANGE=scraped_reviews_ex
+      - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_reviews_ex
       - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q" >> docker-compose.yaml
       for ((i=1; i<=$MERGER_WORKERS; i++)); do
