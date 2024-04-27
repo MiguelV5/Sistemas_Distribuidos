@@ -34,13 +34,17 @@ class AuthorExpander:
         The body is a csv batch with the following format in a line: "['author_1',...,'author_n'], decade" 
         The expansion should create multiple lines, one for each author, with the following format: "author_i, decade"
         """
-        
+        if body == "EOF":
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            for queue_name in self.output_queues:
+                self.mq_connection_handler.send_message(queue_name, "EOF")
+            return
         for line in body.decode().split("\n"):
             if line:
                 authors, decade = eval(line)
                 for author in authors:
                     output_msg = ""
-                    output_msg += author +','+ str(decade) + '\n'
+                    output_msg += author +','+ str(decade)
                     self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
                     
         ch.basic_ack(delivery_tag=method.delivery_tag)
