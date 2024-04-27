@@ -56,6 +56,7 @@ docker-compose-logs:
 test-docker-image-build:
 	docker build -f ./server/Dockerfile -t "server:latest" .
 	docker build -f ./client/Dockerfile -t "client:latest" .
+	docker build -f ./book_sanitizer/Dockerfile -t "book_sanitizer:latest" .
 
 test-compose-up: test-docker-image-build
 	docker compose -f testing-compose.yaml up -d --build --remove-orphans

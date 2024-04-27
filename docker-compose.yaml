@@ -51,8 +51,8 @@ services:
       - SERVER_IP=server
       - SERVER_PORT=8080
       - LOGGING_LEVEL=INFO
-      - REVIEWS_FILE=books_rating.csv
-      - BOOKS_FILE=books_data.csv
+      - REVIEWS_FILE_PATH=/data/books_rating.csv
+      - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
     networks:
       - testing_net

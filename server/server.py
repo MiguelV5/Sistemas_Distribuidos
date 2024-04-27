@@ -3,6 +3,7 @@ import multiprocessing
 from shared.socket_connection_handler import SocketConnectionHandler
 import socket
 from shared.mq_connection_handler import MQConnectionHandler
+from shared import constants
 import signal
 
 
@@ -67,16 +68,17 @@ class Server:
     def __handle_client_connection(self):
         try:
             output_queues_handler = MQConnectionHandler(self.output_exchange_of_data,
-                                                        {self.output_queue_of_reviews: [self.output_queue_of_reviews], self.output_queue_of_books: [self.output_queue_of_books]},
+                                                        {self.output_queue_of_reviews: [self.output_queue_of_reviews], 
+                                                         self.output_queue_of_books: [self.output_queue_of_books]},
                                                         None,
                                                         None
                                                         )
             connection_handler = SocketConnectionHandler(self.client_sock)
             message = connection_handler.read_message()
-            if message == "Start: books":
+            if message == constants.START_BOOKS_MSG:
                 logging.info("Starting books data receiving")
                 self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_books)
-            elif message == "Start: reviews":
+            elif message == constants.START_REVIEWS_MSG:
                 logging.info("Starting reviews data receiving")
                 self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_reviews)
         except Exception as e:
@@ -88,11 +90,11 @@ class Server:
         try:           
             while True:
                 message = connection_handler.read_message()
-                if message == "EOF":
+                if message == constants.FINISH_MSG:
                     logging.info("Finished receiving file data")
                     output_queues_handler.send_message(queue_name, message)
                     break
-                connection_handler.send_message("OK")
+                connection_handler.send_message(constants.OK_MSG)
                 output_queues_handler.send_message(queue_name, message)
         except Exception as e:
             logging.error("Error handling file data: {}".format(str(e)))

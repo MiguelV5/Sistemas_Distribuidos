@@ -32,3 +32,12 @@ def init_configs(env_vars_to_collect):
     except ValueError as e:
         raise ValueError("Key could not be parsed. Error: {}".format(e))
     return config_params
+
+def init_dyn_configs(config_params, num_of_dyn_output_queues, prefix):
+    """
+    Dynamically collects the environment variables related to dynamic output queues
+
+    :param config_params: dictionary with the previously collected environment variables
+    :param num_of_dyn_output_queues: number of dynamic output queues to collect
+    :return: dictionary with the collected environment variables
+    """
