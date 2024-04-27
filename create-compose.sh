@@ -303,6 +303,8 @@ add_query2_processes() {
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
+      - COUNTERS_OF_DECADES_PER_AUTHOR=$C_DEC_PA_WORKERS
+      - MIN_DECADES_TO_FILTER=10
     networks:
       - testing_net
     depends_on:
