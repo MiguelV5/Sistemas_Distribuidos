@@ -6,14 +6,16 @@ from shared.mq_connection_handler import MQConnectionHandler
 from shared import constants
 import signal
 
-
+AMOUNT_OF_QUERY_RESULTS = 5
 class Server:
     def __init__(self,server_port, input_exchange, input_queue_of_query_results, output_exchange_of_data, output_queue_of_reviews, output_queue_of_books):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', server_port))
         self.server_socket.listen()
         self.client_sock = None
-        self.server_is_running = True        
+        self.server_is_running = True     
+        self.finished_with_client_data = False
+        self.received_query_results = 0
 
         self.input_exchange = input_exchange
         self.input_queue_of_query_results = input_queue_of_query_results
@@ -32,12 +34,11 @@ class Server:
     
     
     def run(self):
-        process = multiprocessing.Process(target=self.__handle_results_queue, args=())
-        process.start()
+        results_handler_process = multiprocessing.Process(target=self.__handle_results_from_queue, args=())
+        results_handler_process.start()
         
         self.__listen_to_client()
-        for process in multiprocessing.active_children():
-            process.join()
+        results_handler_process.join()
     
             
     def __listen_to_client(self):
@@ -47,7 +48,7 @@ class Server:
                 self.__handle_client_connection()
          
 
-    def __handle_results_queue(self):
+    def __handle_results_from_queue(self):
         try:
             mq_connection_handler = MQConnectionHandler(None,
                                                         None,
@@ -57,12 +58,20 @@ class Server:
             
             mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
             mq_connection_handler.start_consuming()
+            mq_connection_handler.close_connection()
         except Exception as e:
             logging.error("Error handling results queue: {}".format(str(e)))
         
     def __process_query_result(self, ch, method, properties, body):
-        # TODO
-        pass
+        result = body.decode()            
+        logging.info("Received query result: {}".format(result))
+
+        # See if we need to send the query results to the client
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        if self.received_query_results == AMOUNT_OF_QUERY_RESULTS:
+            ch.stop_consuming()
+
 
 
     def __handle_client_connection(self):
@@ -74,13 +83,15 @@ class Server:
                                                         None
                                                         )
             connection_handler = SocketConnectionHandler(self.client_sock)
-            message = connection_handler.read_message()
-            if message == constants.START_BOOKS_MSG:
-                logging.info("Starting books data receiving")
-                self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_books)
-            elif message == constants.START_REVIEWS_MSG:
-                logging.info("Starting reviews data receiving")
-                self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_reviews)
+            while not self.finished_with_client_data:  
+                message = connection_handler.read_message()
+                if message == constants.START_BOOKS_MSG:
+                    logging.info("Starting books data receiving")
+                    self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_books)
+                elif message == constants.START_REVIEWS_MSG:
+                    logging.info("Starting reviews data receiving")
+                    self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_reviews)
+                    self.finished_with_client_data = True
         except Exception as e:
             logging.error("Error handling client connection: {}".format(str(e)))
         finally:
@@ -98,5 +109,6 @@ class Server:
                 output_queues_handler.send_message(queue_name, message)
         except Exception as e:
             logging.error("Error handling file data: {}".format(str(e)))
+            self.finished_with_client_data = True
             connection_handler.send_message("Error")
             
