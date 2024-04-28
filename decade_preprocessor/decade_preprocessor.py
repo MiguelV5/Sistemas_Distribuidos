@@ -55,11 +55,12 @@ class DecadePreprocessor:
                 categories = row[CATEGORIES_IDX]
                 decade = self.__extract_decade(year)
 
-                batch_to_send_towards_expander += f"{authors},{decade}" + "\n"
+                batch_to_send_towards_expander += f"\"{authors}\",{decade}" + "\n"
                 selected_merger_queue = self.__select_merger_queue(title)
-                batches_to_send_towards_mergers[selected_merger_queue] += f"{title},{authors},{categories},{decade}" + "\n"
+                batches_to_send_towards_mergers[selected_merger_queue] += f"{title},\"{authors}\",\"{categories}\",{decade}" + "\n"
             
-            self.mq_connection_handler.send_message(self.output_queue_towards_expander, batch_to_send_towards_expander)
+            if batch_to_send_towards_expander:
+                self.mq_connection_handler.send_message(self.output_queue_towards_expander, batch_to_send_towards_expander)
             for output_queue in self.output_queues_towards_mergers:
                 if batches_to_send_towards_mergers[output_queue]:
                     self.mq_connection_handler.send_message(output_queue, batches_to_send_towards_mergers[output_queue])

@@ -44,6 +44,7 @@ class YearPreprocessor:
             batch_to_send_towards_preproc = ""
             batch_to_send_towards_filter = ""
             for row in batch:
+                logging.info(row)
                 if len(row) < ORIGINAL_SIZE_OF_ROW:
                     continue
                 title = row[TITLE_IDX]
@@ -56,8 +57,8 @@ class YearPreprocessor:
                 if year is None:
                     continue
 
-                batch_to_send_towards_preproc += f"{title},{authors},{year},{categories}" + "\n"
-                batch_to_send_towards_filter += f"{title},{authors},{publisher},{year},{categories}" + "\n"
+                batch_to_send_towards_preproc += f"{title},\"{authors}\",{year},\"{categories}\"" + "\n"
+                batch_to_send_towards_filter += f"{title},\"{authors}\",{publisher},{year},\"{categories}\"" + "\n"
             
             if batch_to_send_towards_preproc and batch_to_send_towards_filter:
                 self.mq_connection_handler.send_message(self.output_queue_towards_preproc, batch_to_send_towards_preproc)

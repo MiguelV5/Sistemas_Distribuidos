@@ -1,5 +1,10 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
+import csv
+import io
+
+AUTHORS_IDX = 0
+DECADE_IDX = 1
 
 class AuthorExpander:
     def __init__(self, input_exchange, output_exchange, input_queue_of_books, output_queues: dict[str,str]):
@@ -14,11 +19,10 @@ class AuthorExpander:
         
     def start(self):
         try:  
-            self.mq_connection_handler =  MQConnectionHandler(output_exchange_name=self.output_exchange,
-                                                                output_queues_to_bind=self.output_queues,
-                                                                input_exchange_name=self.input_exchange,
-                                                                input_queues_to_recv_from=[self.input_queue_of_books]
-                                                                )
+            self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
+                                                             output_queues_to_bind=self.output_queues,
+                                                             input_exchange_name=self.input_exchange,
+                                                             input_queues_to_recv_from=[self.input_queue_of_books])
             logging.info(f"Create a MQConnectionHandler object for the author expander with the following parameters: output_exchange_name={self.output_exchange}, output_queues_to_bind={self.output_queues}, input_exchange_name={self.input_exchange}, input_queues_to_recv_from={self.input_queue_of_books}")
         except Exception as e:
             logging.error(f"Error starting author expander: {str(e)}")
@@ -37,19 +41,19 @@ class AuthorExpander:
         msg = body.decode()
         logging.info(f"Received message from input queue: {msg}")
         if msg == "EOF":
-            ch.basic_ack(delivery_tag=method.delivery_tag)
             for queue_name in self.output_queues:
                 self.mq_connection_handler.send_message(queue_name, "EOF")
-                logging.info(f"Sent EOF message to output queue {queue_name}")
+                logging.info(f"Sent EOF message to queue {queue_name}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
             return
-        for line in msg.split("\n"):
-            if line:
-                authors, decade = eval(line)
-                for author in authors:
-                    output_msg = ""
-                    output_msg += author +','+ str(decade)
-                    self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
-                    logging.info(f"Sent message to output queue: {output_msg}")
+        batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
+        for row in batch:
+            authors = eval(row[AUTHORS_IDX])
+            decade = row[DECADE_IDX]
+            for author in authors:
+                output_msg = f"{author},{decade}"
+                self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
+                logging.info(f"Sent message to queue: {output_msg}")
                     
         ch.basic_ack(delivery_tag=method.delivery_tag)
         

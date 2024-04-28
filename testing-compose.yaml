@@ -139,65 +139,65 @@ services:
 
 
 
-  merger_1:
-    container_name: merger_1
-    image: merger:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
-      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
-      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
-      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
-      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+  # merger_1:
+  #   container_name: merger_1
+  #   image: merger:latest
+  #   entrypoint: python3 /main.py
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #     - LOGGING_LEVEL=INFO
+  #     - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+  #     - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+  #     - OUTPUT_EXCHANGE=merged_reviews_ex
+  #     - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
+  #     - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
+  #     - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+  #     - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+  #   networks:
+  #     - testing_net
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
 
-  merger_2:
-    container_name: merger_2
-    image: merger:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
-      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
-      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
-      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
-      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+  # merger_2:
+  #   container_name: merger_2
+  #   image: merger:latest
+  #   entrypoint: python3 /main.py
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #     - LOGGING_LEVEL=INFO
+  #     - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+  #     - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+  #     - OUTPUT_EXCHANGE=merged_reviews_ex
+  #     - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
+  #     - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
+  #     - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+  #     - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+  #   networks:
+  #     - testing_net
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
 
-  merger_3:
-    container_name: merger_3
-    image: merger:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
-      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
-      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
-      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
-      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
-    networks:
-      - testing_net
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+  # merger_3:
+  #   container_name: merger_3
+  #   image: merger:latest
+  #   entrypoint: python3 /main.py
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #     - LOGGING_LEVEL=INFO
+  #     - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+  #     - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+  #     - OUTPUT_EXCHANGE=merged_reviews_ex
+  #     - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
+  #     - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
+  #     - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+  #     - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+  #   networks:
+  #     - testing_net
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
 # ================================================================
 
 

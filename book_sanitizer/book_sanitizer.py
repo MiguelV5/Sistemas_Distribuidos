@@ -51,7 +51,7 @@ class BookSanitizer:
 
                 title = title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
 
-                batch_to_send += f"{title},{authors},{publisher},{published_date},{categories}" + "\n"
+                batch_to_send += f"{title},\"{authors}\",{publisher},{published_date},\"{categories}\"" + "\n"
 
             if batch_to_send:
                 self.mq_connection_handler.send_message(self.output_queue, batch_to_send)

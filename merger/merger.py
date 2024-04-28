@@ -36,8 +36,9 @@ class Merger:
     def start(self):
         try:
             self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name,
-                                                             output_queues_to_bind={self.output_queue_name_compact_reviews: [self.output_queue_name_compact_reviews],
-                                                                                   self.output_queue_name_full_reviews: [self.output_queue_name_full_reviews]},
+                                                             output_queues_to_bind={
+                                                                 self.output_queue_name_compact_reviews: [self.output_queue_name_compact_reviews],
+                                                                 self.output_queue_name_full_reviews: [self.output_queue_name_full_reviews]},
                                                              input_exchange_name=self.input_exchange_name_reviews,
                                                              input_queues_to_recv_from=[self.input_queue_name_reviews, self.input_queue_name_books],
                                                              aux_input_exchange_name=self.input_exchange_name_books)
