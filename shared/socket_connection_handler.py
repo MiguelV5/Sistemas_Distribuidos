@@ -12,7 +12,7 @@ class SocketConnectionHandler:
         """
         message = message.encode('utf-8')
         size_of_message = len(message)
-        logging.info(f"action: send_message | result: in_progress | msg: {message} | size: {size_of_message}")
+        logging.info(f"action: send_message | result: in_progress | size: {size_of_message}")
         self._stream.send(int(size_of_message).to_bytes(4, byteorder='big'))
         self._stream.send(message)
         

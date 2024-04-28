@@ -56,6 +56,16 @@ docker-compose-logs:
 test-docker-image-build:
 	docker build -f ./server/Dockerfile -t "server:latest" .
 	docker build -f ./client/Dockerfile -t "client:latest" .
+	
+	docker build -f ./book_sanitizer/Dockerfile -t "book_sanitizer:latest" .
+	docker build -f ./year_preprocessor/Dockerfile -t "year_preprocessor:latest" .
+	docker build -f ./decade_preprocessor/Dockerfile -t "decade_preprocessor:latest" .
+	docker build -f ./review_sanitizer/Dockerfile -t "review_sanitizer:latest" .
+
+	docker build -f ./author_expander/Dockerfile -t "author_expander:latest" .
+	docker build -f ./counter_of_decades_per_author/Dockerfile -t "counter_of_decades_per_author:latest" .
+	docker build -f ./filter_of_authors_by_decade/Dockerfile -t "filter_of_authors_by_decade:latest" .
+	docker build -f ./query2_result_generator/Dockerfile -t "query2_result_generator:latest" .
 
 test-compose-up: test-docker-image-build
 	docker compose -f testing-compose.yaml up -d --build --remove-orphans
