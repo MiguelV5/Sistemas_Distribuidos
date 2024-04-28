@@ -14,11 +14,10 @@ class Counter:
         
     def start(self):
         try:  
-            self.mq_connection_handler =  MQConnectionHandler(output_exchange_name=self.output_exchange,
-                                                                output_queues_to_bind={self.output_queue_of_authors: [self.output_queue_of_authors]},
-                                                                input_exchange_name=self.input_exchange,
-                                                                input_queues_to_recv_from=[self.input_queue_of_authors]
-                                                                )
+            self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
+                                                             output_queues_to_bind={self.output_queue_of_authors: [self.output_queue_of_authors]},
+                                                             input_exchange_name=self.input_exchange,
+                                                             input_queues_to_recv_from=[self.input_queue_of_authors])
         except Exception as e:
             logging.error(f"Error starting counter: {str(e)}")
             
@@ -47,8 +46,8 @@ class Counter:
     def __send_results(self):
         for author, decades in self.authors_decades.items():
             output_msg = ""
-            output_msg += author +','+ str(len(decades))
+            output_msg += author + ',' + str(len(decades))
             self.mq_connection_handler.send_message(self.output_queue_of_authors, output_msg)
             logging.info(f"Sent message to output queue: {output_msg}")
         self.mq_connection_handler.send_message(self.output_queue_of_authors, "EOF")
-        logging.info(f"Sent EOF message to output queue")
+        logging.info("Sent EOF message to output queue")
