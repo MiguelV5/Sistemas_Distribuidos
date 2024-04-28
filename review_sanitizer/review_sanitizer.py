@@ -10,7 +10,7 @@ TITLE_IDX = 1
 REVIEW_SCORE_IDX = 6
 REVIEW_SUMMARY_IDX = 8
 REVIEW_TEXT_IDX = 9
-
+ORIGINAL_SIZE_OF_ROW = 10
 
 
 class ReviewSanitizer:
@@ -40,6 +40,8 @@ class ReviewSanitizer:
             batch_as_csv = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batches_to_send_towards_mergers = {output_queue: "" for output_queue in self.output_queues}
             for row in batch_as_csv:
+                if len(row) < ORIGINAL_SIZE_OF_ROW:
+                    continue
                 title = row[TITLE_IDX]
                 review_score = row[REVIEW_SCORE_IDX]
                 review_summary = row[REVIEW_SUMMARY_IDX]
@@ -56,7 +58,8 @@ class ReviewSanitizer:
                 batches_to_send_towards_mergers[selected_queue] += f"{title},{round(float(review_score))},{review_summary},{review_text}" + "\n"
 
             for output_queue in self.output_queues:
-                self.mq_connection_handler.send_message(output_queue, batches_to_send_towards_mergers[output_queue])
+                if batches_to_send_towards_mergers[output_queue]:
+                    self.mq_connection_handler.send_message(output_queue, batches_to_send_towards_mergers[output_queue])
             
             ch.basic_ack(delivery_tag=method.delivery_tag)
 

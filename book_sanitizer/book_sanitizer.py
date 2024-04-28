@@ -10,6 +10,7 @@ AUTHORS_IDX = 2
 PUBLISHER_IDX = 5
 PUBLISHED_DATE_IDX = 6
 CATEGORIES_IDX = 8
+ORIGINAL_SIZE_OF_ROW = 10
 
 class BookSanitizer:
 
@@ -38,6 +39,8 @@ class BookSanitizer:
             batch_as_csv = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batch_to_send = ""
             for row in batch_as_csv:
+                if len(row) < ORIGINAL_SIZE_OF_ROW:
+                    continue
                 title = row[TITLE_IDX]
                 authors = row[AUTHORS_IDX]
                 publisher = row[PUBLISHER_IDX]
@@ -50,8 +53,8 @@ class BookSanitizer:
 
                 batch_to_send += f"{title},{authors},{publisher},{published_date},{categories}" + "\n"
 
-
-            self.mq_connection_handler.send_message(self.output_queue, batch_to_send)
+            if batch_to_send:
+                self.mq_connection_handler.send_message(self.output_queue, batch_to_send)
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
                 

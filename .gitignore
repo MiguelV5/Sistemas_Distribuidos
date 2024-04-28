@@ -1,6 +1,6 @@
 # DATA
-*.csv
-testing-compose.yaml
+books_data.csv
+books_rating.csv
 
 
 # Byte-compiled / optimized / DLL files

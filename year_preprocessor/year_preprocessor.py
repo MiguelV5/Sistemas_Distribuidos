@@ -11,6 +11,8 @@ AUTHORS_IDX = 1
 PUBLISHER_IDX = 2
 PUBLISHED_DATE_IDX = 3
 CATEGORIES_IDX = 4
+ORIGINAL_SIZE_OF_ROW = 5
+
 
 class YearPreprocessor:
     def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue_towards_preproc: str, output_queue_towards_filter: str):
@@ -42,6 +44,8 @@ class YearPreprocessor:
             batch_to_send_towards_preproc = ""
             batch_to_send_towards_filter = ""
             for row in batch:
+                if len(row) < ORIGINAL_SIZE_OF_ROW:
+                    continue
                 title = row[TITLE_IDX]
                 authors = row[AUTHORS_IDX]
                 publisher = row[PUBLISHER_IDX]
@@ -55,8 +59,9 @@ class YearPreprocessor:
                 batch_to_send_towards_preproc += f"{title},{authors},{year},{categories}" + "\n"
                 batch_to_send_towards_filter += f"{title},{authors},{publisher},{year},{categories}" + "\n"
             
-            self.mq_connection_handler.send_message(self.output_queue_towards_preproc, batch_to_send_towards_preproc)
-            self.mq_connection_handler.send_message(self.output_queue_towards_filter, batch_to_send_towards_filter)
+            if batch_to_send_towards_preproc and batch_to_send_towards_filter:
+                self.mq_connection_handler.send_message(self.output_queue_towards_preproc, batch_to_send_towards_preproc)
+                self.mq_connection_handler.send_message(self.output_queue_towards_filter, batch_to_send_towards_filter)
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
