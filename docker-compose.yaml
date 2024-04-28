@@ -143,7 +143,7 @@ services:
 
 
   merger_1:
-    container_name: merger
+    container_name: merger_1
     image: merger:latest
     entrypoint: python3 /main.py
     environment:
@@ -163,7 +163,7 @@ services:
         condition: service_healthy
 
   merger_2:
-    container_name: merger
+    container_name: merger_2
     image: merger:latest
     entrypoint: python3 /main.py
     environment:
@@ -183,7 +183,7 @@ services:
         condition: service_healthy
 
   merger_3:
-    container_name: merger
+    container_name: merger_3
     image: merger:latest
     entrypoint: python3 /main.py
     environment:

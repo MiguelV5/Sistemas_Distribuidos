@@ -47,9 +47,9 @@ services:
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
       - SERVER_IP=server
-      - REVIEWS_FILE_PATH=/data/books_rating.csv
-      - BOOKS_FILE_PATH=/data/books_data.csv
-      - BATCH_SIZE=200
+      - REVIEWS_FILE_PATH=/data/test_rating.csv
+      - BOOKS_FILE_PATH=/data/test_books.csv
+      - BATCH_SIZE=2
     networks:
       - testing_net
     depends_on:
@@ -139,7 +139,175 @@ services:
 
 
 
+  merger_1:
+    container_name: merger_1
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
+  merger_2:
+    container_name: merger_2
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  merger_3:
+    container_name: merger_3
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+# ================================================================
+
+
+  author_expander:
+    container_name: author_expander
+    image: author_expander:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=expanded_authors_ex
+      - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q
+      - OUTPUT_QUEUE_OF_AUTHORS_1=expanded_authors_q_1
+      - OUTPUT_QUEUE_OF_AUTHORS_2=expanded_authors_q_2
+      - OUTPUT_QUEUE_OF_AUTHORS_3=expanded_authors_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+
+  counter_of_decades_per_author_1:
+    container_name: counter_of_decades_per_author_1
+    image: counter_of_decades_per_author:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=expanded_authors_ex
+      - OUTPUT_EXCHANGE=authors_decades_count_ex
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_1
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  counter_of_decades_per_author_2:
+    container_name: counter_of_decades_per_author_2
+    image: counter_of_decades_per_author:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=expanded_authors_ex
+      - OUTPUT_EXCHANGE=authors_decades_count_ex
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_2
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  counter_of_decades_per_author_3:
+    container_name: counter_of_decades_per_author_3
+    image: counter_of_decades_per_author:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=expanded_authors_ex
+      - OUTPUT_EXCHANGE=authors_decades_count_ex
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_3
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  filter_of_authors_by_decade:
+    container_name: filter_of_authors_by_decade
+    image: filter_of_authors_by_decade:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=authors_decades_count_ex
+      - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
+      - COUNTERS_OF_DECADES_PER_AUTHOR=3
+      - MIN_DECADES_TO_FILTER=10
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      
+  query2_result_generator:
+    container_name: query2_result_generator
+    image: query2_result_generator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=authors_filtered_by_decade_ex
+      - OUTPUT_EXCHANGE=query_results_ex
+      - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
 
 
