@@ -165,7 +165,7 @@ add_mergers() {
     for ((i=1; i<=$MERGER_WORKERS; i++)); do
         echo "
   merger_$i:
-    container_name: merger
+    container_name: merger_$i
     image: merger:latest
     entrypoint: python3 /main.py
     environment:

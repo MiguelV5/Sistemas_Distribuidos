@@ -1,6 +1,18 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
+import io
 import csv
+from shared import constants
+
+
+BOOK_TITLE_IDX = 0
+BOOK_AUTHORS_IDX = 1
+BOOK_CATEGORIES_IDX = 2
+BOOK_DECADE_IDX = 3
+
+REVIEW_TITLE_IDX = 0
+REVIEW_SCORE_IDX = 1
+REVIEW_TEXT_IDX = 2
 class Merger:
     def __init__(self, input_exchange_name_reviews: str,
                  input_exchange_name_books: str,
@@ -44,13 +56,15 @@ class Merger:
         The message should have the following format: title,authors,categories,decade
         """
         msg = body.decode()
-        if msg == "EOF":
+        logging.info(f"Received message from books queue: {msg}")
+        if msg == constants.FINISH_MSG:
             self.books_finished = True
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
-        for line in msg.split("\n"):
+        batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
+        for line in batch:
             if line: 
-                title = line.split(",")[0]
+                title = line[BOOK_TITLE_IDX]
                 self.book_data[title] = line
         ch.basic_ack(delivery_tag=method.delivery_tag)
         
@@ -59,7 +73,9 @@ class Merger:
         The message should have the following format: title,review/score,review/text
         """
         msg = body.decode() 
-        if msg == "EOF":
+        logging.info(f"Received message from reviews queue: {msg}")
+
+        if msg == constants.FINISH_MSG:
             self.__handle_eof_reviews()
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
@@ -74,9 +90,12 @@ class Merger:
         ch.basic_ack(delivery_tag=method.delivery_tag)
         
     def __send_output_msgs(self, title, score, text):
-        book_title, authors, categories, decade = self.book_data[title].split(",")
-        compact_review = f"{book_title},{authors},{score},{decade}"
-        full_review = f"{book_title},{categories},{text}"
+        book_data = self.book_data[title]
+        authors = book_data[BOOK_AUTHORS_IDX]
+        categories = book_data[BOOK_CATEGORIES_IDX]
+        decade = book_data[BOOK_DECADE_IDX]
+        compact_review = f"{title},{authors},{score},{decade}"
+        full_review = f"{title},{categories},{text}"
         self.mq_connection_handler.send_message(self.output_queue_name_compact_reviews, compact_review)
         self.mq_connection_handler.send_message(self.output_queue_name_full_reviews, full_review)
         
@@ -86,8 +105,8 @@ class Merger:
             if title in self.book_data:
                 self.__send_output_msgs(title, score, text)
         self.reviews_buffer = []
-        self.mq_connection_handler.send_message(self.output_queue_name_compact_reviews, "EOF")
-        self.mq_connection_handler.send_message(self.output_queue_name_full_reviews, "EOF")
+        self.mq_connection_handler.send_message(self.output_queue_name_compact_reviews, constants.FINISH_MSG)
+        self.mq_connection_handler.send_message(self.output_queue_name_full_reviews, constants.FINISH_MSG)
                     
         
 

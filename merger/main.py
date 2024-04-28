@@ -1,4 +1,4 @@
-from shared import init_log, init_configs
+from shared.initializers import init_log, init_configs
 import logging
 from merger import Merger
 
