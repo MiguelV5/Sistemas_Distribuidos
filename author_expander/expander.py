@@ -35,6 +35,7 @@ class AuthorExpander:
         The expansion should create multiple lines, one for each author, with the following format: "author_i, decade"
         """
         msg = body.decode()
+        logging.info(f"Received message from input queue: {msg}")
         if msg == "EOF":
             ch.basic_ack(delivery_tag=method.delivery_tag)
             for queue_name in self.output_queues:

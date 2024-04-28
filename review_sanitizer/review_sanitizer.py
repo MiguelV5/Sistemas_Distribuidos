@@ -44,18 +44,18 @@ class ReviewSanitizer:
                     continue
                 title = row[TITLE_IDX]
                 review_score = row[REVIEW_SCORE_IDX]
-                review_summary = row[REVIEW_SUMMARY_IDX]
+                #review_summary = row[REVIEW_SUMMARY_IDX]
                 review_text = row[REVIEW_TEXT_IDX]
                 
-                if not title or not review_score or not review_summary or not review_text:
+                if not title or not review_score or not review_text:
                     continue
 
                 title = title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
-                review_summary = review_summary.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
+                #review_summary = review_summary.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
                 review_text = review_text.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'").replace("&quot;", "'")
 
                 selected_queue = self.__select_queue(title)
-                batches_to_send_towards_mergers[selected_queue] += f"{title},{round(float(review_score))},{review_summary},{review_text}" + "\n"
+                batches_to_send_towards_mergers[selected_queue] += f"{title},{round(float(review_score))},{review_text}" + "\n"
 
             for output_queue in self.output_queues:
                 if batches_to_send_towards_mergers[output_queue]:

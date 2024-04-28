@@ -49,7 +49,7 @@ class Merger:
             self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name_reviews, self.__handle_reviews)
             self.mq_connection_handler.channel.start_consuming()
         except Exception as e:
-            logging.error(f"Error while setting up the callbacks: {e}")
+            logging.error(f"Error while setting up the callbacks: {e.with_traceback()}")
             
     def __handle_books(self, ch, method, properties, body):
         """
