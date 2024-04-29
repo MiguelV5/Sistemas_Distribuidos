@@ -2,6 +2,8 @@ from shared.mq_connection_handler import MQConnectionHandler
 import logging
 import csv
 import io
+import signal
+from shared import constants
 
 AUTHORS_IDX = 0
 DECADE_IDX = 1
@@ -15,23 +17,22 @@ class AuthorExpander:
         for queue_name in output_queues.values():
             self.output_queues[queue_name] = [queue_name]
         self.mq_connection_handler = None
-        
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down AuthorExpander")
+        self.mq_connection_handler.stop_consuming()
+
         
     def start(self):
-        try:  
-            self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
-                                                             output_queues_to_bind=self.output_queues,
-                                                             input_exchange_name=self.input_exchange,
-                                                             input_queues_to_recv_from=[self.input_queue_of_books])
-            logging.info(f"Create a MQConnectionHandler object for the author expander with the following parameters: output_exchange_name={self.output_exchange}, output_queues_to_bind={self.output_queues}, input_exchange_name={self.input_exchange}, input_queues_to_recv_from={self.input_queue_of_books}")
-        except Exception as e:
-            logging.error(f"Error starting author expander: {str(e)}")
-            
-        try:
-            self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_books, self.__expand_authors)
-            self.mq_connection_handler.start_consuming()
-        except Exception as e:
-            logging.error(f"Error setting up callback for input queue: {str(e)}")
+        self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
+                                                         output_queues_to_bind=self.output_queues,
+                                                         input_exchange_name=self.input_exchange,
+                                                         input_queues_to_recv_from=[self.input_queue_of_books])       
+ 
+        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_books, self.__expand_authors)
+        self.mq_connection_handler.start_consuming()
+        
     
     def __expand_authors(self, ch, method, properties, body):
         """ 
@@ -39,10 +40,10 @@ class AuthorExpander:
         The expansion should create multiple lines, one for each author, with the following format: "author_i, decade"
         """
         msg = body.decode()
-        logging.info(f"Received message from input queue: {msg}")
-        if msg == "EOF":
+        logging.debug(f"Received message from input queue: {msg}")
+        if msg == constants.FINISH_MSG:
             for queue_name in self.output_queues:
-                self.mq_connection_handler.send_message(queue_name, "EOF")
+                self.mq_connection_handler.send_message(queue_name, constants.FINISH_MSG)
                 logging.info(f"Sent EOF message to queue {queue_name}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
@@ -53,7 +54,7 @@ class AuthorExpander:
             for author in authors:
                 output_msg = f"{author},{decade}"
                 self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
-                logging.info(f"Sent message to queue: {output_msg}")
+                logging.debug(f"Sent message to queue: {output_msg}")
                     
         ch.basic_ack(delivery_tag=method.delivery_tag)
         

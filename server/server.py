@@ -49,24 +49,20 @@ class Server:
          
 
     def __handle_results_from_queue(self):
-        try:
-            mq_connection_handler = MQConnectionHandler(None,
-                                                        None,
-                                                        self.input_exchange,
-                                                        [self.input_queue_of_query_results]
-                                                        )
-            
-            mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
-            mq_connection_handler.start_consuming()
-            mq_connection_handler.close_connection()
-        except Exception as e:
-            logging.error("Error handling results queue: {}".format(str(e)))
+        mq_connection_handler = MQConnectionHandler(None,
+                                                    None,
+                                                    self.input_exchange,
+                                                    [self.input_queue_of_query_results]
+                                                    )
+        
+        mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
+        mq_connection_handler.start_consuming()
+        mq_connection_handler.close_connection()
         
     def __process_query_result(self, ch, method, properties, body):
         result = body.decode()            
         logging.info("Received query result: {}".format(result))
 
-        # See if we need to send the query results to the client
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
         if self.received_query_results == AMOUNT_OF_QUERY_RESULTS:
@@ -75,13 +71,12 @@ class Server:
 
 
     def __handle_client_connection(self):
+        output_queues_handler = MQConnectionHandler(self.output_exchange_of_data,
+                                                    {self.output_queue_of_reviews: [self.output_queue_of_reviews], 
+                                                     self.output_queue_of_books: [self.output_queue_of_books]},
+                                                    None,
+                                                    None)
         try:
-            output_queues_handler = MQConnectionHandler(self.output_exchange_of_data,
-                                                        {self.output_queue_of_reviews: [self.output_queue_of_reviews], 
-                                                         self.output_queue_of_books: [self.output_queue_of_books]},
-                                                        None,
-                                                        None
-                                                        )
             connection_handler = SocketConnectionHandler(self.client_sock)
             while not self.finished_with_client_data:  
                 message = connection_handler.read_message()

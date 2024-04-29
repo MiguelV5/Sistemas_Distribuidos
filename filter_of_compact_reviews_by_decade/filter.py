@@ -3,13 +3,14 @@ import logging
 import io
 import csv
 from shared import constants
+import signal
 
 TITLE_IDX = 0
 AUTHORS_IDX = 1
 SCORE_IDX = 2
 DECADE_IDX = 3
 
-class Filter:
+class FilterOfCompactReviewsByDecade:
     def __init__(self, input_exchange: str, output_exchange: str, input_queue_of_reviews: str, output_queues: dict[str,str], decade_to_filter:int, num_of_input_workers: int):
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
@@ -21,22 +22,20 @@ class Filter:
             self.output_queues[queue_name] = [queue_name]
         self.mq_connection_handler = None
         self.eof_received = 0
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down FilterOfCompactReviewsByDecade")
+        self.mq_connection_handler.stop_consuming()
         
         
     def start(self):
-        try:
-            self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
-                                                             output_queues_to_bind=self.output_queues,
-                                                             input_exchange_name=self.input_exchange,
-                                                             input_queues_to_recv_from=[self.input_queue_of_reviews])
-        except Exception as e:
-            logging.error(f"Error while creating the MQConnectionHandler object: {e}")
-            
-        try:
-            self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_reviews, self.__filter_reviews)
-            self.mq_connection_handler.channel.start_consuming()
-        except Exception as e:
-            logging.error(f"Error while setting up the callbacks: {e}")
+        self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
+                                                         output_queues_to_bind=self.output_queues,
+                                                         input_exchange_name=self.input_exchange,
+                                                         input_queues_to_recv_from=[self.input_queue_of_reviews])
+        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_reviews, self.__filter_reviews)
+        self.mq_connection_handler.channel.start_consuming()
             
     def __filter_reviews(self, ch, method, properties, body):
         """
@@ -44,11 +43,11 @@ class Filter:
         """
         msg = body.decode()
         logging.info(f"Received message from input queue: {msg}")
-        if msg == "EOF":
+        if msg == constants.FINISH_MSG:
             self.eof_received += 1
             if self.eof_received == self.num_of_input_workers:
                 for queue_name in self.output_queues:
-                    self.mq_connection_handler.send_message(queue_name, "EOF")
+                    self.mq_connection_handler.send_message(queue_name, constants.FINISH_MSG)
                     logging.info(f"Sent EOF message to queue {queue_name}")
         else:
             review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')

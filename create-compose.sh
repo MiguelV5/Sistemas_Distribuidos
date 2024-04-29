@@ -199,18 +199,21 @@ add_mergers() {
 
 add_query1_processes() {
     echo "
-  filter_of_books_by_year:
-    container_name: filter_of_books_by_year
-    image: filter_of_books_by_year:latest
+  filter_of_books_by_year_and_genre:
+    container_name: filter_of_books_by_year_and_genre
+    image: filter_of_books_by_year_and_genre:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_year_ex
-      - OUTPUT_EXCHANGE=books_filtered_by_year_range_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_year_and_genre_ex
       - INPUT_QUEUE_OF_BOOKS=towards_filter__preprocessed_books_with_year_q
-      - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_year_range_q
+      - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_year_and_genre_q
+      - MIN_YEAR=2000
+      - MAX_YEAR=2023
+      - GENRE=Computers
     networks:
       - testing_net
     depends_on:
@@ -225,10 +228,11 @@ add_query1_processes() {
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE=books_filtered_by_year_range_ex
+      - INPUT_EXCHANGE=books_filtered_by_year_and_genre_ex
       - OUTPUT_EXCHANGE=books_filtered_by_title_ex
-      - INPUT_QUEUE_OF_BOOKS=books_filtered_by_year_range_q
+      - INPUT_QUEUE_OF_BOOKS=books_filtered_by_year_and_genre_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
+      - TITLE_KEYWORD=distributed
     networks:
       - testing_net
     depends_on:

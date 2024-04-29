@@ -12,7 +12,7 @@ class SocketConnectionHandler:
         """
         message = message.encode('utf-8')
         size_of_message = len(message)
-        logging.info(f"action: send_message | result: in_progress | size: {size_of_message}")
+        logging.debug(f"action: send_message | result: in_progress | size: {size_of_message}")
         self._stream.send(int(size_of_message).to_bytes(4, byteorder='big'))
         self._stream.send(message)
         
@@ -22,7 +22,7 @@ class SocketConnectionHandler:
         """
         Reads a message from the client stream.
         """
-        logging.info("action: read_message_size | result: in_progress")
+        logging.debug("action: read_message_size | result: in_progress")
         try: 
             size_of_message = int.from_bytes(self._stream.recv(4), byteorder='big')
             logging.debug(f"action: read_message_size | result: success | size: {size_of_message}")

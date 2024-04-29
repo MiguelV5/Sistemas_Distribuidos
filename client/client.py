@@ -35,7 +35,6 @@ class Client:
         """
         Sends the file data to the server
         """
-        logging.info(f"Sending data to server. File: {file}")
         with open(file, 'r') as file:
             self.connection_handler.send_message(f"Start: {type_of_content_in_file}")
             completed = False
