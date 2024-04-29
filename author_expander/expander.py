@@ -2,6 +2,8 @@ from shared.mq_connection_handler import MQConnectionHandler
 import logging
 import csv
 import io
+import signal
+from shared import constants
 
 AUTHORS_IDX = 0
 DECADE_IDX = 1
@@ -15,7 +17,12 @@ class AuthorExpander:
         for queue_name in output_queues.values():
             self.output_queues[queue_name] = [queue_name]
         self.mq_connection_handler = None
-        
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down AuthorExpander")
+        self.mq_connection_handler.stop_consuming()
+
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
@@ -34,9 +41,9 @@ class AuthorExpander:
         """
         msg = body.decode()
         logging.debug(f"Received message from input queue: {msg}")
-        if msg == "EOF":
+        if msg == constants.FINISH_MSG:
             for queue_name in self.output_queues:
-                self.mq_connection_handler.send_message(queue_name, "EOF")
+                self.mq_connection_handler.send_message(queue_name, constants.FINISH_MSG)
                 logging.info(f"Sent EOF message to queue {queue_name}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return

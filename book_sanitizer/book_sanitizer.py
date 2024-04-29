@@ -25,7 +25,7 @@ class BookSanitizer:
         signal.signal(signal.SIGTERM, self.__handle_shutdown)
 
     def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down book_sanitizer")
+        logging.info("Shutting down BookSanitizer")
         self.mq_connection_handler.close_connection()
 
 

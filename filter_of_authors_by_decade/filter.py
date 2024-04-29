@@ -1,7 +1,10 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
+import signal
+from shared import constants
 
-class Filter:
+
+class FilterOfAuthorsByDecade:
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
@@ -18,6 +21,11 @@ class Filter:
         self.min_decades_to_filter = min_decades_to_filter
         self.eof_received = 0
         self.mq_connection_handler = None
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down FilterOfAuthorsByDecade")
+        self.mq_connection_handler.stop_consuming()
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name, 
@@ -31,11 +39,11 @@ class Filter:
     def __filter_authors_by_decades_quantity(self, ch, method, properties, body):
         msg = body.decode()
         logging.debug(f"Received message: {msg}")
-        if msg == "EOF":
+        if msg == constants.FINISH_MSG:
             self.eof_received += 1
             if int(self.eof_received) == int(self.counters_of_decades_per_author):
                 logging.info("All EOF messages received")
-                self.mq_connection_handler.send_message(self.output_queue_name, "EOF")
+                self.mq_connection_handler.send_message(self.output_queue_name, constants.FINISH_MSG)
                 logging.info("Sent EOF message to output queue")
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 self.mq_connection_handler.close_connection()

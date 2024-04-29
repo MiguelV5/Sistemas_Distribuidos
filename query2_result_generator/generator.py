@@ -1,5 +1,8 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
+import signal
+from shared import constants
+
 
 class Generator:
     def __init__(self, input_exchange_name: str, output_exchange_name: str, input_queue_name: str, output_queue_name: str):
@@ -9,6 +12,11 @@ class Generator:
         self.output_queue_name = output_queue_name
         self.response_msg = "Q2 Results: "
         self.mq_connection_handler = None
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down Q2 Result Generator")
+        self.mq_connection_handler.stop_consuming()
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name, 
@@ -21,7 +29,7 @@ class Generator:
         
     def __get_results(self, ch, method, properties, body):
         msg = body.decode()
-        if msg == "EOF":
+        if msg == constants.FINISH_MSG:
             logging.info("Received EOF")
             self.mq_connection_handler.send_message(self.output_queue_name, self.response_msg)
             logging.info(f"Sent response message to output queue: {self.response_msg}")

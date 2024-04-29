@@ -3,6 +3,7 @@ import logging
 import io
 import csv
 from shared import constants
+import signal
 
 
 BOOK_TITLE_IDX = 0
@@ -33,6 +34,11 @@ class Merger:
         self.mq_connection_handler = None
         self.book_data = {}
         self.reviews_buffer = []
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down Merger")
+        self.mq_connection_handler.stop_consuming()
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name,

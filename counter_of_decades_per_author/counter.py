@@ -1,8 +1,10 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
+import signal
+from shared import constants
 
 
-class Counter:
+class CounterOfDecadesPerAuthor:
     def __init__(self, input_exchange, output_exchange, input_queue_of_authors, output_queue_of_authors):
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
@@ -10,6 +12,11 @@ class Counter:
         self.output_queue_of_authors = output_queue_of_authors
         self.mq_connection_handler = None
         self.authors_decades = {}
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down CounterOfDecadesPerAuthor")
+        self.mq_connection_handler.stop_consuming()
         
         
     def start(self):
@@ -27,7 +34,7 @@ class Counter:
         """
         msg = body.decode()
         logging.debug(f"Received message: {msg}")
-        if msg == "EOF":
+        if msg == constants.FINISH_MSG:
             self.__send_results()
             ch.basic_ack(delivery_tag=method.delivery_tag)
             self.mq_connection_handler.close_connection()
@@ -43,5 +50,5 @@ class Counter:
             output_msg += author + ',' + str(len(decades))
             self.mq_connection_handler.send_message(self.output_queue_of_authors, output_msg)
             logging.debug(f"Sent message to output queue: {output_msg}")
-        self.mq_connection_handler.send_message(self.output_queue_of_authors, "EOF")
+        self.mq_connection_handler.send_message(self.output_queue_of_authors, constants.FINISH_MSG)
         logging.info("Sent EOF message to output queue")
