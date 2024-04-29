@@ -51,8 +51,8 @@ class BookSanitizer:
 
                 title = title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
 
-                if '""' in authors:
-                    authors = authors.replace('""', " ")
+                if '"' in authors:
+                    authors = authors.replace('"', "\\'")
                 elif '["' in authors or '"]' in authors:
                     authors = authors.replace("'", " ").replace('"', "'")
                 try:
