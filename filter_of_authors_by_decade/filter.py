@@ -27,11 +27,9 @@ class Filter:
                                                              input_queues_to_recv_from=[self.input_queue_name])
         except Exception as e:
             logging.error(f"Error while connecting to RabbitMQ: {e}")
-        try:
-            self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.__filter_authors_by_decades_quantity)
-            self.mq_connection_handler.channel.start_consuming()
-        except Exception as e:
-            logging.error(f"Error while consuming from RabbitMQ: {e}")
+        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.__filter_authors_by_decades_quantity)
+        self.mq_connection_handler.channel.start_consuming()
+        
             
     def __filter_authors_by_decades_quantity(self, ch, method, properties, body):
         msg = body.decode()
@@ -44,6 +42,8 @@ class Filter:
                 logging.info("Sent EOF message to output queue")
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 self.mq_connection_handler.close_connection()
+            else: 
+                ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
             author, decades = msg.split(",")
             if int(decades) >= int(self.min_decades_to_filter):

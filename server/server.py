@@ -87,8 +87,6 @@ class Server:
                 if message == constants.START_BOOKS_MSG:
                     logging.info("Starting books data receiving")
                     self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_books)
-                    self.finished_with_client_data = True
-
                 elif message == constants.START_REVIEWS_MSG:
                     logging.info("Starting reviews data receiving")
                     self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_reviews)

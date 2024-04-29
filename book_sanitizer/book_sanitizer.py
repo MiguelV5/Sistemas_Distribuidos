@@ -49,19 +49,9 @@ class BookSanitizer:
                 if not title or not authors or not publisher or not published_date or not categories:
                     continue
 
-                title = title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
-
-                if '"' in authors:
-                    authors = authors.replace('"', "\\'")
-                elif '["' in authors or '"]' in authors:
-                    authors = authors.replace("'", " ").replace('"', "'")
-                try:
-                    eval(authors)
-                except Exception as e:
-                    logging.warn(f"Author field not properly formatted: {authors}")
-                    continue
-
-                publisher = publisher.replace(",", ";")
+                title = self.__fix_title_format(title)
+                authors = self.__fix_authors_format(authors)
+                publisher = self.__fix_publisher_format(publisher)
 
                 batch_to_send += f"{title},\"{authors}\",{publisher},{published_date},\"{categories}\"" + "\n"
 
@@ -69,7 +59,31 @@ class BookSanitizer:
                 self.mq_connection_handler.send_message(self.output_queue, batch_to_send)
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
-                
+    def __fix_title_format(self, title):
+        return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
+
+    def __fix_authors_format(self, authors):
+        authors = authors.replace('"', "").replace("'","")
+        fixed_authors = ""
+        for i in range(len(authors)):
+            if i + 1 == len(authors):
+                fixed_authors += "'" + "]"
+            elif i == 0:
+                fixed_authors += "[" + "'"
+            else:
+                if authors[i + 1] == ",":
+                    fixed_authors += authors[i] + "'" + "," + "'"
+                elif authors[i] == ",":
+                    continue
+                else:
+                    fixed_authors += authors[i]
+                    
+        fixed_authors = fixed_authors.replace("',',','", "")  # author had a comma in the name, thus generated a wrong author named ','
+        fixed_authors = fixed_authors.replace("',' ", "', '")  # restore original spacing
+        return fixed_authors    
+
+    def __fix_publisher_format(self, publisher):
+        return publisher.replace(",", ";")
 
 
     def start(self):
