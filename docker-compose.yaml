@@ -25,6 +25,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
       - INPUT_EXCHANGE=query_results_ex
@@ -47,6 +48,7 @@ services:
       - ./data:/data
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_IP=server
       - SERVER_PORT=8080
@@ -69,6 +71,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_books_ex
@@ -86,6 +89,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=sanitized_books_ex
       - OUTPUT_EXCHANGE=preprocessed_books_with_year_ex
@@ -105,6 +109,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_year_ex
       - OUTPUT_EXCHANGE=preprocessed_books_with_decade_ex
@@ -127,6 +132,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_reviews_ex
@@ -148,6 +154,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
@@ -168,6 +175,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
@@ -188,6 +196,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
@@ -211,6 +220,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_year_ex
       - OUTPUT_EXCHANGE=books_filtered_by_year_range_ex
@@ -228,6 +238,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_year_range_ex
       - OUTPUT_EXCHANGE=books_filtered_by_title_ex
@@ -245,6 +256,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_title_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -265,6 +277,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_decade_ex
       - OUTPUT_EXCHANGE=expanded_authors_ex
@@ -286,6 +299,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
@@ -303,6 +317,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
@@ -320,6 +335,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
@@ -337,6 +353,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
@@ -356,6 +373,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_filtered_by_decade_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -376,10 +394,13 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=merged_reviews_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
+      - NUM_OF_OUTPUT_QUEUES=3
+      - DECADE_TO_FILTER=1990
       - OUTPUT_QUEUE_OF_REVIEWS_1=compact_reviews_filtered_by_decade_q_1
       - OUTPUT_QUEUE_OF_REVIEWS_2=compact_reviews_filtered_by_decade_q_2
       - OUTPUT_QUEUE_OF_REVIEWS_3=compact_reviews_filtered_by_decade_q_3
@@ -397,6 +418,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - OUTPUT_EXCHANGE=review_count_per_book_ex
@@ -414,6 +436,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - OUTPUT_EXCHANGE=review_count_per_book_ex
@@ -431,6 +454,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - OUTPUT_EXCHANGE=review_count_per_book_ex
@@ -448,6 +472,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=review_count_per_book_ex
       - OUTPUT_EXCHANGE=books_filtered_by_review_count_ex
@@ -466,6 +491,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_review_count_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -486,6 +512,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_review_count_ex
       - OUTPUT_EXCHANGE=top_books_by_review_count_ex
@@ -503,6 +530,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=top_books_by_review_count_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -523,6 +551,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=merged_reviews_ex
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
@@ -540,6 +569,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
@@ -557,6 +587,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=sentiment_per_book_ex
       - OUTPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
@@ -574,6 +605,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
       - OUTPUT_EXCHANGE=query_results_ex

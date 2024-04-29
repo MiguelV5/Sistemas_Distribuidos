@@ -359,7 +359,9 @@ add_query3_processes() {
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=merged_reviews_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
-      - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q" >> docker-compose.yaml
+      - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
+      - NUM_OF_INPUT_WORKERS=$MERGER_WORKERS
+      - DECADE_TO_FILTER=1990" >> docker-compose.yaml
       for ((i=1; i<=$C_REV_PB_WORKERS; i++)); do
           echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=compact_reviews_filtered_by_decade_q_$i" >> docker-compose.yaml
       done
