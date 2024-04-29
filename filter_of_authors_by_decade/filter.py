@@ -1,4 +1,4 @@
-from shared.mq_connection_handler  import MQConnectionHandler
+from shared.mq_connection_handler import MQConnectionHandler
 import logging
 
 class Filter:
@@ -20,13 +20,10 @@ class Filter:
         self.mq_connection_handler = None
         
     def start(self):
-        try:
-            self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name, 
-                                                             output_queues_to_bind={self.output_queue_name: [self.output_queue_name]}, 
-                                                             input_exchange_name=self.input_exchange_name, 
-                                                             input_queues_to_recv_from=[self.input_queue_name])
-        except Exception as e:
-            logging.error(f"Error while connecting to RabbitMQ: {e}")
+        self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name, 
+                                                         output_queues_to_bind={self.output_queue_name: [self.output_queue_name]}, 
+                                                         input_exchange_name=self.input_exchange_name, 
+                                                         input_queues_to_recv_from=[self.input_queue_name])
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.__filter_authors_by_decades_quantity)
         self.mq_connection_handler.channel.start_consuming()
         

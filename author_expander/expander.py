@@ -18,22 +18,14 @@ class AuthorExpander:
         
         
     def start(self):
-        try:  
-            self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
-                                                             output_queues_to_bind=self.output_queues,
-                                                             input_exchange_name=self.input_exchange,
-                                                             input_queues_to_recv_from=[self.input_queue_of_books])
-            logging.info(f"Create a MQConnectionHandler object for the author expander with the following parameters: output_exchange_name={self.output_exchange}, output_queues_to_bind={self.output_queues}, input_exchange_name={self.input_exchange}, input_queues_to_recv_from={self.input_queue_of_books}")
-        except Exception as e:
-            logging.error(f"Error starting author expander: {str(e)}")
-            
-        try:
-            self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_books, self.__expand_authors)
-            self.mq_connection_handler.start_consuming()
-        except Exception as e:
-            logging.error(f"Error setting up callback for input queue: {str(e)}")
-            logging.error(f"input_queue_of_books: {self.input_queue_of_books}")
-            raise e
+        self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange,
+                                                         output_queues_to_bind=self.output_queues,
+                                                         input_exchange_name=self.input_exchange,
+                                                         input_queues_to_recv_from=[self.input_queue_of_books])       
+ 
+        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_books, self.__expand_authors)
+        self.mq_connection_handler.start_consuming()
+        
     
     def __expand_authors(self, ch, method, properties, body):
         """ 
