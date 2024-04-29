@@ -1,6 +1,5 @@
 name: tp1-test
 services:
-
   rabbitmq:
     container_name: rabbitmq
     build:
@@ -23,6 +22,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
       - INPUT_EXCHANGE=query_results_ex
@@ -44,6 +44,7 @@ services:
       - ./data:/data
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
       - SERVER_IP=server
@@ -56,14 +57,13 @@ services:
       server:
         condition: service_started
 
-
-
   book_sanitizer:
     container_name: book_sanitizer
     image: book_sanitizer:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_books_ex
@@ -81,6 +81,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=sanitized_books_ex
       - OUTPUT_EXCHANGE=preprocessed_books_with_year_ex
@@ -93,13 +94,13 @@ services:
       rabbitmq:
         condition: service_healthy
 
-
   decade_preprocessor:
     container_name: decade_preprocessor
     image: decade_preprocessor:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_year_ex
       - OUTPUT_EXCHANGE=preprocessed_books_with_decade_ex
@@ -115,13 +116,13 @@ services:
       rabbitmq:
         condition: service_healthy
 
-
   review_sanitizer:
     container_name: review_sanitizer
     image: review_sanitizer:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_reviews_ex
@@ -136,70 +137,69 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  merger_1:
+    container_name: merger_1
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
+  merger_2:
+    container_name: merger_2
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
-
-  # merger_1:
-  #   container_name: merger_1
-  #   image: merger:latest
-  #   entrypoint: python3 /main.py
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - LOGGING_LEVEL=INFO
-  #     - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
-  #     - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-  #     - OUTPUT_EXCHANGE=merged_reviews_ex
-  #     - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
-  #     - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
-  #     - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-  #     - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
-  #   networks:
-  #     - testing_net
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-
-  # merger_2:
-  #   container_name: merger_2
-  #   image: merger:latest
-  #   entrypoint: python3 /main.py
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - LOGGING_LEVEL=INFO
-  #     - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
-  #     - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-  #     - OUTPUT_EXCHANGE=merged_reviews_ex
-  #     - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
-  #     - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
-  #     - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-  #     - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
-  #   networks:
-  #     - testing_net
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-
-  # merger_3:
-  #   container_name: merger_3
-  #   image: merger:latest
-  #   entrypoint: python3 /main.py
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - LOGGING_LEVEL=INFO
-  #     - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
-  #     - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-  #     - OUTPUT_EXCHANGE=merged_reviews_ex
-  #     - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
-  #     - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
-  #     - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
-  #     - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
-  #   networks:
-  #     - testing_net
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-# ================================================================
-
+  merger_3:
+    container_name: merger_3
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  # ================================================================
 
   author_expander:
     container_name: author_expander
@@ -207,6 +207,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_decade_ex
       - OUTPUT_EXCHANGE=expanded_authors_ex
@@ -221,13 +222,13 @@ services:
       rabbitmq:
         condition: service_healthy
 
-
   counter_of_decades_per_author_1:
     container_name: counter_of_decades_per_author_1
     image: counter_of_decades_per_author:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
@@ -245,6 +246,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
@@ -262,6 +264,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
@@ -279,6 +282,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
@@ -291,13 +295,14 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      
+
   query2_result_generator:
     container_name: query2_result_generator
     image: query2_result_generator:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_filtered_by_decade_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -309,13 +314,7 @@ services:
       rabbitmq:
         condition: service_healthy
 
-
-
-
   # ================================================================
-
-
-
 
 networks:
   testing_net:
