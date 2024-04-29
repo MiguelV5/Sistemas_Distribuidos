@@ -34,7 +34,7 @@ add_server() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
       - INPUT_EXCHANGE=query_results_ex
@@ -60,7 +60,7 @@ add_client() {
       - ./data:/data
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_IP=server
       - SERVER_PORT=8080
@@ -87,7 +87,7 @@ add_preprocessors() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_books_ex
@@ -105,7 +105,7 @@ add_preprocessors() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=sanitized_books_ex
       - OUTPUT_EXCHANGE=preprocessed_books_with_year_ex
@@ -127,7 +127,7 @@ add_preprocessors() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_year_ex
       - OUTPUT_EXCHANGE=preprocessed_books_with_decade_ex
@@ -150,7 +150,7 @@ add_preprocessors() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_reviews_ex
@@ -176,7 +176,7 @@ add_mergers() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
@@ -205,7 +205,7 @@ add_query1_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_year_ex
       - OUTPUT_EXCHANGE=books_filtered_by_year_range_ex
@@ -223,7 +223,7 @@ add_query1_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_year_range_ex
       - OUTPUT_EXCHANGE=books_filtered_by_title_ex
@@ -241,7 +241,7 @@ add_query1_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_title_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -266,7 +266,7 @@ add_query2_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_decade_ex
       - OUTPUT_EXCHANGE=expanded_authors_ex
@@ -290,7 +290,7 @@ add_query2_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
@@ -310,7 +310,7 @@ add_query2_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
@@ -330,7 +330,7 @@ add_query2_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_filtered_by_decade_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -355,7 +355,7 @@ add_query3_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=merged_reviews_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
@@ -379,7 +379,7 @@ add_query3_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - OUTPUT_EXCHANGE=review_count_per_book_ex
@@ -399,7 +399,7 @@ add_query3_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=review_count_per_book_ex
       - OUTPUT_EXCHANGE=books_filtered_by_review_count_ex
@@ -418,7 +418,7 @@ add_query3_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_review_count_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -443,7 +443,7 @@ add_query4_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_review_count_ex
       - OUTPUT_EXCHANGE=top_books_by_review_count_ex
@@ -461,7 +461,7 @@ add_query4_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=top_books_by_review_count_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -486,7 +486,7 @@ add_query5_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=merged_reviews_ex
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
@@ -504,7 +504,7 @@ add_query5_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
@@ -522,7 +522,7 @@ add_query5_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=sentiment_per_book_ex
       - OUTPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
@@ -540,7 +540,7 @@ add_query5_processes() {
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=0
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
       - OUTPUT_EXCHANGE=query_results_ex
