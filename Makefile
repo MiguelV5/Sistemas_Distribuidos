@@ -72,6 +72,8 @@ test-docker-image-build:
 	docker build -f ./filter_of_authors_by_decade/Dockerfile -t "filter_of_authors_by_decade:latest" .
 	docker build -f ./query2_result_generator/Dockerfile -t "query2_result_generator:latest" .
 
+	docker build -f ./filter_of_compact_reviews_by_decade/Dockerfile -t "filter_of_compact_reviews_by_decade:latest" .
+
 
 
 
