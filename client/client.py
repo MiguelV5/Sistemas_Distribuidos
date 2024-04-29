@@ -27,7 +27,7 @@ class Client:
             self.connection_handler = SocketConnectionHandler(server_socket)
             logging.info("Connected to server at {}:{}".format(self.server_ip, self.server_port))
             self.send_file_data(self.books_file_path, "books")
-            self.send_file_data(self.reviews_file_path, "reviews")        
+            # self.send_file_data(self.reviews_file_path, "reviews")        
         except Exception as e:
             logging.error("Failed to connect to server: {}".format(str(e)))
             
@@ -35,7 +35,6 @@ class Client:
         """
         Sends the file data to the server
         """
-        logging.info(f"Sending data to server. File: {file}")
         with open(file, 'r') as file:
             self.connection_handler.send_message(f"Start: {type_of_content_in_file}")
             completed = False

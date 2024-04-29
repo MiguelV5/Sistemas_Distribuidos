@@ -11,7 +11,7 @@ AUTHORS_IDX = 1
 PUBLISHER_IDX = 2
 PUBLISHED_DATE_IDX = 3
 CATEGORIES_IDX = 4
-ORIGINAL_SIZE_OF_ROW = 5
+REQUIRED_SIZE_OF_ROW = 5
 
 
 class YearPreprocessor:
@@ -44,8 +44,7 @@ class YearPreprocessor:
             batch_to_send_towards_preproc = ""
             batch_to_send_towards_filter = ""
             for row in batch:
-                logging.info(row)
-                if len(row) < ORIGINAL_SIZE_OF_ROW:
+                if len(row) != REQUIRED_SIZE_OF_ROW:
                     continue
                 title = row[TITLE_IDX]
                 authors = row[AUTHORS_IDX]

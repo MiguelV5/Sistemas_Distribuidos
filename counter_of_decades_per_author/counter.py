@@ -33,12 +33,13 @@ class Counter:
         The counter should count the number of authors per decade and send the result to the output queue.
         """
         msg = body.decode()
-        logging.info(f"Received message: {msg}")
+        logging.debug(f"Received message: {msg}")
         if msg == "EOF":
-            ch.basic_ack(delivery_tag=method.delivery_tag)
             self.__send_results()
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.mq_connection_handler.close_connection()
             return
-        logging.info(f"Processing message: {msg}")
+        logging.debug(f"Processing message: {msg}")
         author, decade = msg.split(',')
         self.authors_decades.setdefault(author, set()).add(decade)
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -48,6 +49,6 @@ class Counter:
             output_msg = ""
             output_msg += author + ',' + str(len(decades))
             self.mq_connection_handler.send_message(self.output_queue_of_authors, output_msg)
-            logging.info(f"Sent message to output queue: {output_msg}")
+            logging.debug(f"Sent message to output queue: {output_msg}")
         self.mq_connection_handler.send_message(self.output_queue_of_authors, "EOF")
         logging.info("Sent EOF message to output queue")

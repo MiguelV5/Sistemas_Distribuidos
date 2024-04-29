@@ -10,7 +10,7 @@ TITLE_IDX = 1
 REVIEW_SCORE_IDX = 6
 REVIEW_SUMMARY_IDX = 8
 REVIEW_TEXT_IDX = 9
-ORIGINAL_SIZE_OF_ROW = 10
+REQUIRED_SIZE_OF_ROW = 10
 
 
 class ReviewSanitizer:
@@ -40,18 +40,16 @@ class ReviewSanitizer:
             batch_as_csv = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batches_to_send_towards_mergers = {output_queue: "" for output_queue in self.output_queues}
             for row in batch_as_csv:
-                if len(row) < ORIGINAL_SIZE_OF_ROW:
+                if len(row) != REQUIRED_SIZE_OF_ROW:
                     continue
                 title = row[TITLE_IDX]
                 review_score = row[REVIEW_SCORE_IDX]
-                #review_summary = row[REVIEW_SUMMARY_IDX]
                 review_text = row[REVIEW_TEXT_IDX]
                 
                 if not title or not review_score or not review_text:
                     continue
 
                 title = title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
-                #review_summary = review_summary.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
                 review_text = review_text.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'").replace("&quot;", "'")
 
                 selected_queue = self.__select_queue(title)

@@ -48,8 +48,8 @@ services:
       - SERVER_PORT=8080
       - SERVER_IP=server
       - REVIEWS_FILE_PATH=/data/test_rating.csv
-      - BOOKS_FILE_PATH=/data/test_books.csv
-      - BATCH_SIZE=2
+      - BOOKS_FILE_PATH=/data/books_data.csv
+      - BATCH_SIZE=200
     networks:
       - testing_net
     depends_on:
@@ -199,6 +199,64 @@ services:
   #     rabbitmq:
   #       condition: service_healthy
 # ================================================================
+
+
+  filter_of_books_by_year_and_genre:
+    container_name: filter_of_books_by_year_and_genre
+    image: filter_of_books_by_year_and_genre:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=preprocessed_books_with_year_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_year_and_genre_ex
+      - INPUT_QUEUE_OF_BOOKS=towards_filter__preprocessed_books_with_year_q
+      - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_year_and_genre_q
+      - MIN_YEAR=2000
+      - MAX_YEAR=2023
+      - GENRE=Computers
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      
+  filter_of_books_by_title:
+    container_name: filter_of_books_by_title
+    image: filter_of_books_by_title:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=books_filtered_by_year_and_genre_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_title_ex
+      - INPUT_QUEUE_OF_BOOKS=books_filtered_by_year_and_genre_q
+      - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
+      - TITLE_KEYWORD=distributed
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  query1_result_generator:
+    container_name: query1_result_generator
+    image: query1_result_generator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=books_filtered_by_title_ex
+      - OUTPUT_EXCHANGE=query_results_ex
+      - INPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # ================================================================
 
 
   author_expander:

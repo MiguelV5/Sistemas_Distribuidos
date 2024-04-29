@@ -10,7 +10,7 @@ TITLE_IDX = 0
 AUTHORS_IDX = 1
 YEAR_IDX = 2
 CATEGORIES_IDX = 3
-ORIGINAL_SIZE_OF_ROW = 4
+REQUIRED_SIZE_OF_ROW = 4
 
 class DecadePreprocessor:
     def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue_towards_expander: str, output_queues_towards_mergers: list[str]):
@@ -47,7 +47,7 @@ class DecadePreprocessor:
             batch_to_send_towards_expander = ""
             batches_to_send_towards_mergers = {output_queue: "" for output_queue in self.output_queues_towards_mergers}
             for row in batch:
-                if len(row) < ORIGINAL_SIZE_OF_ROW:
+                if len(row) != REQUIRED_SIZE_OF_ROW:
                     continue
                 title = row[TITLE_IDX]
                 authors = row[AUTHORS_IDX]

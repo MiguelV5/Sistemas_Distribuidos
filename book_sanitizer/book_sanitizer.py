@@ -10,7 +10,7 @@ AUTHORS_IDX = 2
 PUBLISHER_IDX = 5
 PUBLISHED_DATE_IDX = 6
 CATEGORIES_IDX = 8
-ORIGINAL_SIZE_OF_ROW = 10
+REQUIRED_SIZE_OF_ROW = 10
 
 class BookSanitizer:
 
@@ -39,7 +39,7 @@ class BookSanitizer:
             batch_as_csv = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batch_to_send = ""
             for row in batch_as_csv:
-                if len(row) < ORIGINAL_SIZE_OF_ROW:
+                if len(row) < REQUIRED_SIZE_OF_ROW:
                     continue
                 title = row[TITLE_IDX]
                 authors = row[AUTHORS_IDX]
@@ -50,6 +50,18 @@ class BookSanitizer:
                     continue
 
                 title = title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
+
+                if '""' in authors:
+                    authors = authors.replace('""', " ")
+                elif '["' in authors or '"]' in authors:
+                    authors = authors.replace("'", " ").replace('"', "'")
+                try:
+                    eval(authors)
+                except Exception as e:
+                    logging.warn(f"Author field not properly formatted: {authors}")
+                    continue
+
+                publisher = publisher.replace(",", ";")
 
                 batch_to_send += f"{title},\"{authors}\",{publisher},{published_date},\"{categories}\"" + "\n"
 

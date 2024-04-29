@@ -35,20 +35,22 @@ class Filter:
             
     def __filter_authors_by_decades_quantity(self, ch, method, properties, body):
         msg = body.decode()
-        logging.info(f"Received message: {msg}")
+        logging.debug(f"Received message: {msg}")
         if msg == "EOF":
             self.eof_received += 1
             if int(self.eof_received) == int(self.counters_of_decades_per_author):
                 logging.info("All EOF messages received")
                 self.mq_connection_handler.send_message(self.output_queue_name, "EOF")
                 logging.info("Sent EOF message to output queue")
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+                self.mq_connection_handler.close_connection()
         else:
             author, decades = msg.split(",")
             if int(decades) >= int(self.min_decades_to_filter):
                 self.mq_connection_handler.send_message(self.output_queue_name, msg)
-                logging.info(f"Sent message to output queue: {msg}")
+                logging.debug(f"Sent message to output queue: {msg}")
             else:
-                logging.info(f"Author {author} was filtered out. Decades: {decades} < {self.min_decades_to_filter}")
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+                logging.debug(f"Author {author} was filtered out. Decades: {decades} < {self.min_decades_to_filter}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         
        

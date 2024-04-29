@@ -13,9 +13,9 @@ class Generator:
     def start(self):
         try:
             self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name, 
-                                                         output_queues_to_bind={self.output_queue_name: [self.output_queue_name]}, 
-                                                         input_exchange_name=self.input_exchange_name, 
-                                                         input_queues_to_recv_from=[self.input_queue_name])
+                                                             output_queues_to_bind={self.output_queue_name: [self.output_queue_name]}, 
+                                                             input_exchange_name=self.input_exchange_name, 
+                                                             input_queues_to_recv_from=[self.input_queue_name])
             logging.info(f"MQConnectionHandler created successfully. Parameters: {self.input_exchange_name}, {self.output_exchange_name}, {self.input_queue_name}, {self.output_queue_name}")
         except Exception as e:
             logging.error(f"Error while creating MQConnectionHandler: {e}")
@@ -33,8 +33,10 @@ class Generator:
             logging.info("Received EOF")
             self.mq_connection_handler.send_message(self.output_queue_name, self.response_msg)
             logging.info(f"Sent response message to output queue: {self.response_msg}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.mq_connection_handler.close_connection()
         else: 
             self.response_msg += '\n' + msg 
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         
         

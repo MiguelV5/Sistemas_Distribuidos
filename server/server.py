@@ -66,7 +66,6 @@ class Server:
         result = body.decode()            
         logging.info("Received query result: {}".format(result))
 
-        # See if we need to send the query results to the client
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
         if self.received_query_results == AMOUNT_OF_QUERY_RESULTS:
@@ -88,6 +87,8 @@ class Server:
                 if message == constants.START_BOOKS_MSG:
                     logging.info("Starting books data receiving")
                     self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_books)
+                    self.finished_with_client_data = True
+
                 elif message == constants.START_REVIEWS_MSG:
                     logging.info("Starting reviews data receiving")
                     self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_reviews)

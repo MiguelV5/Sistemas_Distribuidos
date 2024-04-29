@@ -32,6 +32,8 @@ class AuthorExpander:
             self.mq_connection_handler.start_consuming()
         except Exception as e:
             logging.error(f"Error setting up callback for input queue: {str(e)}")
+            logging.error(f"input_queue_of_books: {self.input_queue_of_books}")
+            raise e
     
     def __expand_authors(self, ch, method, properties, body):
         """ 
@@ -39,7 +41,7 @@ class AuthorExpander:
         The expansion should create multiple lines, one for each author, with the following format: "author_i, decade"
         """
         msg = body.decode()
-        logging.info(f"Received message from input queue: {msg}")
+        logging.debug(f"Received message from input queue: {msg}")
         if msg == "EOF":
             for queue_name in self.output_queues:
                 self.mq_connection_handler.send_message(queue_name, "EOF")
@@ -53,7 +55,7 @@ class AuthorExpander:
             for author in authors:
                 output_msg = f"{author},{decade}"
                 self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
-                logging.info(f"Sent message to queue: {output_msg}")
+                logging.debug(f"Sent message to queue: {output_msg}")
                     
         ch.basic_ack(delivery_tag=method.delivery_tag)
         

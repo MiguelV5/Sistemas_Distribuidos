@@ -4,17 +4,17 @@ PWD := $(shell pwd)
 docker-image-build:
 	docker build -f ./server/Dockerfile -t "server:latest" .
 	docker build -f ./client/Dockerfile -t "client:latest" .
-
+	
 	docker build -f ./book_sanitizer/Dockerfile -t "book_sanitizer:latest" .
 	docker build -f ./year_preprocessor/Dockerfile -t "year_preprocessor:latest" .
 	docker build -f ./decade_preprocessor/Dockerfile -t "decade_preprocessor:latest" .
 	docker build -f ./review_sanitizer/Dockerfile -t "review_sanitizer:latest" .
 	docker build -f ./merger/Dockerfile -t "merger:latest" .
 
-	docker build -f ./filter_of_books_by_year/Dockerfile -t "filter_of_books_by_year:latest" .
+	docker build -f ./filter_of_books_by_year_and_genre/Dockerfile -t "filter_of_books_by_year_and_genre:latest" .
 	docker build -f ./filter_of_books_by_title/Dockerfile -t "filter_of_books_by_title:latest" .
 	docker build -f ./query1_result_generator/Dockerfile -t "query1_result_generator:latest" .
-
+	
 	docker build -f ./author_expander/Dockerfile -t "author_expander:latest" .
 	docker build -f ./counter_of_decades_per_author/Dockerfile -t "counter_of_decades_per_author:latest" .
 	docker build -f ./filter_of_authors_by_decade/Dockerfile -t "filter_of_authors_by_decade:latest" .
@@ -63,9 +63,9 @@ test-docker-image-build:
 	docker build -f ./review_sanitizer/Dockerfile -t "review_sanitizer:latest" .
 	docker build -f ./merger/Dockerfile -t "merger:latest" .
 
-# docker build -f ./filter_of_books_by_year/Dockerfile -t "filter_of_books_by_year:latest" .
-# docker build -f ./filter_of_books_by_title/Dockerfile -t "filter_of_books_by_title:latest" .
-# docker build -f ./query1_result_generator/Dockerfile -t "query1_result_generator:latest" .
+	docker build -f ./filter_of_books_by_year_and_genre/Dockerfile -t "filter_of_books_by_year_and_genre:latest" .
+	docker build -f ./filter_of_books_by_title/Dockerfile -t "filter_of_books_by_title:latest" .
+	docker build -f ./query1_result_generator/Dockerfile -t "query1_result_generator:latest" .
 	
 	docker build -f ./author_expander/Dockerfile -t "author_expander:latest" .
 	docker build -f ./counter_of_decades_per_author/Dockerfile -t "counter_of_decades_per_author:latest" .

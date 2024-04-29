@@ -57,7 +57,7 @@ class Merger:
         The message should have the following format: title,authors,categories,decade
         """
         msg = body.decode()
-        logging.info(f"Received message from books queue: {msg}")
+        logging.debug(f"Received message from books queue: {msg}")
         if msg == constants.FINISH_MSG:
             self.books_finished = True
             ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -74,11 +74,12 @@ class Merger:
         The message should have the following format: title,review/score,review/text
         """
         msg = body.decode() 
-        logging.info(f"Received message from reviews queue: {msg}")
+        logging.debug(f"Received message from reviews queue: {msg}")
 
         if msg == constants.FINISH_MSG:
             self.__handle_eof_reviews()
             ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.mq_connection_handler.close_connection()
             return
         for line in msg.split("\n"):
             if line:
