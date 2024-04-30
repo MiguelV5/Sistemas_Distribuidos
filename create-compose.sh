@@ -415,6 +415,8 @@ add_query3_processes() {
       - INPUT_QUEUE_OF_BOOKS=review_count_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_QUERY3=towards_query3__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_sorter=towards_sorter__books_filtered_by_review_count_q
+      - NUM_OF_COUNTERS=$C_REV_PB_WORKERS
+      - MIN_REVIEWS=500
     networks:
       - testing_net
     depends_on:

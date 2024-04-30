@@ -59,11 +59,10 @@ class CounterOfReviewsPerBook:
     
     def __send_results(self):
         for title,review in self.books_reviews.items():
-            for i in range(len(review[SCORE_IDX])):
-                output_msg = ""
-                output_msg += f"{title},\"{review[AUTHORS_IDX]}\",{review[SCORE_IDX][i]},{review[DECADE_IDX]},{len(review[SCORE_IDX])}" + '\n'
-                self.mq_connection_handler.send_message(self.output_queue_name, output_msg)
-                logging.info(f"Sent message to output queue: {output_msg}")
+            output_msg = ""
+            output_msg += f"{title},\"{review[AUTHORS_IDX]}\",\"{review[SCORE_IDX]}\",{review[DECADE_IDX]},{len(review[SCORE_IDX])}" + '\n'
+            self.mq_connection_handler.send_message(self.output_queue_name, output_msg)
+            logging.info(f"Sent message to output queue: {output_msg}")
         self.mq_connection_handler.send_message(self.output_queue_name, constants.FINISH_MSG)
         logging.info("Sent EOF message to output queue")
         self.mq_connection_handler.close_connection
