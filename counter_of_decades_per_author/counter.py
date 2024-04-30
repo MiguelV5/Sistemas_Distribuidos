@@ -16,7 +16,7 @@ class CounterOfDecadesPerAuthor:
 
     def __handle_shutdown(self, signum, frame):
         logging.info("Shutting down CounterOfDecadesPerAuthor")
-        self.mq_connection_handler.stop_consuming()
+        self.mq_connection_handler.close_connection()
         
         
     def start(self):
@@ -52,3 +52,6 @@ class CounterOfDecadesPerAuthor:
             logging.debug(f"Sent message to output queue: {output_msg}")
         self.mq_connection_handler.send_message(self.output_queue_of_authors, constants.FINISH_MSG)
         logging.info("Sent EOF message to output queue")
+        self.mq_connection_handler.close_connection()
+
+        
