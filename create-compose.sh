@@ -307,9 +307,10 @@ add_query2_processes() {
         condition: service_healthy" >> docker-compose.yaml
     done
 
+    for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
     echo "
-  filter_of_authors_by_decade:
-    container_name: filter_of_authors_by_decade
+  filter_of_authors_by_decade_$i:
+    container_name: filter_of_authors_by_decade_$i
     image: filter_of_authors_by_decade:latest
     entrypoint: python3 /main.py
     environment:
@@ -320,14 +321,15 @@ add_query2_processes() {
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
-      - COUNTERS_OF_DECADES_PER_AUTHOR=$C_DEC_PA_WORKERS
       - MIN_DECADES_TO_FILTER=10
     networks:
       - testing_net
     depends_on:
       rabbitmq:
-        condition: service_healthy
+        condition: service_healthy" >> docker-compose.yaml
+    done
       
+    echo "
   query2_result_generator:
     container_name: query2_result_generator
     image: query2_result_generator:latest
@@ -340,6 +342,7 @@ add_query2_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - FILTERS_QUANTITY=$C_DEC_PA_WORKERS
     networks:
       - testing_net
     depends_on:

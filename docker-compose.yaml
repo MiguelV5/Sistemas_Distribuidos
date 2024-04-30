@@ -351,8 +351,8 @@ services:
       rabbitmq:
         condition: service_healthy
 
-  filter_of_authors_by_decade:
-    container_name: filter_of_authors_by_decade
+  filter_of_authors_by_decade_1:
+    container_name: filter_of_authors_by_decade_1
     image: filter_of_authors_by_decade:latest
     entrypoint: python3 /main.py
     environment:
@@ -363,14 +363,51 @@ services:
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
-      - COUNTERS_OF_DECADES_PER_AUTHOR=3
       - MIN_DECADES_TO_FILTER=10
     networks:
       - testing_net
     depends_on:
       rabbitmq:
         condition: service_healthy
-      
+
+  filter_of_authors_by_decade_2:
+    container_name: filter_of_authors_by_decade_2
+    image: filter_of_authors_by_decade:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=authors_decades_count_ex
+      - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
+      - MIN_DECADES_TO_FILTER=10
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  filter_of_authors_by_decade_3:
+    container_name: filter_of_authors_by_decade_3
+    image: filter_of_authors_by_decade:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=authors_decades_count_ex
+      - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
+      - MIN_DECADES_TO_FILTER=10
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   query2_result_generator:
     container_name: query2_result_generator
     image: query2_result_generator:latest
@@ -383,6 +420,7 @@ services:
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - FILTERS_QUANTITY=3
     networks:
       - testing_net
     depends_on:
@@ -403,7 +441,7 @@ services:
       - INPUT_EXCHANGE=merged_reviews_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
-      - NUM_OF_OUTPUT_QUEUES=3
+      - NUM_OF_INPUT_WORKERS=3
       - DECADE_TO_FILTER=1990
       - OUTPUT_QUEUE_OF_REVIEWS_1=compact_reviews_filtered_by_decade_q_1
       - OUTPUT_QUEUE_OF_REVIEWS_2=compact_reviews_filtered_by_decade_q_2

@@ -46,7 +46,7 @@ class BookSanitizer:
                 publisher = row[PUBLISHER_IDX]
                 published_date = row[PUBLISHED_DATE_IDX]
                 categories = row[CATEGORIES_IDX]
-                if not title or not authors or not publisher or not published_date or not categories:
+                if not title or not authors or not published_date or not categories:
                     continue
 
                 title = self.__fix_title_format(title)

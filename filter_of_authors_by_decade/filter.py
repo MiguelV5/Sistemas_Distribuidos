@@ -10,16 +10,13 @@ class FilterOfAuthorsByDecade:
                  output_exchange_name: str, 
                  input_queue_name: str, 
                  output_queue_name: str, 
-                 counters_of_decades_per_author: int, 
                  min_decades_to_filter: int
                  ):
         self.input_exchange_name = input_exchange_name
         self.output_exchange_name = output_exchange_name
         self.input_queue_name = input_queue_name
         self.output_queue_name = output_queue_name
-        self.counters_of_decades_per_author = counters_of_decades_per_author
         self.min_decades_to_filter = min_decades_to_filter
-        self.eof_received = 0
         self.mq_connection_handler = None
         signal.signal(signal.SIGTERM, self.__handle_shutdown)
 
@@ -40,15 +37,11 @@ class FilterOfAuthorsByDecade:
         msg = body.decode()
         logging.debug(f"Received message: {msg}")
         if msg == constants.FINISH_MSG:
-            self.eof_received += 1
-            if int(self.eof_received) == int(self.counters_of_decades_per_author):
-                logging.info("All EOF messages received")
-                self.mq_connection_handler.send_message(self.output_queue_name, constants.FINISH_MSG)
-                logging.info("Sent EOF message to output queue")
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-                self.mq_connection_handler.close_connection()
-            else: 
-                ch.basic_ack(delivery_tag=method.delivery_tag)
+            logging.info("EOF RECEIVED")
+            self.mq_connection_handler.send_message(self.output_queue_name, constants.FINISH_MSG)
+            logging.info("Sent EOF message to output queue")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.mq_connection_handler.close_connection()
         else:
             author, decades = msg.split(",")
             if int(decades) >= int(self.min_decades_to_filter):

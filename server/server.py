@@ -16,6 +16,7 @@ class Server:
         self.server_is_running = True     
         self.finished_with_client_data = False
         self.received_query_results = 0
+        self.mq_connection_handler = None
 
         self.input_exchange = input_exchange
         self.input_queue_of_query_results = input_queue_of_query_results
@@ -31,46 +32,70 @@ class Server:
         self.server_socket.close()
         if self.client_sock:
             self.client_sock.close()
+        if self.mq_connection_handler:
+            self.mq_connection_handler.close_connection()
     
     
     def run(self):
-        results_handler_process = multiprocessing.Process(target=self.__handle_results_from_queue, args=())
+        pipe_receiver, pipe_sender = multiprocessing.Pipe()
+        results_handler_process = multiprocessing.Process(target=self.__handle_results_from_queue, args=(pipe_sender,))
         results_handler_process.start()
         
-        self.__listen_to_client()
+        self.__listen_to_client(pipe_receiver)
         results_handler_process.join()
-    
-            
-    def __listen_to_client(self):
-        while self.server_is_running:
-            self.client_sock, _ = self.server_socket.accept()
-            if self.client_sock is not None:
-                self.__handle_client_connection()
-         
 
-    def __handle_results_from_queue(self):
-        mq_connection_handler = MQConnectionHandler(None,
-                                                    None,
-                                                    self.input_exchange,
-                                                    [self.input_queue_of_query_results]
-                                                    )
+
+    # ==============================================================================================================
+
+
+    def __handle_results_from_queue(self, pipe_sender):
+        self.mq_connection_handler = MQConnectionHandler(None,
+                                                         None,
+                                                         self.input_exchange,
+                                                         [self.input_queue_of_query_results])
         
-        mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
-        mq_connection_handler.start_consuming()
-        mq_connection_handler.close_connection()
+        self.pipe_sender = pipe_sender
+        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
+        self.mq_connection_handler.start_consuming()
+        self.mq_connection_handler.close_connection()
         
     def __process_query_result(self, ch, method, properties, body):
         result = body.decode()            
         logging.info("Received query result: {}".format(result))
-
+        self.pipe_sender.send(result)
+        self.received_query_results += 1
         ch.basic_ack(delivery_tag=method.delivery_tag)
-
         if self.received_query_results == AMOUNT_OF_QUERY_RESULTS:
             ch.stop_consuming()
 
+    
+    # ==============================================================================================================
 
 
-    def __handle_client_connection(self):
+    def __send_queries_results_to_client(self, 
+                                         connection_handler: SocketConnectionHandler, 
+                                         pipe_receiver):
+        while self.received_query_results < AMOUNT_OF_QUERY_RESULTS:
+            if pipe_receiver.poll(None):
+                query_result = pipe_receiver.recv()
+                connection_handler.send_message(query_result)
+                self.received_query_results += 1
+        connection_handler.send_message(constants.FINISH_MSG)
+               
+
+
+            
+    def __listen_to_client(self, pipe_receiver):
+        while self.server_is_running and not self.finished_with_client_data:
+            self.client_sock, _ = self.server_socket.accept()
+            if self.client_sock is not None:
+                self.__handle_client_connection(pipe_receiver)
+         
+
+    
+
+
+    def __handle_client_connection(self, pipe_receiver):
         output_queues_handler = MQConnectionHandler(self.output_exchange_of_data,
                                                     {self.output_queue_of_reviews: [self.output_queue_of_reviews], 
                                                      self.output_queue_of_books: [self.output_queue_of_books]},
@@ -87,10 +112,9 @@ class Server:
                     logging.info("Starting reviews data receiving")
                     self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_reviews)
                     self.finished_with_client_data = True
+            self.__send_queries_results_to_client(connection_handler, pipe_receiver)
         except Exception as e:
             logging.error("Error handling client connection: {}".format(str(e)))
-        finally:
-            self.client_sock.close()
             
     def __handle_incoming_client_data(self, connection_handler: SocketConnectionHandler, output_queues_handler: MQConnectionHandler, queue_name: str):
         try:           
