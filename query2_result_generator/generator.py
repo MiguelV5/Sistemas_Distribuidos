@@ -25,7 +25,6 @@ class Generator:
                                                          output_queues_to_bind={self.output_queue_name: [self.output_queue_name]}, 
                                                          input_exchange_name=self.input_exchange_name, 
                                                          input_queues_to_recv_from=[self.input_queue_name])
-        logging.info(f"MQConnectionHandler created successfully. Parameters: {self.input_exchange_name}, {self.output_exchange_name}, {self.input_queue_name}, {self.output_queue_name}")
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.__get_results)
         self.mq_connection_handler.start_consuming()
         
