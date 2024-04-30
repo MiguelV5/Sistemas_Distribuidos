@@ -27,7 +27,8 @@ class Client:
             self.connection_handler = SocketConnectionHandler(server_socket)
             logging.info("Connected to server at {}:{}".format(self.server_ip, self.server_port))
             self.send_file_data(self.books_file_path, "books")
-            self.send_file_data(self.reviews_file_path, "reviews")        
+            self.send_file_data(self.reviews_file_path, "reviews")       
+            self.receive_results() 
         except Exception as e:
             logging.error("Failed to connect to server: {}".format(str(e)))
             
@@ -59,3 +60,16 @@ class Client:
         logging.info(f"Finish data sent to server. File: {file}")
 
         
+    def receive_results(self):
+        """
+        Receives the results from the server
+        """
+        finished_receiving = False
+        while finished_receiving is False:
+            results = self.connection_handler.read_message()
+            if results == constants.FINISH_MSG:
+                finished_receiving = True
+            else:
+                logging.info(f"Results received from server: {results}")
+        self.connection_handler.close()
+        logging.info("Client connection closed")
