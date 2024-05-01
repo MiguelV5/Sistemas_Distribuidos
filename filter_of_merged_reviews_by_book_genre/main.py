@@ -11,7 +11,7 @@ def main():
                                      config_params["INPUT_QUEUE_OF_REVIEWS"], 
                                      config_params["OUTPUT_QUEUE_OF_REVIEWS"], 
                                      config_params["GENRE"],
-                                     config_params["NUM_OF_INPUT_WORKERS"])
+                                     int(config_params["NUM_OF_INPUT_WORKERS"]))
     filter.start()
     
 if __name__ == "__main__":

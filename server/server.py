@@ -61,7 +61,6 @@ class Server:
         
     def __process_query_result(self, ch, method, properties, body):
         result = body.decode()            
-        logging.info("Received query result")
         self.pipe_sender.send(result)
         self.received_query_results += 1
         ch.basic_ack(delivery_tag=method.delivery_tag)

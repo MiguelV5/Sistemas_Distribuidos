@@ -36,7 +36,7 @@ class SentimentAnalyzer:
     def __handle_reviews_calculations(self, ch, method, properties, body):
         msg = body.decode()
         if msg == constants.FINISH_MSG:
-            logging.info("<<<<<<<<<<<<<<<<<<<<<<<<<<< Received EOF message")
+            logging.info("Received EOF message")
             self.__handle_eof_reviews()
             ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
@@ -46,12 +46,9 @@ class SentimentAnalyzer:
                     book_data = line.split(",")
                     title = book_data[TITLE_IDX]
                     text = book_data[TEXT_IDX]
-                    # logging.info(f"Calculating polarity for book {title}")
+                    logging.debug(f"Calculating polarity for book {title}")
                     polarity = TextBlob(text).sentiment.polarity
                     self.polarity_accumulator.add_polarity_for_book(title, polarity)
-                else:
-                    logging.warning("passing through")
-                    break
             
             ch.basic_ack(delivery_tag=method.delivery_tag)
         
