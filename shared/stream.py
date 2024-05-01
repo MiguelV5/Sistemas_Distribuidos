@@ -35,3 +35,6 @@ class Stream:
             message += received
             bytes_read += len(received)
         return message
+    
+    def close(self):
+        self._socket.close()

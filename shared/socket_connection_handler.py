@@ -32,3 +32,6 @@ class SocketConnectionHandler:
             raise OSError("Socket connection broken")
         return message
         
+
+    def close(self):
+        self._stream.close()
