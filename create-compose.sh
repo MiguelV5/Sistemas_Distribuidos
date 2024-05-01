@@ -501,6 +501,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
+      - GENRE=fiction
     networks:
       - testing_net
     depends_on:
@@ -537,6 +538,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
       - INPUT_QUEUE_OF_BOOKS=sentiment_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
+      - QUANTILE=0.9
     networks:
       - testing_net
     depends_on:

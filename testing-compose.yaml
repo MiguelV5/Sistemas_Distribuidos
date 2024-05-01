@@ -490,6 +490,85 @@ services:
 
   # ================================================================
 
+
+
+  # ================================================================
+
+
+  filter_of_merged_reviews_by_book_genre:
+    container_name: filter_of_merged_reviews_by_book_genre
+    image: filter_of_merged_reviews_by_book_genre:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
+      - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
+      - GENRE=fiction
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  sentiment_analyzer:
+    container_name: sentiment_analyzer
+    image: sentiment_analyzer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
+      - OUTPUT_EXCHANGE=sentiment_per_book_ex
+      - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
+      - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  filter_of_books_by_sentiment_quantile:
+    container_name: filter_of_books_by_sentiment_quantile
+    image: filter_of_books_by_sentiment_quantile:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=sentiment_per_book_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
+      - INPUT_QUEUE_OF_BOOKS=sentiment_per_book_q
+      - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
+      - QUANTILE=0.9
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  query5_result_generator:
+    container_name: query5_result_generator
+    image: query5_result_generator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
+      - OUTPUT_EXCHANGE=query_results_ex
+      - INPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
 networks:
   testing_net:
     ipam:
