@@ -1,0 +1,42 @@
+from shared.mq_connection_handler import MQConnectionHandler
+import signal
+import logging
+
+TITLE_IDX = 0
+SCORES_IDX = 1
+
+class Generator:
+    def __init__(self, input_exchange, output_exchange, input_queue, output_queue):
+        self.input_exchange = input_exchange
+        self.output_exchange = output_exchange
+        self.input_queue = input_queue
+        self.output_queue = output_queue
+        self.output_msg = "Query4 result:" + '\n' + "Title,Review Score" + '\n'
+        self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange, 
+                                                         output_queues_to_bind={self.output_queue: [self.output_queue]},
+                                                         input_exchange_name=self.input_exchange,
+                                                         input_queues_to_recv_from=[self.input_queue])
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+        
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down Generator")
+        self.mq_connection_handler.close_connection()
+        
+    def start(self):
+        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue, self.__generate)
+        self.mq_connection_handler.start_consuming()
+        
+    def __generate(self, ch, method, properties, body):
+        """
+        The body is a csv list with the following: "[(title,review_score)]" 
+        The generator should send the result to the output queue.
+        """
+        msg = body.decode()
+        logging.info(f"Received message from input queue: {msg}")
+        books = eval(msg.replace("\"",""))
+        for book in books:
+            logging.info(f"Received book: {book}")
+            self.output_msg += f"{book[TITLE_IDX]},{book[SCORES_IDX]}" + '\n'
+        self.mq_connection_handler.send_message(self.output_queue, self.output_msg)
+        logging.info(f"Sent message to output queue: {self.output_msg}")
+        ch.basic_ack(delivery_tag=method.delivery_tag)

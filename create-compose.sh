@@ -460,6 +460,7 @@ add_query4_processes() {
       - OUTPUT_EXCHANGE=top_books_by_review_count_ex
       - INPUT_QUEUE_OF_BOOKS=towards_sorter__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
+      - TOP_OF_BOOKS=10
     networks:
       - testing_net
     depends_on:
