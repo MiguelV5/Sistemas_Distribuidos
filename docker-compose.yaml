@@ -600,6 +600,7 @@ services:
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - GENRE=fiction
+      - NUM_OF_INPUT_WORKERS=3
     networks:
       - testing_net
     depends_on:

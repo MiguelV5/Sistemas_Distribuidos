@@ -502,6 +502,7 @@ add_query5_processes() {
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - GENRE=fiction
+      - NUM_OF_INPUT_WORKERS=$MERGER_WORKERS
     networks:
       - testing_net
     depends_on:

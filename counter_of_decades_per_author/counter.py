@@ -37,7 +37,6 @@ class CounterOfDecadesPerAuthor:
         if msg == constants.FINISH_MSG:
             self.__send_results()
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
             return
         logging.debug(f"Processing message: {msg}")
         author, decade = msg.split(',')
@@ -52,6 +51,6 @@ class CounterOfDecadesPerAuthor:
             logging.debug(f"Sent message to output queue: {output_msg}")
         self.mq_connection_handler.send_message(self.output_queue_of_authors, constants.FINISH_MSG)
         logging.info("Sent EOF message to output queue")
-        self.mq_connection_handler.close_connection()
+        self.authors_decades = {}
 
         
