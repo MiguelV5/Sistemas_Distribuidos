@@ -86,7 +86,7 @@ class Server:
 
             
     def __listen_to_client(self, pipe_receiver):
-        while self.server_is_running and not self.finished_with_client_data:
+        while self.server_is_running:
             self.client_sock, _ = self.server_socket.accept()
             if self.client_sock is not None:
                 self.__handle_client_connection(pipe_receiver)
