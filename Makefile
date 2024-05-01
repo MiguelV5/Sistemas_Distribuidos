@@ -75,13 +75,13 @@ test-docker-image-build:
 	docker build -f ./filter_of_compact_reviews_by_decade/Dockerfile -t "filter_of_compact_reviews_by_decade:latest" .
 	docker build -f ./counter_of_reviews_per_book/Dockerfile -t "counter_of_reviews_per_book:latest" .
 
-# docker build -f ./filter_of_compact_reviews_by_decade/Dockerfile -t "filter_of_compact_reviews_by_decade:latest" .
-# docker build -f ./counter_of_reviews_per_book/Dockerfile -t "counter_of_reviews_per_book:latest" .
-# docker build -f ./filter_of_books_by_review_count/Dockerfile -t "filter_of_books_by_review_count:latest" .
-# docker build -f ./query3_result_generator/Dockerfile -t "query3_result_generator:latest" .
+	docker build -f ./filter_of_compact_reviews_by_decade/Dockerfile -t "filter_of_compact_reviews_by_decade:latest" .
+	docker build -f ./counter_of_reviews_per_book/Dockerfile -t "counter_of_reviews_per_book:latest" .
+	docker build -f ./filter_of_books_by_review_count/Dockerfile -t "filter_of_books_by_review_count:latest" .
+	docker build -f ./query3_result_generator/Dockerfile -t "query3_result_generator:latest" .
 
-# docker build -f ./sorter_of_books_by_review_count/Dockerfile -t "sorter_of_books_by_review_count:latest" .
-# docker build -f ./query4_result_generator/Dockerfile -t "query4_result_generator:latest" .
+	docker build -f ./sorter_of_books_by_review_count/Dockerfile -t "sorter_of_books_by_review_count:latest" .
+	docker build -f ./query4_result_generator/Dockerfile -t "query4_result_generator:latest" .
 
 
 	docker build -f ./filter_of_merged_reviews_by_book_genre/Dockerfile -t "filter_of_merged_reviews_by_book_genre:latest" .

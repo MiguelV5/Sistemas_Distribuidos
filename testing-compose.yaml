@@ -1,5 +1,7 @@
-name: tp1-test
+name: tp1
 services:
+
+
   rabbitmq:
     container_name: rabbitmq
     build:
@@ -16,6 +18,7 @@ services:
       retries: 5
       start_period: 20s
 
+  
   server:
     container_name: server
     image: server:latest
@@ -36,6 +39,7 @@ services:
       rabbitmq:
         condition: service_healthy
 
+
   client:
     container_name: client
     image: client:latest
@@ -46,8 +50,9 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - SERVER_PORT=8080
       - SERVER_IP=server
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL=INFO
       - REVIEWS_FILE_PATH=/data/test_rating.csv
       - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
@@ -56,6 +61,9 @@ services:
     depends_on:
       server:
         condition: service_started
+
+  # ================================================================
+
 
   book_sanitizer:
     container_name: book_sanitizer
@@ -94,6 +102,7 @@ services:
       rabbitmq:
         condition: service_healthy
 
+
   decade_preprocessor:
     container_name: decade_preprocessor
     image: decade_preprocessor:latest
@@ -116,6 +125,7 @@ services:
       rabbitmq:
         condition: service_healthy
 
+
   review_sanitizer:
     container_name: review_sanitizer
     image: review_sanitizer:latest
@@ -136,6 +146,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
 
   merger_1:
     container_name: merger_1
@@ -199,7 +210,9 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
   # ================================================================
+
 
   filter_of_books_by_year_and_genre:
     container_name: filter_of_books_by_year_and_genre
@@ -207,6 +220,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=preprocessed_books_with_year_ex
       - OUTPUT_EXCHANGE=books_filtered_by_year_and_genre_ex
@@ -220,13 +234,14 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-
+      
   filter_of_books_by_title:
     container_name: filter_of_books_by_title
     image: filter_of_books_by_title:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_year_and_genre_ex
       - OUTPUT_EXCHANGE=books_filtered_by_title_ex
@@ -245,6 +260,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=books_filtered_by_title_ex
       - OUTPUT_EXCHANGE=query_results_ex
@@ -257,6 +273,7 @@ services:
         condition: service_healthy
 
   # ================================================================
+
 
   author_expander:
     container_name: author_expander
@@ -278,6 +295,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
 
   counter_of_decades_per_author_1:
     container_name: counter_of_decades_per_author_1
@@ -411,6 +429,7 @@ services:
 
   # ================================================================
 
+
   filter_of_compact_reviews_by_decade:
     container_name: filter_of_compact_reviews_by_decade
     image: filter_of_compact_reviews_by_decade:latest
@@ -433,6 +452,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+
 
   counter_of_reviews_per_book_1:
     container_name: counter_of_reviews_per_book_1
@@ -488,9 +508,84 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  filter_of_books_by_review_count:
+    container_name: filter_of_books_by_review_count
+    image: filter_of_books_by_review_count:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=review_count_per_book_ex
+      - OUTPUT_EXCHANGE=books_filtered_by_review_count_ex
+      - INPUT_QUEUE_OF_BOOKS=review_count_per_book_q
+      - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_QUERY3=towards_query3__books_filtered_by_review_count_q
+      - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_sorter=towards_sorter__books_filtered_by_review_count_q
+      - NUM_OF_COUNTERS=3
+      - MIN_REVIEWS=500
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  query3_result_generator:
+    container_name: query3_result_generator
+    image: query3_result_generator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=books_filtered_by_review_count_ex
+      - OUTPUT_EXCHANGE=query_results_ex
+      - INPUT_QUEUE_OF_BOOKS=towards_query3__books_filtered_by_review_count_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   # ================================================================
 
 
+  sorter_of_books_by_review_count:
+    container_name: sorter_of_books_by_review_count
+    image: sorter_of_books_by_review_count:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=books_filtered_by_review_count_ex
+      - OUTPUT_EXCHANGE=top_books_by_review_count_ex
+      - INPUT_QUEUE_OF_BOOKS=towards_sorter__books_filtered_by_review_count_q
+      - OUTPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
+      - TOP_OF_BOOKS=10
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  query4_result_generator:
+    container_name: query4_result_generator
+    image: query4_result_generator:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=top_books_by_review_count_ex
+      - OUTPUT_EXCHANGE=query_results_ex
+      - INPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
+      - OUTPUT_QUEUE_OF_QUERY=query_results_q
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   # ================================================================
 
@@ -569,6 +664,9 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+        
+  # ================================================================
+
 
 networks:
   testing_net:
@@ -576,3 +674,4 @@ networks:
       driver: default
       config:
         - subnet: 172.25.125.0/24
+
