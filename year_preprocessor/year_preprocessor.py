@@ -38,7 +38,6 @@ class YearPreprocessor:
             self.mq_connection_handler.send_message(self.output_queue_towards_filter, msg)
             self.mq_connection_handler.send_message(self.output_queue_towards_preproc, msg)
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
         else:
             batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batch_to_send_towards_preproc = ""

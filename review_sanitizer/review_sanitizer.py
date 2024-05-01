@@ -35,7 +35,6 @@ class ReviewSanitizer:
             for output_queue in self.output_queues:
                 self.mq_connection_handler.send_message(output_queue, msg)
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
         else:
             batch_as_csv = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batches_to_send_towards_mergers = {output_queue: "" for output_queue in self.output_queues}

@@ -45,7 +45,6 @@ class FilterByGenreAndYear:
         if msg == constants.FINISH_MSG:
             self.mq_connection_handler.send_message(self.output_queue, msg)
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
         else:
             batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             for row in batch:
@@ -60,7 +59,6 @@ class FilterByGenreAndYear:
                     msg_to_send = f"{title},\"{authors}\",{publisher},{year_str}" + "\n"            
                     self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
                 
-
             ch.basic_ack(delivery_tag=method.delivery_tag)
         
        

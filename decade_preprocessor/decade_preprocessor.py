@@ -41,7 +41,6 @@ class DecadePreprocessor:
                 self.mq_connection_handler.send_message(output_queue, msg)
             self.mq_connection_handler.send_message(self.output_queue_towards_expander, msg)
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
         else:
             batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batch_to_send_towards_expander = ""

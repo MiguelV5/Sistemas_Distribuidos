@@ -28,7 +28,7 @@ class Generator:
             self.mq_connection_handler.send_message(self.output_queue, self.response_msg)
             logging.info(f"Sent response message to output queue: {self.response_msg}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
+            self.response_msg = "Q1 Results: "
         else: 
             self.response_msg += '\n' + msg 
             ch.basic_ack(delivery_tag=method.delivery_tag)
