@@ -26,7 +26,7 @@ class FilterOfCompactReviewsByDecade:
 
     def __handle_shutdown(self, signum, frame):
         logging.info("Shutting down FilterOfCompactReviewsByDecade")
-        self.mq_connection_handler.stop_consuming()
+        self.mq_connection_handler.close_connection()
         
         
     def start(self):
@@ -42,13 +42,13 @@ class FilterOfCompactReviewsByDecade:
         The message should have the following format: title,authors,score,decade
         """
         msg = body.decode()
-        logging.info(f"Received message from input queue: {msg}")
         if msg == constants.FINISH_MSG:
             self.eof_received += 1
             if self.eof_received == self.num_of_input_workers:
                 for queue_name in self.output_queues:
                     self.mq_connection_handler.send_message(queue_name, constants.FINISH_MSG)
-                    logging.info(f"Sent EOF message to queue {queue_name}")
+                logging.info("Received all EOFs. Sending to all output queues.")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
             review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             for row in review:
@@ -59,10 +59,9 @@ class FilterOfCompactReviewsByDecade:
                 if int(decade) == self.decade_to_filter:
                     output_msg = f"{title},\"{authors}\",{score},{decade}"
                     self.mq_connection_handler.send_message(self.__select_queue(title), output_msg)
-                    logging.info(f"Sent message to queue: {output_msg}")
                 else:
-                    logging.info(f"Review {title} was discarded. Decade: {decade} != {self.decade_to_filter}")
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+                    logging.debug(f"Review {title} was discarded. Decade: {decade} != {self.decade_to_filter}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
                 
     def __select_queue(self, title: str) -> str:
         """

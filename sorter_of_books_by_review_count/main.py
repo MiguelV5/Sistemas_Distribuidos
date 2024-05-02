@@ -10,7 +10,7 @@ def main():
                     output_exchange=config_params["OUTPUT_EXCHANGE"],
                     input_queue=config_params["INPUT_QUEUE_OF_BOOKS"],
                     output_queue=config_params["OUTPUT_QUEUE_OF_BOOKS"],
-                    top_of_books=config_params["TOP_OF_BOOKS"])
+                    required_top_of_books=config_params["TOP_OF_BOOKS"])
     sorter.start()
     
 if __name__ == "__main__":

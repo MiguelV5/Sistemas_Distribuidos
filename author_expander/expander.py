@@ -21,7 +21,7 @@ class AuthorExpander:
 
     def __handle_shutdown(self, signum, frame):
         logging.info("Shutting down AuthorExpander")
-        self.mq_connection_handler.stop_consuming()
+        self.mq_connection_handler.close_connection()
 
         
     def start(self):
@@ -44,19 +44,19 @@ class AuthorExpander:
         if msg == constants.FINISH_MSG:
             for queue_name in self.output_queues:
                 self.mq_connection_handler.send_message(queue_name, constants.FINISH_MSG)
-                logging.info(f"Sent EOF message to queue {queue_name}")
+            logging.info("Sent EOF message to output queues")
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            return
-        batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
-        for row in batch:
-            authors = eval(row[AUTHORS_IDX])
-            decade = row[DECADE_IDX]
-            for author in authors:
-                output_msg = f"{author},{decade}"
-                self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
-                logging.debug(f"Sent message to queue: {output_msg}")
-                    
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        else:
+            batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
+            for row in batch:
+                authors = eval(row[AUTHORS_IDX])
+                decade = row[DECADE_IDX]
+                for author in authors:
+                    output_msg = f"{author},{decade}"
+                    self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
+                    logging.debug(f"Sent message to queue: {output_msg}")
+
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         
     def __select_queue(self, author: str) -> str:
         """

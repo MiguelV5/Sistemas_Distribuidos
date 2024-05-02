@@ -57,16 +57,12 @@ class Server:
         self.pipe_sender = pipe_sender
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
         self.mq_connection_handler.start_consuming()
-        self.mq_connection_handler.close_connection()
         
     def __process_query_result(self, ch, method, properties, body):
         result = body.decode()            
         self.pipe_sender.send(result)
         self.received_query_results += 1
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        if self.received_query_results == AMOUNT_OF_QUERY_RESULTS:
-            ch.stop_consuming()
-
     
     # ==============================================================================================================
 
@@ -80,18 +76,15 @@ class Server:
                 connection_handler.send_message(query_result)
                 self.received_query_results += 1
         connection_handler.send_message(constants.FINISH_MSG)
+        self.received_query_results = 0
                
-
-
-            
+   
     def __listen_to_client(self, pipe_receiver):
         while self.server_is_running:
             self.client_sock, _ = self.server_socket.accept()
             if self.client_sock is not None:
                 self.__handle_client_connection(pipe_receiver)
          
-
-    
 
 
     def __handle_client_connection(self, pipe_receiver):
@@ -102,6 +95,7 @@ class Server:
                                                     None)
         try:
             connection_handler = SocketConnectionHandler(self.client_sock)
+            self.finished_with_client_data = False
             while not self.finished_with_client_data:  
                 message = connection_handler.read_message()
                 if message == constants.START_BOOKS_MSG:
@@ -114,6 +108,7 @@ class Server:
             self.__send_queries_results_to_client(connection_handler, pipe_receiver)
         except Exception as e:
             logging.error("Error handling client connection: {}".format(str(e)))
+            
             
     def __handle_incoming_client_data(self, connection_handler: SocketConnectionHandler, output_queues_handler: MQConnectionHandler, queue_name: str):
         try:           

@@ -32,6 +32,21 @@ class SocketConnectionHandler:
             raise OSError("Socket connection broken")
         return message
         
-
+    def read_message_with_size_in_lines(self):
+        """
+        Reads a message from the client stream.
+        """
+        logging.debug("action: read_message_size | result: in_progress")
+        try: 
+            size_of_message = int.from_bytes(self._stream.recv(4), byteorder='big')
+            logging.debug(f"action: read_message_size | result: success | size: {size_of_message}")
+            message = self._stream.recv(size_of_message).decode('utf-8')
+            size_in_lines = message.count("\n") - 1
+        except OSError as e:
+            logging.error(f"action: read_message_size | result: fail | error: {e}")
+            raise OSError("Socket connection broken")
+        return message, size_of_message, size_in_lines
+        
+        
     def close(self):
         self._stream.close()

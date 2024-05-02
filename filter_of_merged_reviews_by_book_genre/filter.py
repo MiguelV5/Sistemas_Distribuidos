@@ -49,9 +49,13 @@ class FilterReviewByBookGenre:
             batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             batch_to_send = ""
             for row in batch:
-                title = row[TITLE_IDX]
-                categories = row[CATEGORIES_IDX]
-                text = row[TEXT_IDX]
+                try:
+                    title = row[TITLE_IDX]
+                    categories = row[CATEGORIES_IDX]
+                    text = row[TEXT_IDX]
+                except IndexError as e:
+                    logging.error(f"<<<<<<<<<<<<< Row {row} does not have the required number of columns")
+                    raise e
                 if self.genre_to_filter in categories.lower():
                     batch_to_send += f"{title},{text}" + "\n"
             if batch_to_send:

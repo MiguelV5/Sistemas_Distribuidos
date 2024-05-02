@@ -308,7 +308,7 @@ services:
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_1
-      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_1
     networks:
       - testing_net
     depends_on:
@@ -326,7 +326,7 @@ services:
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_2
-      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_2
     networks:
       - testing_net
     depends_on:
@@ -344,7 +344,7 @@ services:
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_3
-      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_3
     networks:
       - testing_net
     depends_on:
@@ -361,7 +361,7 @@ services:
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
-      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_1
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
     networks:
@@ -380,7 +380,7 @@ services:
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
-      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_2
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
     networks:
@@ -399,7 +399,7 @@ services:
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
-      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_3
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
     networks:

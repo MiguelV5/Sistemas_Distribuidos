@@ -4,6 +4,10 @@ from shared import constants
 import socket
 import signal
 
+
+KiB = 1024
+MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT = 4 * KiB
+
 class Client:
     def __init__(self, server_ip, server_port, reviews_file_path, books_file_path, batch_size):
         self.server_ip = server_ip
@@ -57,7 +61,7 @@ class Client:
                     logging.error("Server response: {}".format(response))
                     break  
         self.connection_handler.send_message(constants.FINISH_MSG)
-        logging.info(f"Finish data sent to server. File: {file}")
+        logging.info(f"Finish data sent to server ({type_of_content_in_file})")
 
         
     def receive_results(self):
@@ -66,10 +70,14 @@ class Client:
         """
         finished_receiving = False
         while finished_receiving is False:
-            results = self.connection_handler.read_message()
+            results, size, size_in_lines = self.connection_handler.read_message_with_size_in_lines()
             if results == constants.FINISH_MSG:
                 finished_receiving = True
             else:
-                logging.info(f"Results received from server: {results}")
+                if size < MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT:
+                    logging.info(f"Results received from server:\n {results}")
+                else:
+                    logging.info(f"Result received from server:\n {results[:MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT]}\n       [...]\n      {results[-MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT:]}")
+                    logging.info(f"  <<< Total size of result: {size_in_lines} rows; {size} bytes >>>")
         self.connection_handler.close()
         logging.info("Client connection closed")

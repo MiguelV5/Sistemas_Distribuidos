@@ -31,7 +31,7 @@ class CounterOfReviewsPerBook:
         
     def __handle_shutdown(self, signum, frame):
         logging.info("Shutting down CounterOfReviewsPerBook")
-        self.mq_connection_handler.stop_consuming()
+        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.__count_reviews)
@@ -42,12 +42,11 @@ class CounterOfReviewsPerBook:
         The message should have the following format: title,authors,score,decade
         """
         msg = body.decode()
-        logging.info(f"Received message from input queue: {msg}")
         if msg == constants.FINISH_MSG:
+            logging.info("Received EOF. Sending results to output queue.")
             self.__send_results()
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
-            return
+            self.books_reviews = {}
         else:
             review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             for row in review:
@@ -62,7 +61,5 @@ class CounterOfReviewsPerBook:
             output_msg = ""
             output_msg += f"{title},\"{review[AUTHORS_IDX]}\",\"{review[SCORE_IDX]}\",{review[DECADE_IDX]},{len(review[SCORE_IDX])}" + '\n'
             self.mq_connection_handler.send_message(self.output_queue_name, output_msg)
-            logging.info(f"Sent message to output queue: {output_msg}")
         self.mq_connection_handler.send_message(self.output_queue_name, constants.FINISH_MSG)
         logging.info("Sent EOF message to output queue")
-        self.mq_connection_handler.close_connection

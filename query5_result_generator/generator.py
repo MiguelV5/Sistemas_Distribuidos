@@ -13,7 +13,7 @@ class Generator:
                  input_queue_name: str, 
                  output_queue_name: str):
         self.output_queue = output_queue_name
-        self.resulting_books_batch = "Q5 Results: "
+        self.resulting_books_batch = "[Q5 Results]:  (Title, AvgPolarity)"
         self.mq_connection_handler = MQConnectionHandler(
             output_exchange_name=output_exchange_name, 
             output_queues_to_bind={output_queue_name: [output_queue_name]}, 
@@ -40,7 +40,7 @@ class Generator:
     def __handle_eof_reviews(self):
         logging.info("Sending Q5 results to output queue")
         self.mq_connection_handler.send_message(self.output_queue, self.resulting_books_batch)
-        self.resulting_books_batch = "Q5 Results: "
+        self.resulting_books_batch = "[Q5 Results]:"
 
 
     def start(self):

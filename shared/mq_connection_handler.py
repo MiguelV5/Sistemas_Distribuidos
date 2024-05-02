@@ -19,7 +19,7 @@ class MQConnectionHandler:
 
         - aux_input_exchange_name: Rare usage, thus optional. Only used when the channel must consume from an additional exchange. To be used with proper message handling as it makes the start_consuming method to consume from the related queues of both exchanges. (Example of usage: merger process)
         """
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', heartbeat=3600))
         self.channel = self.connection.channel()
 
         # Notation: 

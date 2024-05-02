@@ -19,7 +19,7 @@ class Generator:
                                                          output_queues_to_bind={self.output_queue: self.output_queue},
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue])
-        self.response_msg = "Q3 Results: " + '\n' + "Title, Reviews, Authors" + '\n'
+        self.response_msg = "[Q3 Results]:  (Title, Reviews, Authors)"
         signal.signal(signal.SIGTERM, self.__handle_shutdown)
         
     def __handle_shutdown(self, signum, frame):
@@ -35,13 +35,13 @@ class Generator:
         The body is a csv line with the following format in the line: "title,reviews_count,authors"
         """
         msg = body.decode()
-        logging.info(f"Received message from input queue: {msg}")
         if msg == constants.FINISH_MSG:
+            logging.info("Sending Q3 results to output queue")
             self.mq_connection_handler.send_message(self.output_queue, self.response_msg)
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            return
+            self.response_msg = "[Q3 Results]:  (Title, Reviews, Authors)"
         else:
             review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             for row in review:
-                self.response_msg += '\n' + f"{row[TITLE_IDX]}, {row[REVIEW_COUNT_IDX]}, \"{row[AUTHORS_IDX]}\""
+                self.response_msg += "\n" + f"{row[TITLE_IDX]}, {row[REVIEW_COUNT_IDX]}, \"{row[AUTHORS_IDX]}\""
             ch.basic_ack(delivery_tag=method.delivery_tag)

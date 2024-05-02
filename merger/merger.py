@@ -38,7 +38,7 @@ class Merger:
 
     def __handle_shutdown(self, signum, frame):
         logging.info("Shutting down Merger")
-        self.mq_connection_handler.stop_consuming()
+        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name,
@@ -62,13 +62,13 @@ class Merger:
         if msg == constants.FINISH_MSG:
             self.books_finished = True
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            return
-        batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
-        for line in batch:
-            if line: 
-                title = line[BOOK_TITLE_IDX]
-                self.book_data[title] = line
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        else:
+            batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
+            for line in batch:
+                if line: 
+                    title = line[BOOK_TITLE_IDX]
+                    self.book_data[title] = line
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         
     def __handle_reviews(self, ch, method, properties, body):
         """
@@ -80,27 +80,28 @@ class Merger:
         if msg == constants.FINISH_MSG:
             self.__handle_eof_reviews()
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
-            return
-        output_msg_compact = ""
-        output_msg_full = ""
-        for line in msg.split("\n"):
-            if line:
-                title, score, text = line.split(",")
-                if title in self.book_data:
-                    compact, full = self.__generate_line_output(title, score, text)
-                    output_msg_compact += compact + "\n"
-                    output_msg_full += full + "\n"
-                elif not self.books_finished:
-                    self.reviews_buffer.append(line)
-                # If the title of the reviews is not in the book_data after we got all books, it is discarded
-        if output_msg_compact:  
-            self.mq_connection_handler.send_message(self.output_queue_name_compact_reviews, output_msg_compact)
-            logging.debug(f"Sent message to compact reviews queue: {output_msg_compact}")
-        if output_msg_full:
-            self.mq_connection_handler.send_message(self.output_queue_name_full_reviews, output_msg_full)
-            logging.debug(f"Sent message to full reviews queue: {output_msg_full}")
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.books_finished = False
+            self.book_data = {}
+            self.reviews_buffer = []
+        else:
+            output_msg_compact = ""
+            output_msg_full = ""
+            for line in msg.split("\n"):
+                if line:
+                    title, score, text = line.split(",")
+                    if title in self.book_data:
+                        compact, full = self.__generate_line_output(title, score, text)
+                        output_msg_compact += compact + "\n"
+                        output_msg_full += full + "\n"
+                    elif not self.books_finished:
+                        self.reviews_buffer.append(line)
+            if output_msg_compact:  
+                self.mq_connection_handler.send_message(self.output_queue_name_compact_reviews, output_msg_compact)
+                logging.debug(f"Sent message to compact reviews queue: {output_msg_compact}")
+            if output_msg_full:
+                self.mq_connection_handler.send_message(self.output_queue_name_full_reviews, output_msg_full)
+                logging.debug(f"Sent message to full reviews queue: {output_msg_full}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         
     def __generate_line_output(self, title, score, text):
         book_data = self.book_data.get(title)
@@ -123,10 +124,10 @@ class Merger:
         self.reviews_buffer = []
         if output_msg_compact:
             self.mq_connection_handler.send_message(self.output_queue_name_compact_reviews, output_msg_compact)
-            logging.info(f"Sent message to compact reviews queue: {output_msg_compact}")
+            logging.debug(f"Sent message to compact reviews queue: {output_msg_compact}")
         if output_msg_full:
             self.mq_connection_handler.send_message(self.output_queue_name_full_reviews, output_msg_full)
-            logging.info(f"Sent message to full reviews queue: {output_msg_full}")
+            logging.debug(f"Sent message to full reviews queue: {output_msg_full}")
         self.mq_connection_handler.send_message(self.output_queue_name_compact_reviews, constants.FINISH_MSG)
         logging.info("Sent EOF message to compact reviews queue")
         self.mq_connection_handler.send_message(self.output_queue_name_full_reviews, constants.FINISH_MSG)

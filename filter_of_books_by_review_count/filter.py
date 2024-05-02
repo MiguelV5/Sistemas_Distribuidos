@@ -41,12 +41,14 @@ class FilterByReviewsCount:
         The filter should filter out books with reviews_count less than min_reviews and send the result to the outputsqueue.
         """
         msg = body.decode()
-        logging.info(f"Received message from input queue: {msg}")
+        logging.debug(f"Received message from input queue: {msg}")
         if msg == constants.FINISH_MSG:
             self.eofs_received += 1
             if self.eofs_received == self.num_of_counters:
+                logging.info("Received EOF from all counters. Sending EOF to output queues.")
                 self.mq_connection_handler.send_message(self.output_queue_towards_query3, constants.FINISH_MSG)
                 self.mq_connection_handler.send_message(self.output_queue_towards_sorter, constants.FINISH_MSG)
+                self.eofs_received = 0
             ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
             review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
@@ -54,11 +56,11 @@ class FilterByReviewsCount:
                 reviews_count = int(row[REVIEW_COUNT_IDX])
                 if reviews_count >= self.min_reviews:
                     self.mq_connection_handler.send_message(self.output_queue_towards_query3, f"{row[TITLE_IDX]},{reviews_count},\"{row[AUTHORS_IDX]}\"")
-                    logging.info(f"Sent message to output queue towards query3:{self.output_queue_towards_query3} : {row[TITLE_IDX]},{reviews_count},\"{row[AUTHORS_IDX]}\"")
+                    logging.debug(f"Sent message to output queue towards query3:{self.output_queue_towards_query3} : {row[TITLE_IDX]},{reviews_count},\"{row[AUTHORS_IDX]}\"")
                     self.mq_connection_handler.send_message(self.output_queue_towards_sorter, f"{row[TITLE_IDX]},\"{row[SCORE_IDX]}\"")
-                    logging.info(f"Sent message to output queue towards sorter: {self.output_queue_towards_sorter}{row[TITLE_IDX]},\"{row[SCORE_IDX]}\"")
+                    logging.debug(f"Sent message to output queue towards sorter: {self.output_queue_towards_sorter}{row[TITLE_IDX]},\"{row[SCORE_IDX]}\"")
                 else:
-                    logging.info(f"Discarded message: {row[TITLE_IDX]}. Reviews count: {row[REVIEW_COUNT_IDX]} < {self.min_reviews}")
+                    logging.debug(f"Discarded message: {row[TITLE_IDX]}. Reviews count: {row[REVIEW_COUNT_IDX]} < {self.min_reviews}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
         
         

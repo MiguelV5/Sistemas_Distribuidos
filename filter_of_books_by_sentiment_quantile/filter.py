@@ -45,7 +45,7 @@ class FilterBySentimentQuantile:
         
     def __handle_eof_reviews(self):
         index_at_quantile, polarity_at_quantile = self.__get_items_at_required_quantile()
-        logging.info(f"Calculated Avg Polarity: {polarity_at_quantile} at required quantile: {self.quantile}")
+        logging.info(f"The required quantile: {self.quantile} has a value with average polarity of {polarity_at_quantile}")
 
         for idx, book in enumerate(self.sorted_books_by_polarity):
             if idx < index_at_quantile:

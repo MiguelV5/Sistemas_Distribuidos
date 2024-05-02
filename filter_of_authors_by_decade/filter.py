@@ -22,7 +22,7 @@ class FilterOfAuthorsByDecade:
 
     def __handle_shutdown(self, signum, frame):
         logging.info("Shutting down FilterOfAuthorsByDecade")
-        self.mq_connection_handler.stop_consuming()
+        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name, 
@@ -37,11 +37,9 @@ class FilterOfAuthorsByDecade:
         msg = body.decode()
         logging.debug(f"Received message: {msg}")
         if msg == constants.FINISH_MSG:
-            logging.info("EOF RECEIVED")
+            logging.info("EOF received. Sending EOF message to output queue")
             self.mq_connection_handler.send_message(self.output_queue_name, constants.FINISH_MSG)
-            logging.info("Sent EOF message to output queue")
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.mq_connection_handler.close_connection()
         else:
             author, decades = msg.split(",")
             if int(decades) >= int(self.min_decades_to_filter):

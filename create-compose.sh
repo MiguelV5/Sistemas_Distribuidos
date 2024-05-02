@@ -299,7 +299,7 @@ add_query2_processes() {
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_$i
-      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
     networks:
       - testing_net
     depends_on:
@@ -319,7 +319,7 @@ add_query2_processes() {
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
-      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
     networks:
