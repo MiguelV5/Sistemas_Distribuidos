@@ -6,7 +6,7 @@ import signal
 
 
 KiB = 1024
-MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT = 4 * KiB
+MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT = 2 * KiB
 
 class Client:
     def __init__(self, server_ip, server_port, reviews_file_path, books_file_path, batch_size):
@@ -75,9 +75,10 @@ class Client:
                 finished_receiving = True
             else:
                 if size < MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT:
-                    logging.info(f"Results received from server:\n {results}")
+                    logging.info(f"\nResults received from server:\n {results}")
+                    logging.info(f"  <<< Total size of result: {size_in_lines} rows >>>\n")
                 else:
-                    logging.info(f"Result received from server:\n {results[:MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT]}\n       [...]\n      {results[-MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT:]}")
-                    logging.info(f"  <<< Total size of result: {size_in_lines} rows; {size} bytes >>>")
+                    logging.info(f"\nResult received from server:\n {results[:MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT]}(...)\n =========================================== [...] ===========================================\n(...){results[-MAX_SIZE_FOR_LARGE_RESULTS_OUTPUT:]}")
+                    logging.info(f"  <<< Total size of result: {size_in_lines} rows >>>\n")
         self.connection_handler.close()
         logging.info("Client connection closed")

@@ -41,7 +41,7 @@ class SocketConnectionHandler:
             size_of_message = int.from_bytes(self._stream.recv(4), byteorder='big')
             logging.debug(f"action: read_message_size | result: success | size: {size_of_message}")
             message = self._stream.recv(size_of_message).decode('utf-8')
-            size_in_lines = message.count("\n") - 1
+            size_in_lines = message.count("\n")
         except OSError as e:
             logging.error(f"action: read_message_size | result: fail | error: {e}")
             raise OSError("Socket connection broken")

@@ -48,6 +48,7 @@ class FilterOfCompactReviewsByDecade:
                 for queue_name in self.output_queues:
                     self.mq_connection_handler.send_message(queue_name, constants.FINISH_MSG)
                 logging.info("Received all EOFs. Sending to all output queues.")
+                self.eof_received = 0
             ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
             review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
@@ -62,6 +63,7 @@ class FilterOfCompactReviewsByDecade:
                 else:
                     logging.debug(f"Review {title} was discarded. Decade: {decade} != {self.decade_to_filter}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
+            
                 
     def __select_queue(self, title: str) -> str:
         """
