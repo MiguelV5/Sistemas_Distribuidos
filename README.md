@@ -61,6 +61,20 @@ Adicionalmente, se incluye un script de bash para creación dinámica del archiv
 C_DEC_PA_WORKERS=3 C_REV_PB_WORKERS=3 MERGER_WORKERS=3 ./create-compose.sh
 ```
 
+Tambien se proveen targets adicionales (up, down, logs) para facilitar la reinserción del cliente una vez que ya finalizó el anterior.
+
+```bash
+make docker-reinsert-client
+```
+
+```bash
+make docker-reinsert-client-logs
+```
+
+```bash
+make docker-reinsert-client-down
+```
+
 ## Informe
 
 Para ver a detalle decisiones de diseño, arquitectura e implementación, referirse al [informe](https://github.com/erick12m/distributed-books-analyzer/blob/main/informe.pdf).
