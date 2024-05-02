@@ -51,6 +51,7 @@ class BookSanitizer:
                 title = self.__fix_title_format(title)
                 authors = self.__fix_authors_format(authors)
                 publisher = self.__fix_publisher_format(publisher)
+                categories = self.__fix_categories_format(categories)
 
                 batch_to_send += f"{title},\"{authors}\",{publisher},{published_date},\"{categories}\"" + "\n"
 
@@ -62,27 +63,34 @@ class BookSanitizer:
         return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
 
     def __fix_authors_format(self, authors):
-        authors = authors.replace('"', "").replace("'","")
-        fixed_authors = ""
-        for i in range(len(authors)):
-            if i + 1 == len(authors):
-                fixed_authors += "'" + "]"
-            elif i == 0:
-                fixed_authors += "[" + "'"
-            else:
-                if authors[i + 1] == ",":
-                    fixed_authors += authors[i] + "'" + "," + "'"
-                elif authors[i] == ",":
-                    continue
-                else:
-                    fixed_authors += authors[i]
-                    
-        fixed_authors = fixed_authors.replace("',',','", "")  # author had a comma in the name, thus generated a wrong author named ','
-        fixed_authors = fixed_authors.replace("',' ", "', '")  # restore original spacing
-        return fixed_authors    
+        return self.__make_list_format_consisent(authors)
 
     def __fix_publisher_format(self, publisher):
         return publisher.replace(",", ";")
+    
+    def __fix_categories_format(self, categories):
+        return self.__make_list_format_consisent(categories)
+    
+    def __make_list_format_consisent(self, list_as_str):
+        list_as_str = list_as_str.replace('"', "").replace("'","")
+        fixed_list = ""
+        for i in range(len(list_as_str)):
+            if i + 1 == len(list_as_str):
+                fixed_list += "'" + "]"
+            elif i == 0:
+                fixed_list += "[" + "'"
+            else:
+                if list_as_str[i + 1] == ",":
+                    fixed_list += list_as_str[i] + "'" + "," + "'"
+                elif list_as_str[i] == ",":
+                    continue
+                else:
+                    fixed_list += list_as_str[i]
+                    
+        fixed_list = fixed_list.replace("',',','", "")  # if it had commas in the middle, this avoids a wrong element named ','
+        fixed_list = fixed_list.replace("',' ", "', '")  # restore original spacing
+        return fixed_list
+
 
 
     def start(self):

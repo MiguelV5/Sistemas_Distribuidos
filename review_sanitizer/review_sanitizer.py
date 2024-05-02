@@ -48,8 +48,8 @@ class ReviewSanitizer:
                 if not title or not review_score or not review_text:
                     continue
 
-                title = title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
-                review_text = review_text.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'").replace("&quot;", "'")
+                title = self.__fix_title_format(title)
+                review_text = self.__fix_review_text_format(review_text)
 
                 selected_queue = self.__select_queue(title)
                 batches_to_send_towards_mergers[selected_queue] += f"{title},{round(float(review_score))},{review_text}" + "\n"
@@ -59,6 +59,13 @@ class ReviewSanitizer:
                     self.mq_connection_handler.send_message(output_queue, batches_to_send_towards_mergers[output_queue])
             
             ch.basic_ack(delivery_tag=method.delivery_tag)
+
+
+    def __fix_title_format(self, title):
+        return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
+    
+    def __fix_review_text_format(self, review_text):
+        return review_text.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'").replace("&quot;", "'")
 
     def __select_queue(self, title: str) -> str:
         """
