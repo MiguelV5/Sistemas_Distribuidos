@@ -60,7 +60,7 @@ class BookSanitizer:
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def __fix_title_format(self, title):
-        return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
+        return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "`").replace("'", "`")
 
     def __fix_authors_format(self, authors):
         return self.__make_list_format_consisent(authors)

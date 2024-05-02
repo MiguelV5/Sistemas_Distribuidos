@@ -2,6 +2,7 @@ from shared.mq_connection_handler import MQConnectionHandler
 import logging
 import signal
 from shared import constants
+import numpy as np
 
 TITLE_IDX = 0
 AVG_POLARITY_IDX = 1
@@ -44,11 +45,11 @@ class FilterBySentimentQuantile:
             ch.basic_ack(delivery_tag=method.delivery_tag)
         
     def __handle_eof_reviews(self):
-        index_at_quantile, polarity_at_quantile = self.__get_items_at_required_quantile()
+        polarity_at_quantile = self.__get_polarity_at_required_quantile()
         logging.info(f"The required quantile: {self.quantile} has a value with average polarity of {polarity_at_quantile}")
 
         for idx, book in enumerate(self.sorted_books_by_polarity):
-            if idx < index_at_quantile:
+            if book[AVG_POLARITY_IDX] >= polarity_at_quantile:
                 msg = f"{book[TITLE_IDX]},{book[AVG_POLARITY_IDX]}"
                 self.mq_connection_handler.send_message(self.output_queue, msg)
             else:
@@ -71,10 +72,10 @@ class FilterBySentimentQuantile:
                 self.sorted_books_by_polarity.append((title, avg_polarity))
 
     
-    def __get_items_at_required_quantile(self):
-        index_at_quantile = round(self.quantile * (len(self.sorted_books_by_polarity) - 1))
-        polarity_at_quantile = self.sorted_books_by_polarity[index_at_quantile][AVG_POLARITY_IDX]
-        return index_at_quantile, polarity_at_quantile
+    def __get_polarity_at_required_quantile(self):
+        avg_polarities = [book[AVG_POLARITY_IDX] for book in self.sorted_books_by_polarity]
+        polarity_at_quantile = np.quantile(avg_polarities, self.quantile)
+        return polarity_at_quantile
 
 
     def start(self):

@@ -62,7 +62,7 @@ class ReviewSanitizer:
 
 
     def __fix_title_format(self, title):
-        return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'")
+        return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "`").replace("'", "`")
     
     def __fix_review_text_format(self, review_text):
         return review_text.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "'").replace("&quot;", "'")

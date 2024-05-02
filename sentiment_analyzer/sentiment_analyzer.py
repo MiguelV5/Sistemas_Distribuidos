@@ -71,7 +71,6 @@ class PolarityAccumulator:
         # Contains book titles as keys and a list with the sum of the polarity of the reviews and the total number of reviews for that book as values
         self.accumulator_per_book = {}
         self.total_books = 0
-        # Contains book titles as keys and the average polarity of the total reviews for that book as values
 
     def add_polarity_for_book(self, title: str, polarity: float):
         if title in self.accumulator_per_book:

@@ -15,7 +15,6 @@ class Stream:
         bytes_to_send = len(message)
         while bytes_sent < bytes_to_send:
             send_result = self._socket.send(message[bytes_sent:])
-            # Handle error in send
             if send_result == 0:
                 raise OSError("Socket connection broken")
             bytes_sent += send_result
@@ -29,7 +28,6 @@ class Stream:
         bytes_read = 0
         while bytes_read < bytes_to_receive:
             received = self._socket.recv(bytes_to_receive - bytes_read)
-            # Handle error in receive
             if not received:
                 raise OSError("Socket connection broken")
             message += received
