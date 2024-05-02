@@ -1,0 +1,26 @@
+name: client_reinsert
+services:
+  client:
+    container_name: client_reinsert
+    image: client:latest
+    entrypoint: python3 /main.py
+    volumes:
+      - ./data:/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - SERVER_IP=server
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL=INFO
+      - REVIEWS_FILE_PATH=/data/test_rating.csv
+      - BOOKS_FILE_PATH=/data/books_data.csv
+      - BATCH_SIZE=200
+    networks:
+      - testing_net
+
+networks:
+  testing_net:
+    name: tp1_testing_net
+    external: true
+    

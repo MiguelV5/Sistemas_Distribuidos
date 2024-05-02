@@ -50,8 +50,27 @@ docker-compose-logs:
 .PHONY: docker-compose-logs
 
 # ==============================================================================
+# targets for reinserting data after the cycle is done
 
-## Temporary targets for testing purposes
+client-only-build:
+	docker build -f ./client/Dockerfile -t "client:latest" .
+
+docker-reinsert-client-up: client-only-build
+	docker compose -f reinsert-client-compose.yaml up -d --build --remove-orphans
+.PHONY: docker-reinsert-client-up
+
+docker-reinsert-client-down:
+	docker compose -f reinsert-client-compose.yaml stop -t 3
+	docker compose -f reinsert-client-compose.yaml down
+.PHONY: docker-reinsert-client-down
+
+docker-reinsert-client-logs:
+	docker compose -f reinsert-client-compose.yaml logs -f
+.PHONY: docker-reinsert-client-logs
+
+# ==============================================================================
+
+## targets for testing purposes
 
 test-docker-image-build:
 	docker build -f ./server/Dockerfile -t "server:latest" .
@@ -74,9 +93,16 @@ test-docker-image-build:
 
 	docker build -f ./filter_of_compact_reviews_by_decade/Dockerfile -t "filter_of_compact_reviews_by_decade:latest" .
 	docker build -f ./counter_of_reviews_per_book/Dockerfile -t "counter_of_reviews_per_book:latest" .
+	docker build -f ./filter_of_books_by_review_count/Dockerfile -t "filter_of_books_by_review_count:latest" .
+	docker build -f ./query3_result_generator/Dockerfile -t "query3_result_generator:latest" .
 
+	docker build -f ./sorter_of_books_by_review_count/Dockerfile -t "sorter_of_books_by_review_count:latest" .
+	docker build -f ./query4_result_generator/Dockerfile -t "query4_result_generator:latest" .
 
-
+	docker build -f ./filter_of_merged_reviews_by_book_genre/Dockerfile -t "filter_of_merged_reviews_by_book_genre:latest" .
+	docker build -f ./sentiment_analyzer/Dockerfile -t "sentiment_analyzer:latest" .
+	docker build -f ./filter_of_books_by_sentiment_quantile/Dockerfile -t "filter_of_books_by_sentiment_quantile:latest" .
+	docker build -f ./query5_result_generator/Dockerfile -t "query5_result_generator:latest" .
 
 
 test-compose-up: test-docker-image-build

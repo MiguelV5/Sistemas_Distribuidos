@@ -1,6 +1,7 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import signal
 import logging
+from shared import constants
 
 TITLE_IDX = 0
 SCORES_IDX = 1
@@ -11,7 +12,7 @@ class Generator:
         self.output_exchange = output_exchange
         self.input_queue = input_queue
         self.output_queue = output_queue
-        self.output_msg = "Query4 result:" + '\n' + "Title,Review Score" + '\n'
+        self.output_msg = "[Q4 Results]:  (Title, ReviewScore)"
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange, 
                                                          output_queues_to_bind={self.output_queue: [self.output_queue]},
                                                          input_exchange_name=self.input_exchange,
@@ -32,11 +33,14 @@ class Generator:
         The generator should send the result to the output queue.
         """
         msg = body.decode()
-        logging.info(f"Received message from input queue: {msg}")
-        books = eval(msg.replace("\"",""))
-        for book in books:
-            logging.info(f"Received book: {book}")
-            self.output_msg += f"{book[TITLE_IDX]},{book[SCORES_IDX]}" + '\n'
-        self.mq_connection_handler.send_message(self.output_queue, self.output_msg)
-        logging.info(f"Sent message to output queue: {self.output_msg}")
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        if msg == constants.FINISH_MSG:
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.output_msg = "[Q4 Results]:  (Title, ReviewScore)"
+        else:
+            books = eval(msg.replace("\"",""))
+            for book in books:
+                self.output_msg += "\n" f"{book[TITLE_IDX]},{book[SCORES_IDX]}"
+            logging.info("Sending Q4 results to output queue")
+            self.mq_connection_handler.send_message(self.output_queue, self.output_msg)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+

@@ -299,7 +299,7 @@ add_query2_processes() {
       - INPUT_EXCHANGE=expanded_authors_ex
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_$i
-      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
     networks:
       - testing_net
     depends_on:
@@ -319,7 +319,7 @@ add_query2_processes() {
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=authors_decades_count_ex
       - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
-      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
     networks:
@@ -504,6 +504,8 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
+      - GENRE=fiction
+      - NUM_OF_INPUT_WORKERS=$MERGER_WORKERS
     networks:
       - testing_net
     depends_on:
@@ -540,6 +542,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=books_filtered_by_highest_sentiment_ex
       - INPUT_QUEUE_OF_BOOKS=sentiment_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
+      - QUANTILE=0.9
     networks:
       - testing_net
     depends_on:

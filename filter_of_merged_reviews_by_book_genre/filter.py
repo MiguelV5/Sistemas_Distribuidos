@@ -7,58 +7,56 @@ import io
 
 
 TITLE_IDX = 0
-AUTHORS_IDX = 1
-PUBLISHER_IDX = 2
-YEAR_IDX = 3
-CATEGORIES_IDX = 4
+CATEGORIES_IDX = 1
+TEXT_IDX = 2
 
-
-class FilterByGenreAndYear:
+class FilterReviewByBookGenre:
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
                  input_queue_name: str, 
                  output_queue_name: str, 
-                 min_year_to_filter: int, 
-                 max_year_to_filter: int,
-                 genre_to_filter: str):
+                 genre_to_filter: str,
+                 num_of_input_workers: int):
         self.output_queue = output_queue_name
-        self.min_year_to_filter = int(min_year_to_filter)
-        self.max_year_to_filter = int(max_year_to_filter)
         self.genre_to_filter = genre_to_filter
+        self.eofs_received = 0
+        self.num_of_input_workers = num_of_input_workers
         self.mq_connection_handler = MQConnectionHandler(
             output_exchange_name=output_exchange_name, 
             output_queues_to_bind={output_queue_name: [output_queue_name]}, 
             input_exchange_name=input_exchange_name, 
             input_queues_to_recv_from=[input_queue_name]
         )
-        self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__filter_books_by_year_and_genre)
+        self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__filter_reviews_by_book_genre)
         signal.signal(signal.SIGTERM, self.__handle_shutdown)
 
     def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down FilterByGenreAndYear")
+        logging.info("Shutting down FilterReviewByBookGenre")
         self.mq_connection_handler.close_connection()
         
             
-    def __filter_books_by_year_and_genre(self, ch, method, properties, body):
+    def __filter_reviews_by_book_genre(self, ch, method, properties, body):
         msg = body.decode()
         if msg == constants.FINISH_MSG:
-            self.mq_connection_handler.send_message(self.output_queue, msg)
+            self.eofs_received += 1
+            if self.eofs_received == self.num_of_input_workers:
+                logging.info("All EOFs received. Sending to output queue")
+                self.mq_connection_handler.send_message(self.output_queue, constants.FINISH_MSG)
+                self.eofs_received = 0
             ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
             batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
+            batch_to_send = ""
             for row in batch:
                 title = row[TITLE_IDX]
-                authors = row[AUTHORS_IDX]
-                publisher = row[PUBLISHER_IDX]
-                year_str = row[YEAR_IDX]
                 categories = row[CATEGORIES_IDX]
-                if int(year_str) >= self.min_year_to_filter and \
-                        int(year_str) <= self.max_year_to_filter and \
-                        self.genre_to_filter in categories:
-                    msg_to_send = f"{title},\"{authors}\",{publisher},{year_str}" + "\n"            
-                    self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
-                
+                text = row[TEXT_IDX]
+                if self.genre_to_filter in categories.lower():
+                    batch_to_send += f"{title},{text}" + "\n"
+            if batch_to_send:
+                self.mq_connection_handler.send_message(self.output_queue, batch_to_send)
+
             ch.basic_ack(delivery_tag=method.delivery_tag)
         
        
