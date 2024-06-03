@@ -1,7 +1,5 @@
 ---
-
 # [75.74] TP Distributed Books Analyzer - Sistemas Distribuidos - 1c2024
-
 ---
 
 <br>
@@ -16,10 +14,10 @@
 
 ### Integrantes
 
-| Nombre                                                              | Padrón |
-| ------------------------------------------------------------------- | ------ |
-| [Erick Martinez](https://github.com/erick12m)                       | 103745 |
-| [Miguel Vasquez](https://github.com/MiguelV5)                       | 107378 |
+| Nombre                                        | Padrón |
+| --------------------------------------------- | ------ |
+| [Erick Martinez](https://github.com/erick12m) | 103745 |
+| [Miguel Vasquez](https://github.com/MiguelV5) | 107378 |
 
 ---
 
@@ -28,6 +26,7 @@
 Distributed Books Analyzer es un sistema distribuido de procesos que permiten realizar procesamiento de una extensa cantidad de datos, provenientes de [datasets de libros y reviews](https://www.kaggle.com/datasets/mohamedbakhet/amazon-books-reviews) publicados en la plataforma de Amazon, con fines de análisis y aprovechamiento de multicomputing para la realización de consultas.
 
 El sistema responde a las siguientes consultas:
+
 - Título, autores y editoriales de los libros de categoría "Computers" entre 2000 y 2023 que contengan 'distributed' en su título
 - Autores que tengan títulos publicados en al menos 10 décadas distintas
 - Títulos y autores de los libros publicados en la década del 90' con al menos 500 calificaciones
@@ -58,7 +57,7 @@ Adicionalmente, se incluye un script de bash para creación dinámica del archiv
 (Si no se proveen valores, se toman los valores por defecto de 1 worker)
 
 ```bash
-C_DEC_PA_WORKERS=3 C_REV_PB_WORKERS=3 MERGER_WORKERS=3 ./create-compose.sh
+C_DEC_PA_WORKERS=3 C_REV_PB_WORKERS=3 MERGER_WORKERS=3 HEALTH_CHECKERS=3 ./create-compose.sh
 ```
 
 Tambien se proveen targets adicionales (up, down, logs) para facilitar la reinserción del cliente una vez que ya finalizó el anterior.
@@ -78,5 +77,3 @@ make docker-reinsert-client-down
 ## Informe
 
 Para ver a detalle decisiones de diseño, arquitectura e implementación, referirse al [informe](https://github.com/erick12m/distributed-books-analyzer/blob/main/informe.pdf).
-
-
