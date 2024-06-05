@@ -2,3 +2,5 @@
 **/*.csv
 **/*.zip
 **/Dockerfile
+**/*.pdf
+**/*.png

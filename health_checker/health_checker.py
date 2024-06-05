@@ -4,29 +4,21 @@ import docker.models
 import docker.models.containers
 import docker.types
 from shared.socket_connection_handler import SocketConnectionHandler
-import signal
 import logging
 from multiprocessing import Process
 import time
+from shared.monitorable_process import MonitorableProcess
 
-class HealthChecker:
+class HealthChecker(MonitorableProcess):
     def __init__(self):
-        self.joinable_processes = [Process]
+        super().__init__()
         self.socket_connection_handler = None
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-        
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down Health Checker")
-        for process in self.joinable_processes:
-            process.terminate()
        
     def start(self):
         client = docker.from_env()
         containers = client.containers.list()
         logging.info(f"Containers found: {containers}")
         
-        p = Process(target=self.__handle_incoming_health_check)
-        p.start()
         
         for container in containers:
             p = Process(target=self.__check_container_health, args=(container,))
@@ -57,22 +49,6 @@ class HealthChecker:
     def __revive_container(self, container: docker.models.containers.Container):
         container.start()
         logging.info(f"Container {container.name} has been restarted")
-        
-    def __handle_incoming_health_check(self):
-        logging.info("Starting to receive health checks")
-        self.listening_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        current_container_name = docker.from_env().containers.get(socket.gethostname()).name
-        logging.info(f"Current container name: {current_container_name}")
-        
-        self.listening_socket.bind((current_container_name, 5000))
-        self.listening_socket.listen()
-        while True:
-            client_socket, _ = self.listening_socket.accept()
-            self.socket_connection_handler = SocketConnectionHandler(client_socket)
-            message = self.socket_connection_handler.read_message()
-            if message == "health":
-                self.socket_connection_handler.send_message("ok")
-            self.socket_connection_handler.close()
         
         
         
