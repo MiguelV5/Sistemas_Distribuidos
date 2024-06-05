@@ -2,14 +2,15 @@ from shared.mq_connection_handler import MQConnectionHandler
 import logging
 import csv
 import io
-import signal
 from shared import constants
+from shared.monitorable_process import MonitorableProcess
 
 AUTHORS_IDX = 0
 DECADE_IDX = 1
 
-class AuthorExpander:
+class AuthorExpander(MonitorableProcess):
     def __init__(self, input_exchange, output_exchange, input_queue_of_books, output_queues: dict[str,str]):
+        super().__init__()
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_books = input_queue_of_books
@@ -17,11 +18,7 @@ class AuthorExpander:
         for queue_name in output_queues.values():
             self.output_queues[queue_name] = [queue_name]
         self.mq_connection_handler = None
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down AuthorExpander")
-        self.mq_connection_handler.close_connection()
+ 
 
         
     def start(self):

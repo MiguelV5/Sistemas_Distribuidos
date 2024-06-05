@@ -1,13 +1,14 @@
 from shared.mq_connection_handler import MQConnectionHandler
-import signal
 import logging
 from shared import constants
+from shared.monitorable_process import MonitorableProcess
 
 TITLE_IDX = 0
 SCORES_IDX = 1
 
-class Generator:
+class Generator(MonitorableProcess):
     def __init__(self, input_exchange, output_exchange, input_queue, output_queue):
+        super().__init__()
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue
@@ -17,11 +18,6 @@ class Generator:
                                                          output_queues_to_bind={self.output_queue: [self.output_queue]},
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue])
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-        
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down Generator")
-        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue, self.__generate)

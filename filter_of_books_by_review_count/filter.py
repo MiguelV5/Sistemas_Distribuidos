@@ -3,7 +3,7 @@ from shared import constants
 import logging
 import csv
 import io
-import signal
+from shared.monitorable_process import MonitorableProcess
 
 TITLE_IDX = 0
 AUTHORS_IDX = 1
@@ -11,8 +11,9 @@ SCORE_IDX = 2
 DECADE_IDX = 3
 REVIEW_COUNT_IDX = 4
 
-class FilterByReviewsCount:
+class FilterByReviewsCount(MonitorableProcess):
     def __init__(self, input_exchange, output_exchange, input_queue, output_queue_towards_query3, output_queue_towards_sorter, min_reviews, num_of_counters):
+        super().__init__()
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue
@@ -24,12 +25,7 @@ class FilterByReviewsCount:
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange, 
                                                          output_queues_to_bind={self.output_queue_towards_query3: [self.output_queue_towards_query3], self.output_queue_towards_sorter: [output_queue_towards_sorter]},
                                                          input_exchange_name=self.input_exchange,
-                                                         input_queues_to_recv_from=[self.input_queue])
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down CounterOfDecadesPerAuthor")
-        self.mq_connection_handler.close_connection()        
+                                                         input_queues_to_recv_from=[self.input_queue])        
         
     def start(self):
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue, self.__filter_books)

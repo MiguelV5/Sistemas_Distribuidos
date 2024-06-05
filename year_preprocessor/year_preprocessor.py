@@ -1,10 +1,10 @@
 import io
 from shared.mq_connection_handler import MQConnectionHandler
-import signal
 import logging
 import csv
 from shared import constants
 import re
+from shared.monitorable_process import MonitorableProcess
 
 TITLE_IDX = 0
 AUTHORS_IDX = 1
@@ -14,8 +14,9 @@ CATEGORIES_IDX = 4
 REQUIRED_SIZE_OF_ROW = 5
 
 
-class YearPreprocessor:
+class YearPreprocessor(MonitorableProcess):
     def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue_towards_preproc: str, output_queue_towards_filter: str):
+        super().__init__()
         self.output_queue_towards_preproc = output_queue_towards_preproc
         self.output_queue_towards_filter = output_queue_towards_filter
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
@@ -25,12 +26,6 @@ class YearPreprocessor:
                                                          [input_queue])
         
         self.mq_connection_handler.setup_callback_for_input_queue(input_queue, self.__preprocess_batch)
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down YearPreprocessor")
-        self.mq_connection_handler.close_connection()
-
 
     def __preprocess_batch(self, ch, method, properties, body):
         msg = body.decode()

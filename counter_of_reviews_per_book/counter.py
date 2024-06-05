@@ -3,7 +3,7 @@ from shared.mq_connection_handler import MQConnectionHandler
 from shared import constants
 import csv
 import io
-import signal
+from shared.monitorable_process import MonitorableProcess
 
 TITLE_IDX = 0
 AUTHORS_IDX = 1
@@ -11,13 +11,14 @@ SCORE_IDX = 2
 DECADE_IDX = 3
 
 
-class CounterOfReviewsPerBook:
+class CounterOfReviewsPerBook(MonitorableProcess):
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
                  input_queue_name: str, 
                  output_queue_name: str
                  ):
+        super().__init__()
         self.input_exchange_name = input_exchange_name
         self.output_exchange_name = output_exchange_name
         self.input_queue_name = input_queue_name
@@ -27,12 +28,7 @@ class CounterOfReviewsPerBook:
                                                          output_queues_to_bind={self.output_queue_name: [self.output_queue_name]},
                                                          input_exchange_name=self.input_exchange_name,
                                                          input_queues_to_recv_from=[self.input_queue_name])
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-        
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down CounterOfReviewsPerBook")
-        self.mq_connection_handler.close_connection()
-        
+       
     def start(self):
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.__count_reviews)
         self.mq_connection_handler.channel.start_consuming()

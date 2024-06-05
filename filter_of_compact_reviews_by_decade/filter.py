@@ -3,15 +3,16 @@ import logging
 import io
 import csv
 from shared import constants
-import signal
+from shared.monitorable_process import MonitorableProcess
 
 TITLE_IDX = 0
 AUTHORS_IDX = 1
 SCORE_IDX = 2
 DECADE_IDX = 3
 
-class FilterOfCompactReviewsByDecade:
+class FilterOfCompactReviewsByDecade(MonitorableProcess):
     def __init__(self, input_exchange: str, output_exchange: str, input_queue_of_reviews: str, output_queues: dict[str,str], decade_to_filter:int, num_of_input_workers: int):
+        super().__init__()
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_reviews = input_queue_of_reviews
@@ -22,11 +23,6 @@ class FilterOfCompactReviewsByDecade:
             self.output_queues[queue_name] = [queue_name]
         self.mq_connection_handler = None
         self.eof_received = 0
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down FilterOfCompactReviewsByDecade")
-        self.mq_connection_handler.close_connection()
         
         
     def start(self):

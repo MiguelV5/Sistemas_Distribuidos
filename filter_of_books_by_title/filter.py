@@ -1,9 +1,9 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
-import signal
 from shared import constants
 import csv
 import io
+from shared.monitorable_process import MonitorableProcess
 
 
 TITLE_IDX = 0
@@ -12,13 +12,14 @@ PUBLISHER_IDX = 2
 YEAR_IDX = 3
 
 
-class FilterByTitle:
+class FilterByTitle(MonitorableProcess):
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
                  input_queue_name: str, 
                  output_queue_name: str, 
                  title_keyword: str):
+        super().__init__()
         self.output_queue = output_queue_name
         self.title_keyword = title_keyword
         self.mq_connection_handler = MQConnectionHandler(
@@ -28,11 +29,6 @@ class FilterByTitle:
             input_queues_to_recv_from=[input_queue_name]
         )
         self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__filter_books_by_title)
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down FilterByTitle")
-        self.mq_connection_handler.close_connection()
         
             
     def __filter_books_by_title(self, ch, method, properties, body):

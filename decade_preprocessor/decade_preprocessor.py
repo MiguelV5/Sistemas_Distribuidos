@@ -1,9 +1,9 @@
 import io
 from shared.mq_connection_handler import MQConnectionHandler
-import signal
 import logging
 import csv
 from shared import constants
+from shared.monitorable_process import MonitorableProcess
 
 
 TITLE_IDX = 0
@@ -12,8 +12,9 @@ YEAR_IDX = 2
 CATEGORIES_IDX = 3
 REQUIRED_SIZE_OF_ROW = 4
 
-class DecadePreprocessor:
+class DecadePreprocessor(MonitorableProcess):
     def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue_towards_expander: str, output_queues_towards_mergers: list[str]):
+        super().__init__()
         self.output_queue_towards_expander = output_queue_towards_expander
         self.output_queues_towards_mergers = output_queues_towards_mergers
         
@@ -27,11 +28,7 @@ class DecadePreprocessor:
                                                          [input_queue])
         
         self.mq_connection_handler.setup_callback_for_input_queue(input_queue, self.__preprocess_batch)
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
 
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down book_sanitizer")
-        self.mq_connection_handler.close_connection()
 
 
     def __preprocess_batch(self, ch, method, properties, body):
