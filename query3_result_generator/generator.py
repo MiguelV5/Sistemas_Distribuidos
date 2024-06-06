@@ -3,14 +3,15 @@ from shared import constants
 import logging
 import csv
 import io
-import signal
+from shared.monitorable_process import MonitorableProcess
 
 TITLE_IDX = 0
 AUTHORS_IDX = 2
 REVIEW_COUNT_IDX = 1
 
-class Generator:
+class Generator(MonitorableProcess):
     def __init__(self, input_exchange, output_exchange, input_queue, output_queue):
+        super().__init__()
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue
@@ -20,11 +21,6 @@ class Generator:
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue])
         self.response_msg = "[Q3 Results]:  (Title, Reviews, Authors)"
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-        
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down Q3 Result Generator")
-        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue, self.__generate_query3_result)

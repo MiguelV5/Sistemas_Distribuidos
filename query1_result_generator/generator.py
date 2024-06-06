@@ -1,10 +1,11 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
-import signal
 from shared import constants
+from shared.monitorable_process import MonitorableProcess
 
-class Generator:
+class Generator(MonitorableProcess):
     def __init__(self, input_exchange_name: str, output_exchange_name: str, input_queue_name: str, output_queue_name: str):
+        super().__init__()
         self.output_queue = output_queue_name
         self.results_msg = "[Q1 Results]:  (Title, Authors, Publisher, Publication Year)"
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=output_exchange_name, 
@@ -12,11 +13,6 @@ class Generator:
                                                          input_exchange_name=input_exchange_name, 
                                                          input_queues_to_recv_from=[input_queue_name])
         self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__get_results)
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down Q1 Result Generator")
-        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler.start_consuming()

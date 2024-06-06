@@ -1,7 +1,5 @@
 name: tp1
 services:
-
-
   rabbitmq:
     container_name: rabbitmq
     build:
@@ -18,7 +16,6 @@ services:
       retries: 5
       start_period: 20s
 
-  
   server:
     container_name: server
     image: server:latest
@@ -38,7 +35,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-
 
   client:
     container_name: client
@@ -63,7 +59,6 @@ services:
         condition: service_started
 
   # ================================================================
-
 
   book_sanitizer:
     container_name: book_sanitizer
@@ -102,7 +97,6 @@ services:
       rabbitmq:
         condition: service_healthy
 
-
   decade_preprocessor:
     container_name: decade_preprocessor
     image: decade_preprocessor:latest
@@ -125,7 +119,6 @@ services:
       rabbitmq:
         condition: service_healthy
 
-
   review_sanitizer:
     container_name: review_sanitizer
     image: review_sanitizer:latest
@@ -146,7 +139,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-
 
   merger_1:
     container_name: merger_1
@@ -213,7 +205,6 @@ services:
 
   # ================================================================
 
-
   filter_of_books_by_year_and_genre:
     container_name: filter_of_books_by_year_and_genre
     image: filter_of_books_by_year_and_genre:latest
@@ -234,7 +225,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      
+
   filter_of_books_by_title:
     container_name: filter_of_books_by_title
     image: filter_of_books_by_title:latest
@@ -274,7 +265,6 @@ services:
 
   # ================================================================
 
-
   author_expander:
     container_name: author_expander
     image: author_expander:latest
@@ -295,7 +285,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-
 
   counter_of_decades_per_author_1:
     container_name: counter_of_decades_per_author_1
@@ -429,7 +418,6 @@ services:
 
   # ================================================================
 
-
   filter_of_compact_reviews_by_decade:
     container_name: filter_of_compact_reviews_by_decade
     image: filter_of_compact_reviews_by_decade:latest
@@ -452,7 +440,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-
 
   counter_of_reviews_per_book_1:
     container_name: counter_of_reviews_per_book_1
@@ -549,7 +536,6 @@ services:
 
   # ================================================================
 
-
   sorter_of_books_by_review_count:
     container_name: sorter_of_books_by_review_count
     image: sorter_of_books_by_review_count:latest
@@ -588,7 +574,6 @@ services:
         condition: service_healthy
 
   # ================================================================
-
 
   filter_of_merged_reviews_by_book_genre:
     container_name: filter_of_merged_reviews_by_book_genre
@@ -664,9 +649,56 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-        
-  # ================================================================
 
+  health_checker_1:
+    container_name: health_checker_1
+    image: health_checker:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  health_checker_2:
+    container_name: health_checker_2
+    image: health_checker:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  health_checker_3:
+    container_name: health_checker_3
+    image: health_checker:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # ================================================================
 
 networks:
   testing_net:
@@ -674,4 +706,3 @@ networks:
       driver: default
       config:
         - subnet: 172.25.125.0/24
-

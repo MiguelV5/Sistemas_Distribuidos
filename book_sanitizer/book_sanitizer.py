@@ -1,9 +1,9 @@
 from shared.mq_connection_handler import MQConnectionHandler
-import signal
 import logging
 import csv
 import io
 from shared import constants
+from shared.monitorable_process import MonitorableProcess
 
 TITLE_IDX = 0
 AUTHORS_IDX = 2
@@ -12,9 +12,10 @@ PUBLISHED_DATE_IDX = 6
 CATEGORIES_IDX = 8
 REQUIRED_SIZE_OF_ROW = 10
 
-class BookSanitizer:
+class BookSanitizer(MonitorableProcess):
 
     def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue: str):
+        super().__init__()
         self.output_queue = output_queue
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
                                                          {output_queue: [output_queue]},
@@ -22,11 +23,6 @@ class BookSanitizer:
                                                          [input_queue])
         
         self.mq_connection_handler.setup_callback_for_input_queue(input_queue, self.__sanitize_batch_of_books)
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down BookSanitizer")
-        self.mq_connection_handler.close_connection()
 
 
     def __sanitize_batch_of_books(self, ch, method, properties, body):

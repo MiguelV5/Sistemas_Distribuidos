@@ -571,6 +571,27 @@ add_query5_processes() {
 " >> docker-compose.yaml
 }
 
+add_health_checkers(){
+  for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
+    echo "
+  health_checker_$i:
+    container_name: health_checker_$i
+    image: health_checker:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy" >> docker-compose.yaml
+  done
+}
+
 
 add_network() {
     echo "
@@ -587,6 +608,8 @@ check_params() {
     # C_DEC_PA_WORKERS: Number of [Counters of Decades Per Author] Processes
     # C_REV_PB_WORKERS: Number of [Counters of Reviews Per Book] Processes
     # MERGER_WORKERS: Number of [Merger] Processes
+    # HEALTH_CHECKERS: Number of [Health Checker] Processes
+
     if [ -z "$C_DEC_PA_WORKERS" ]; then
         echo "Using default values for C_DEC_PA_WORKERS=1"
         export C_DEC_PA_WORKERS=1
@@ -601,9 +624,14 @@ check_params() {
         echo "Using default values for MERGER_WORKERS=1"
         export MERGER_WORKERS=1
     fi
+
+    if [ -z "$HEALTH_CHECKERS" ]; then
+        echo "Using default values for HEALTH_CHECKERS=1"
+        export HEALTH_CHECKERS=1
+    fi
     
     local MAX_WORKERS=5
-    if [ $C_DEC_PA_WORKERS -gt $MAX_WORKERS ] || [ $C_REV_PB_WORKERS -gt $MAX_WORKERS ] || [ $MERGER_WORKERS -gt $MAX_WORKERS ]; then
+    if [ $C_DEC_PA_WORKERS -gt $MAX_WORKERS ] || [ $C_REV_PB_WORKERS -gt $MAX_WORKERS ] || [ $MERGER_WORKERS -gt $MAX_WORKERS ] || [ $HEALTH_CHECKERS -gt $MAX_WORKERS ] ; then
         echo "The maximum number of workers is $MAX_WORKERS"
         exit 1
     fi
@@ -627,6 +655,7 @@ add_query2_processes
 add_query3_processes
 add_query4_processes
 add_query5_processes
+add_health_checkers
 add_network
 
 echo ">>>   Successfully generated docker-compose.yaml   <<<"

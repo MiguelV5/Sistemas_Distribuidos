@@ -1,5 +1,5 @@
 FROM python:3.11-slim
-RUN pip install --upgrade pip && pip3 install pika
+RUN pip install --upgrade pip && pip3 install pika && pip3 install docker
 
 COPY counter_of_reviews_per_book /
 COPY shared /shared

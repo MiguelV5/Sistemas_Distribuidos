@@ -1,9 +1,9 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
-import signal
 from shared import constants
 import csv
 import io
+from shared.monitorable_process import MonitorableProcess
 
 
 TITLE_IDX = 0
@@ -13,7 +13,7 @@ YEAR_IDX = 3
 CATEGORIES_IDX = 4
 
 
-class FilterByGenreAndYear:
+class FilterByGenreAndYear(MonitorableProcess):
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
@@ -22,6 +22,7 @@ class FilterByGenreAndYear:
                  min_year_to_filter: int, 
                  max_year_to_filter: int,
                  genre_to_filter: str):
+        super().__init__()
         self.output_queue = output_queue_name
         self.min_year_to_filter = int(min_year_to_filter)
         self.max_year_to_filter = int(max_year_to_filter)
@@ -33,11 +34,6 @@ class FilterByGenreAndYear:
             input_queues_to_recv_from=[input_queue_name]
         )
         self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__filter_books_by_year_and_genre)
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down FilterByGenreAndYear")
-        self.mq_connection_handler.close_connection()
         
             
     def __filter_books_by_year_and_genre(self, ch, method, properties, body):

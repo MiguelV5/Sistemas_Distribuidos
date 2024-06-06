@@ -1,22 +1,18 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
-import signal
 from shared import constants
+from shared.monitorable_process import MonitorableProcess
 
 
-class CounterOfDecadesPerAuthor:
+class CounterOfDecadesPerAuthor(MonitorableProcess):
     def __init__(self, input_exchange, output_exchange, input_queue_of_authors, output_queue_of_authors):
+        super().__init__()
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_authors = input_queue_of_authors
         self.output_queue_of_authors = output_queue_of_authors
         self.mq_connection_handler = None
         self.authors_decades = {}
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down CounterOfDecadesPerAuthor")
-        self.mq_connection_handler.close_connection()
         
         
     def start(self):

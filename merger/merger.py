@@ -3,7 +3,7 @@ import logging
 import io
 import csv
 from shared import constants
-import signal
+from shared.monitorable_process import MonitorableProcess
 
 
 BOOK_TITLE_IDX = 0
@@ -15,7 +15,7 @@ REVIEW_TITLE_IDX = 0
 REVIEW_SCORE_IDX = 1
 REVIEW_TEXT_IDX = 2
 
-class Merger:
+class Merger(MonitorableProcess):
     def __init__(self, input_exchange_name_reviews: str,
                  input_exchange_name_books: str,
                  output_exchange_name: str,
@@ -23,6 +23,7 @@ class Merger:
                  input_queue_name_books: str,
                  output_queue_name_compact_reviews: str,
                  output_queue_name_full_reviews: str):
+        super().__init__()
         self.input_exchange_name_reviews = input_exchange_name_reviews
         self.input_exchange_name_books = input_exchange_name_books
         self.output_exchange_name = output_exchange_name
@@ -34,11 +35,6 @@ class Merger:
         self.mq_connection_handler = None
         self.book_data = {}
         self.reviews_buffer = []
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down Merger")
-        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name,

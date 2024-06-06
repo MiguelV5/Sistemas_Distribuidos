@@ -1,10 +1,10 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
-import signal
 from shared import constants
+from shared.monitorable_process import MonitorableProcess
 
 
-class FilterOfAuthorsByDecade:
+class FilterOfAuthorsByDecade(MonitorableProcess):
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
@@ -12,17 +12,13 @@ class FilterOfAuthorsByDecade:
                  output_queue_name: str, 
                  min_decades_to_filter: int
                  ):
+        super().__init__()
         self.input_exchange_name = input_exchange_name
         self.output_exchange_name = output_exchange_name
         self.input_queue_name = input_queue_name
         self.output_queue_name = output_queue_name
         self.min_decades_to_filter = min_decades_to_filter
         self.mq_connection_handler = None
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down FilterOfAuthorsByDecade")
-        self.mq_connection_handler.close_connection()
         
     def start(self):
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange_name, 

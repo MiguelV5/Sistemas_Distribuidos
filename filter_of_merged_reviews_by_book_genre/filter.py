@@ -1,16 +1,16 @@
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
-import signal
 from shared import constants
 import csv
 import io
+from shared.monitorable_process import MonitorableProcess
 
 
 TITLE_IDX = 0
 CATEGORIES_IDX = 1
 TEXT_IDX = 2
 
-class FilterReviewByBookGenre:
+class FilterReviewByBookGenre(MonitorableProcess):
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
@@ -18,6 +18,7 @@ class FilterReviewByBookGenre:
                  output_queue_name: str, 
                  genre_to_filter: str,
                  num_of_input_workers: int):
+        super().__init__()
         self.output_queue = output_queue_name
         self.genre_to_filter = genre_to_filter
         self.eofs_received = 0
@@ -29,11 +30,6 @@ class FilterReviewByBookGenre:
             input_queues_to_recv_from=[input_queue_name]
         )
         self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__filter_reviews_by_book_genre)
-        signal.signal(signal.SIGTERM, self.__handle_shutdown)
-
-    def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down FilterReviewByBookGenre")
-        self.mq_connection_handler.close_connection()
         
             
     def __filter_reviews_by_book_genre(self, ch, method, properties, body):
