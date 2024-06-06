@@ -44,6 +44,8 @@ add_server() {
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -95,6 +97,8 @@ add_preprocessors() {
       - OUTPUT_QUEUE_OF_BOOKS=sanitized_books_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -114,6 +118,8 @@ add_preprocessors() {
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_FILTER=towards_filter__preprocessed_books_with_year_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -139,6 +145,8 @@ add_preprocessors() {
     echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$MERGER_WORKERS
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -161,6 +169,8 @@ add_preprocessors() {
       echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$MERGER_WORKERS
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -187,6 +197,8 @@ add_mergers() {
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -216,6 +228,8 @@ add_query1_processes() {
       - GENRE=Computers
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -235,6 +249,8 @@ add_query1_processes() {
       - TITLE_KEYWORD=distributed
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -253,6 +269,8 @@ add_query1_processes() {
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -281,6 +299,8 @@ add_query2_processes() {
       echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$C_DEC_PA_WORKERS
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -302,6 +322,8 @@ add_query2_processes() {
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -324,6 +346,8 @@ add_query2_processes() {
       - MIN_DECADES_TO_FILTER=10
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -345,6 +369,8 @@ add_query2_processes() {
       - FILTERS_QUANTITY=$C_DEC_PA_WORKERS
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -375,6 +401,8 @@ add_query3_processes() {
       echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$C_REV_PB_WORKERS
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -396,6 +424,8 @@ add_query3_processes() {
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -419,6 +449,8 @@ add_query3_processes() {
       - MIN_REVIEWS=500
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -437,6 +469,8 @@ add_query3_processes() {
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -463,6 +497,8 @@ add_query4_processes() {
       - TOP_OF_BOOKS=10
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -481,6 +517,8 @@ add_query4_processes() {
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -508,6 +546,8 @@ add_query5_processes() {
       - NUM_OF_INPUT_WORKERS=$MERGER_WORKERS
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -526,6 +566,8 @@ add_query5_processes() {
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -545,6 +587,8 @@ add_query5_processes() {
       - QUANTILE=0.9
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -563,6 +607,8 @@ add_query5_processes() {
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -572,7 +618,7 @@ add_query5_processes() {
 }
 
 add_health_checkers(){
-  for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
+  for ((i=1; i<=$HEALTH_CHECKERS; i++)); do
     echo "
   health_checker_$i:
     container_name: health_checker_$i
@@ -584,6 +630,8 @@ add_health_checkers(){
       - LOGGING_LEVEL=INFO
     networks:
       - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
