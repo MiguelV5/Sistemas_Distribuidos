@@ -15,40 +15,40 @@ class HealthChecker(MonitorableProcess):
         self.socket_connection_handler = None
        
     def start(self):
-        client = docker.from_env()
-        containers = client.containers.list()
-        logging.info(f"Containers found: {containers}")
-        
+        # Read container names from file containers_data.txt
+        containers = []
+        with open('/containers_data.txt', 'r') as file:
+            containers = file.read().splitlines()
         
         for container in containers:
             p = Process(target=self.__check_container_health, args=(container,))
             self.joinable_processes.append(p)
             p.start()
             
-    def __check_container_health(self, container: docker.models.containers.Container):
+    def __check_container_health(self, container: str):
         while True:
             try:
                 container_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                logging.info(f"Connecting to container {container.name}")
-                container_socket.connect((container.name, 5000))
-                container_socket.settimeout(0.5)
+                logging.debug(f"Connecting to container {container}")
+                container_socket.connect((container, 5000))
+                container_socket.settimeout(1)
                 self.socket_connection_handler = SocketConnectionHandler(container_socket)
                 self.socket_connection_handler.send_message("health")
                 response = self.socket_connection_handler.read_message()
                 if response != "ok":
-                    logging.error(f"Container {container.name} is not healthy")
+                    logging.error(f"Container {container} is not healthy")
                     self.__revive_container(container)
                 else:
-                    logging.info(f"Container {container.name} is healthy")
+                    logging.debug(f"Container {container} is healthy")
             except Exception as e:
-                logging.error(f"Failed to connect to container {container.name}: {str(e)}")
+                logging.error(f"Failed to connect to container {container}: {str(e)}")
                 self.__revive_container(container)
             
-            time.sleep(1)
+            time.sleep(5)
     
-    def __revive_container(self, container: docker.models.containers.Container):
-        container.start()
-        logging.info(f"Container {container.name} has been restarted")
+    def __revive_container(self, container: str):
+        docker.APIClient().start(container)
+        logging.info(f"Container {container} has been restarted")
         
         
         

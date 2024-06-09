@@ -632,6 +632,7 @@ add_health_checkers(){
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./containers_data.txt:/containers_data.txt
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml

@@ -33,6 +33,8 @@ docker-image-build:
 	docker build -f ./filter_of_books_by_sentiment_quantile/Dockerfile -t "filter_of_books_by_sentiment_quantile:latest" .
 	docker build -f ./query5_result_generator/Dockerfile -t "query5_result_generator:latest" .
 
+	docker build -f ./health_checker/Dockerfile -t "health_checker:latest" .
+
 .PHONY: docker-image-build
 
 docker-compose-up: docker-image-build
