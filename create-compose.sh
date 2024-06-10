@@ -11,7 +11,7 @@ add_rabbitmq() {
   rabbitmq:
     container_name: rabbitmq
     build:
-      context: ./rabbitmq
+      context: ./src/rabbitmq
       dockerfile: Dockerfile
     networks:
       - testing_net
@@ -82,10 +82,10 @@ add_client() {
 
 
 add_preprocessors() {
-    echo "book_sanitizer" > health_checker/monitorable_controllers.txt
-    echo "year_preprocessor" >> health_checker/monitorable_controllers.txt
-    echo "decade_preprocessor" >> health_checker/monitorable_controllers.txt
-    echo "review_sanitizer" >> health_checker/monitorable_controllers.txt
+    echo "book_sanitizer" > src/controllers/health_checker/monitorable_controllers.txt
+    echo "year_preprocessor" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "decade_preprocessor" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "review_sanitizer" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   book_sanitizer:
     container_name: book_sanitizer
@@ -187,7 +187,7 @@ add_preprocessors() {
 
 add_mergers() {
     for ((i=1; i<=$WORKERS; i++)); do
-        echo "merger_$i" >> health_checker/monitorable_controllers.txt
+        echo "merger_$i" >> src/controllers/health_checker/monitorable_controllers.txt
         echo "
   merger_$i:
     container_name: merger_$i
@@ -221,9 +221,9 @@ add_mergers() {
 
 
 add_query1_processes() {
-    echo "filter_of_books_by_year_and_genre" >> health_checker/monitorable_controllers.txt
-    echo "filter_of_books_by_title" >> health_checker/monitorable_controllers.txt
-    echo "query1_result_generator" >> health_checker/monitorable_controllers.txt
+    echo "filter_of_books_by_year_and_genre" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "filter_of_books_by_title" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query1_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_books_by_year_and_genre:
     container_name: filter_of_books_by_year_and_genre
@@ -298,7 +298,7 @@ add_query1_processes() {
 
 
 add_query2_processes() {
-    echo "author_expander" >> health_checker/monitorable_controllers.txt
+    echo "author_expander" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   author_expander:
     container_name: author_expander
@@ -326,7 +326,7 @@ add_query2_processes() {
 " >> docker-compose.yaml
 
     for ((i=1; i<=$WORKERS; i++)); do
-        echo "counter_of_decades_per_author_$i" >> health_checker/monitorable_controllers.txt
+        echo "counter_of_decades_per_author_$i" >> src/controllers/health_checker/monitorable_controllers.txt
         echo "
   counter_of_decades_per_author_$i:
     container_name: counter_of_decades_per_author_$i
@@ -352,7 +352,7 @@ add_query2_processes() {
     done
 
     for ((i=1; i<=$WORKERS; i++)); do
-        echo "filter_of_authors_by_decade_$i" >> health_checker/monitorable_controllers.txt
+        echo "filter_of_authors_by_decade_$i" >> src/controllers/health_checker/monitorable_controllers.txt
         echo "
   filter_of_authors_by_decade_$i:
     container_name: filter_of_authors_by_decade_$i
@@ -378,7 +378,7 @@ add_query2_processes() {
         condition: service_healthy" >> docker-compose.yaml
     done
     
-    echo "query2_result_generator" >> health_checker/monitorable_controllers.txt
+    echo "query2_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   query2_result_generator:
     container_name: query2_result_generator
@@ -408,7 +408,7 @@ add_query2_processes() {
 
 
 add_query3_processes() {
-    echo "filter_of_compact_reviews_by_decade" >> health_checker/monitorable_controllers.txt
+    echo "filter_of_compact_reviews_by_decade" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_compact_reviews_by_decade:
     container_name: filter_of_compact_reviews_by_decade
@@ -438,7 +438,7 @@ add_query3_processes() {
 " >> docker-compose.yaml
 
     for ((i=1; i<=$WORKERS; i++)); do
-        echo "counter_of_reviews_per_book_$i" >> health_checker/monitorable_controllers.txt
+        echo "counter_of_reviews_per_book_$i" >> src/controllers/health_checker/monitorable_controllers.txt
         echo "
   counter_of_reviews_per_book_$i:
     container_name: counter_of_reviews_per_book_$i
@@ -463,8 +463,8 @@ add_query3_processes() {
         condition: service_healthy" >> docker-compose.yaml
     done
 
-    echo "filter_of_books_by_review_count" >> health_checker/monitorable_controllers.txt
-    echo "query3_result_generator" >> health_checker/monitorable_controllers.txt
+    echo "filter_of_books_by_review_count" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query3_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_books_by_review_count:
     container_name: filter_of_books_by_review_count
@@ -517,8 +517,8 @@ add_query3_processes() {
 
 
 add_query4_processes() {
-    echo "sorter_of_books_by_review_count" >> health_checker/monitorable_controllers.txt
-    echo "query4_result_generator" >> health_checker/monitorable_controllers.txt
+    echo "sorter_of_books_by_review_count" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query4_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   sorter_of_books_by_review_count:
     container_name: sorter_of_books_by_review_count
@@ -569,10 +569,10 @@ add_query4_processes() {
 
 
 add_query5_processes() {
-    echo "filter_of_merged_reviews_by_book_genre" >> health_checker/monitorable_controllers.txt
-    echo "sentiment_analyzer" >> health_checker/monitorable_controllers.txt
-    echo "filter_of_books_by_sentiment_quantile" >> health_checker/monitorable_controllers.txt
-    echo "query5_result_generator" >> health_checker/monitorable_controllers.txt
+    echo "filter_of_merged_reviews_by_book_genre" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "sentiment_analyzer" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "filter_of_books_by_sentiment_quantile" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query5_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_merged_reviews_by_book_genre:
     container_name: filter_of_merged_reviews_by_book_genre
@@ -667,7 +667,7 @@ add_query5_processes() {
 
 add_health_checkers(){
   for ((i=1; i<=$HEALTH_CHECKERS; i++)); do
-    echo "health_checker_$i" >> health_checker/monitorable_controllers.txt
+    echo "health_checker_$i" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   health_checker_$i:
     container_name: health_checker_$i
