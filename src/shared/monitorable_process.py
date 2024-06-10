@@ -57,6 +57,6 @@ class MonitorableProcess:
         except FileNotFoundError:
             return {}
         
-    def save_state_file(self, state: dict):
+    def save_state_file(self):
         writer = AtomicWriter(self.state_file_path)
-        writer.write(json.dumps(state))                          
+        writer.write(json.dumps(self.state))                          
