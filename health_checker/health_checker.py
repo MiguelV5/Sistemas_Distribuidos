@@ -1,4 +1,3 @@
-import socket
 import docker
 import docker.models
 import docker.models.containers
@@ -9,46 +8,52 @@ from multiprocessing import Process
 import time
 from shared.monitorable_process import MonitorableProcess
 
+# Not an env var due to docker pathing within image
+CONTROLLERS_NAMES_PATH = '/monitorable_controllers.txt'
+HEALTH_CHECK_PORT = 5000
+
 class HealthChecker(MonitorableProcess):
-    def __init__(self):
+    def __init__(self, health_check_interval: int, health_check_timeout: int, worker_id: int):
         super().__init__()
+        self.health_check_interval = health_check_interval
+        self.health_check_timeout = health_check_timeout
+        self.worker_name = f"health_checker_{worker_id}"
         self.socket_connection_handler = None
        
     def start(self):
-        # Read container names from file containers_data.txt
-        containers = []
-        with open('/containers_data.txt', 'r') as file:
-            containers = file.read().splitlines()
-        
-        for container in containers:
-            p = Process(target=self.__check_container_health, args=(container,))
+        controllers = []
+        with open(CONTROLLERS_NAMES_PATH, 'r') as file:
+            controllers = file.read().splitlines()
+        for controller in controllers:
+            if controller == self.worker_name: 
+                continue
+            p = Process(target=self.__check_controllers_health, args=(controller,))
             self.joinable_processes.append(p)
             p.start()
             
-    def __check_container_health(self, container: str):
+
+    def __check_controllers_health(self, container: str):
         while True:
             try:
-                container_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 logging.debug(f"Connecting to container {container}")
-                container_socket.connect((container, 5000))
-                container_socket.settimeout(1)
-                self.socket_connection_handler = SocketConnectionHandler(container_socket)
+                self.socket_connection_handler = SocketConnectionHandler.connect_and_create(container, HEALTH_CHECK_PORT, self.health_check_timeout)
+
                 self.socket_connection_handler.send_message("health")
                 response = self.socket_connection_handler.read_message()
                 if response != "ok":
                     logging.error(f"Container {container} is not healthy")
-                    self.__revive_container(container)
+                    self.__revive_controller(container)
                 else:
                     logging.debug(f"Container {container} is healthy")
             except Exception as e:
                 logging.error(f"Failed to connect to container {container}: {str(e)}")
-                self.__revive_container(container)
+                self.__revive_controller(container)
             
-            time.sleep(5)
+            time.sleep(self.health_check_interval)
     
-    def __revive_container(self, container: str):
-        docker.APIClient().start(container)
-        logging.info(f"Container {container} has been restarted")
+    def __revive_controller(self, controller: str):
+        docker.APIClient().start(controller)
+        logging.info(f"Container {controller} has been restarted")
         
         
         

@@ -1,7 +1,6 @@
 import logging
 from shared.socket_connection_handler import SocketConnectionHandler
 from shared import constants
-import socket
 import signal
 
 
@@ -26,9 +25,8 @@ class Client:
     def start(self):
         logging.info("Starting client")
         try:
-            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_socket.connect((self.server_ip, self.server_port))           
-            self.connection_handler = SocketConnectionHandler(server_socket)
+            self.connection_handler = SocketConnectionHandler.connect_and_create(self.server_ip, self.server_port)
+
             logging.info("Connected to server at {}:{}".format(self.server_ip, self.server_port))
             self.send_file_data(self.books_file_path, "books")
             self.send_file_data(self.reviews_file_path, "reviews")       

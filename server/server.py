@@ -94,7 +94,7 @@ class Server:
                                                     None,
                                                     None)
         try:
-            connection_handler = SocketConnectionHandler(self.client_sock)
+            connection_handler = SocketConnectionHandler.create_from_socket(self.client_sock)
             self.finished_with_client_data = False
             while not self.finished_with_client_data:  
                 message = connection_handler.read_message()

@@ -1,10 +1,24 @@
 import logging
+import socket
 from shared.stream import Stream
 
 class SocketConnectionHandler:
     
     def __init__(self, sock):
         self._stream = Stream(sock)
+
+    @classmethod
+    def create_from_socket(cls, sock):
+        return cls(sock)
+    
+    @classmethod
+    def connect_and_create(cls, host: str, port: int, timeout: int = None):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host, port))
+        if timeout:
+            sock.settimeout(timeout)
+        return cls(sock)
+
         
     def send_message(self, message: str):
         """
