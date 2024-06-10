@@ -651,9 +651,9 @@ add_health_checkers(){
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - HEALTH_CHECK_INTERVAL = 5
-      - HEALTH_CHECK_TIMEOUT = 1
-      - WORKER_ID = $i
+      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_TIMEOUT=1
+      - WORKER_ID=$i
     networks:
       - testing_net
     volumes:
