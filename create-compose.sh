@@ -11,7 +11,7 @@ add_rabbitmq() {
   rabbitmq:
     container_name: rabbitmq
     build:
-      context: ./rabbitmq
+      context: ./src/rabbitmq
       dockerfile: Dockerfile
     networks:
       - testing_net
@@ -82,6 +82,10 @@ add_client() {
 
 
 add_preprocessors() {
+    echo "book_sanitizer" > src/controllers/health_checker/monitorable_controllers.txt
+    echo "year_preprocessor" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "decade_preprocessor" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "review_sanitizer" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   book_sanitizer:
     container_name: book_sanitizer
@@ -95,6 +99,7 @@ add_preprocessors() {
       - OUTPUT_EXCHANGE=sanitized_books_ex
       - INPUT_QUEUE_OF_BOOKS=scraped_books_q
       - OUTPUT_QUEUE_OF_BOOKS=sanitized_books_q
+      - WORKER_NAME=book_sanitizer
     networks:
       - testing_net
     volumes:
@@ -116,6 +121,7 @@ add_preprocessors() {
       - INPUT_QUEUE_OF_BOOKS=sanitized_books_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_PREPROC=towards_preprocessor__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_FILTER=towards_filter__preprocessed_books_with_year_q
+      - WORKER_NAME=year_preprocessor
     networks:
       - testing_net
     volumes:
@@ -139,10 +145,11 @@ add_preprocessors() {
       - OUTPUT_EXCHANGE=preprocessed_books_with_decade_ex
       - INPUT_QUEUE_OF_BOOKS=towards_preprocessor__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_EXPANDER=towards_expander__preprocessed_books_with_decade_q" >> docker-compose.yaml
-    for ((i=1; i<=$MERGER_WORKERS; i++)); do
+    for ((i=1; i<=$WORKERS; i++)); do
         echo "      - OUTPUT_QUEUE_OF_BOOKS_$i=preprocessed_books_with_decade_q_$i" >> docker-compose.yaml
     done
-    echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$MERGER_WORKERS
+    echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
+      - WORKER_NAME=decade_preprocessor
     networks:
       - testing_net
     volumes:
@@ -163,10 +170,11 @@ add_preprocessors() {
       - INPUT_EXCHANGE=scraped_data_ex
       - OUTPUT_EXCHANGE=sanitized_reviews_ex
       - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q" >> docker-compose.yaml
-      for ((i=1; i<=$MERGER_WORKERS; i++)); do
+      for ((i=1; i<=$WORKERS; i++)); do
           echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=sanitized_reviews_q_$i" >> docker-compose.yaml
       done
-      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$MERGER_WORKERS
+      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
+      - WORKER_NAME=review_sanitizer
     networks:
       - testing_net
     volumes:
@@ -178,7 +186,8 @@ add_preprocessors() {
 }
 
 add_mergers() {
-    for ((i=1; i<=$MERGER_WORKERS; i++)); do
+    for ((i=1; i<=$WORKERS; i++)); do
+        echo "merger_$i" >> src/controllers/health_checker/monitorable_controllers.txt
         echo "
   merger_$i:
     container_name: merger_$i
@@ -195,6 +204,8 @@ add_mergers() {
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_$i
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - WORKER_NAME=merger_$i
+      - WORKER_ID=$i
     networks:
       - testing_net
     volumes:
@@ -210,6 +221,9 @@ add_mergers() {
 
 
 add_query1_processes() {
+    echo "filter_of_books_by_year_and_genre" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "filter_of_books_by_title" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query1_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_books_by_year_and_genre:
     container_name: filter_of_books_by_year_and_genre
@@ -226,6 +240,7 @@ add_query1_processes() {
       - MIN_YEAR=2000
       - MAX_YEAR=2023
       - GENRE=Computers
+      - WORKER_NAME=filter_of_books_by_year_and_genre
     networks:
       - testing_net
     volumes:
@@ -247,6 +262,7 @@ add_query1_processes() {
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_year_and_genre_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
       - TITLE_KEYWORD=distributed
+      - WORKER_NAME=filter_of_books_by_title
     networks:
       - testing_net
     volumes:
@@ -267,6 +283,7 @@ add_query1_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query1_result_generator
     networks:
       - testing_net
     volumes:
@@ -281,6 +298,7 @@ add_query1_processes() {
 
 
 add_query2_processes() {
+    echo "author_expander" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   author_expander:
     container_name: author_expander
@@ -293,10 +311,11 @@ add_query2_processes() {
       - INPUT_EXCHANGE=preprocessed_books_with_decade_ex
       - OUTPUT_EXCHANGE=expanded_authors_ex
       - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q" >> docker-compose.yaml
-      for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
+      for ((i=1; i<=$WORKERS; i++)); do
           echo "      - OUTPUT_QUEUE_OF_AUTHORS_$i=expanded_authors_q_$i" >> docker-compose.yaml
       done
-      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$C_DEC_PA_WORKERS
+      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
+      - WORKER_NAME=author_expander
     networks:
       - testing_net
     volumes:
@@ -306,7 +325,8 @@ add_query2_processes() {
         condition: service_healthy
 " >> docker-compose.yaml
 
-    for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
+    for ((i=1; i<=$WORKERS; i++)); do
+        echo "counter_of_decades_per_author_$i" >> src/controllers/health_checker/monitorable_controllers.txt
         echo "
   counter_of_decades_per_author_$i:
     container_name: counter_of_decades_per_author_$i
@@ -320,6 +340,8 @@ add_query2_processes() {
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
+      - WORKER_NAME=counter_of_decades_per_author_$i
+      - WORKER_ID=$i
     networks:
       - testing_net
     volumes:
@@ -329,8 +351,9 @@ add_query2_processes() {
         condition: service_healthy" >> docker-compose.yaml
     done
 
-    for ((i=1; i<=$C_DEC_PA_WORKERS; i++)); do
-    echo "
+    for ((i=1; i<=$WORKERS; i++)); do
+        echo "filter_of_authors_by_decade_$i" >> src/controllers/health_checker/monitorable_controllers.txt
+        echo "
   filter_of_authors_by_decade_$i:
     container_name: filter_of_authors_by_decade_$i
     image: filter_of_authors_by_decade:latest
@@ -344,6 +367,8 @@ add_query2_processes() {
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
+      - WORKER_NAME=filter_of_authors_by_decade_$i
+      - WORKER_ID=$i
     networks:
       - testing_net
     volumes:
@@ -352,7 +377,8 @@ add_query2_processes() {
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
     done
-      
+    
+    echo "query2_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   query2_result_generator:
     container_name: query2_result_generator
@@ -366,7 +392,8 @@ add_query2_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
-      - FILTERS_QUANTITY=$C_DEC_PA_WORKERS
+      - FILTERS_QUANTITY=$WORKERS
+      - WORKER_NAME=query2_result_generator
     networks:
       - testing_net
     volumes:
@@ -381,6 +408,7 @@ add_query2_processes() {
 
 
 add_query3_processes() {
+    echo "filter_of_compact_reviews_by_decade" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_compact_reviews_by_decade:
     container_name: filter_of_compact_reviews_by_decade
@@ -393,12 +421,13 @@ add_query3_processes() {
       - INPUT_EXCHANGE=merged_reviews_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
-      - NUM_OF_INPUT_WORKERS=$MERGER_WORKERS
+      - NUM_OF_INPUT_WORKERS=$WORKERS
       - DECADE_TO_FILTER=1990" >> docker-compose.yaml
-      for ((i=1; i<=$C_REV_PB_WORKERS; i++)); do
+      for ((i=1; i<=$WORKERS; i++)); do
           echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=compact_reviews_filtered_by_decade_q_$i" >> docker-compose.yaml
       done
-      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$C_REV_PB_WORKERS
+      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
+      - WORKER_NAME=filter_of_compact_reviews_by_decade
     networks:
       - testing_net
     volumes:
@@ -408,7 +437,8 @@ add_query3_processes() {
         condition: service_healthy
 " >> docker-compose.yaml
 
-    for ((i=1; i<=$C_REV_PB_WORKERS; i++)); do
+    for ((i=1; i<=$WORKERS; i++)); do
+        echo "counter_of_reviews_per_book_$i" >> src/controllers/health_checker/monitorable_controllers.txt
         echo "
   counter_of_reviews_per_book_$i:
     container_name: counter_of_reviews_per_book_$i
@@ -422,6 +452,8 @@ add_query3_processes() {
       - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_$i
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - WORKER_NAME=counter_of_reviews_per_book_$i
+      - WORKER_ID=$i
     networks:
       - testing_net
     volumes:
@@ -431,6 +463,8 @@ add_query3_processes() {
         condition: service_healthy" >> docker-compose.yaml
     done
 
+    echo "filter_of_books_by_review_count" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query3_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_books_by_review_count:
     container_name: filter_of_books_by_review_count
@@ -445,8 +479,9 @@ add_query3_processes() {
       - INPUT_QUEUE_OF_BOOKS=review_count_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_QUERY3=towards_query3__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_sorter=towards_sorter__books_filtered_by_review_count_q
-      - NUM_OF_COUNTERS=$C_REV_PB_WORKERS
+      - NUM_OF_COUNTERS=$WORKERS
       - MIN_REVIEWS=500
+      - WORKER_NAME=filter_of_books_by_review_count
     networks:
       - testing_net
     volumes:
@@ -467,6 +502,7 @@ add_query3_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=towards_query3__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query3_result_generator
     networks:
       - testing_net
     volumes:
@@ -481,6 +517,8 @@ add_query3_processes() {
 
 
 add_query4_processes() {
+    echo "sorter_of_books_by_review_count" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query4_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   sorter_of_books_by_review_count:
     container_name: sorter_of_books_by_review_count
@@ -495,6 +533,7 @@ add_query4_processes() {
       - INPUT_QUEUE_OF_BOOKS=towards_sorter__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
       - TOP_OF_BOOKS=10
+      - WORKER_NAME=sorter_of_books_by_review_count
     networks:
       - testing_net
     volumes:
@@ -515,6 +554,7 @@ add_query4_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query4_result_generator
     networks:
       - testing_net
     volumes:
@@ -529,6 +569,10 @@ add_query4_processes() {
 
 
 add_query5_processes() {
+    echo "filter_of_merged_reviews_by_book_genre" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "sentiment_analyzer" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "filter_of_books_by_sentiment_quantile" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "query5_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   filter_of_merged_reviews_by_book_genre:
     container_name: filter_of_merged_reviews_by_book_genre
@@ -543,7 +587,8 @@ add_query5_processes() {
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - GENRE=fiction
-      - NUM_OF_INPUT_WORKERS=$MERGER_WORKERS
+      - NUM_OF_INPUT_WORKERS=$WORKERS
+      - WORKER_NAME=filter_of_merged_reviews_by_book_genre
     networks:
       - testing_net
     volumes:
@@ -564,6 +609,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
+      - WORKER_NAME=sentiment_analyzer
     networks:
       - testing_net
     volumes:
@@ -585,6 +631,7 @@ add_query5_processes() {
       - INPUT_QUEUE_OF_BOOKS=sentiment_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
       - QUANTILE=0.9
+      - WORKER_NAME=filter_of_books_by_sentiment_quantile
     networks:
       - testing_net
     volumes:
@@ -605,6 +652,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query5_result_generator
     networks:
       - testing_net
     volumes:
@@ -619,6 +667,7 @@ add_query5_processes() {
 
 add_health_checkers(){
   for ((i=1; i<=$HEALTH_CHECKERS; i++)); do
+    echo "health_checker_$i" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
   health_checker_$i:
     container_name: health_checker_$i
@@ -628,13 +677,20 @@ add_health_checkers(){
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
+      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_TIMEOUT=1
+      - WORKER_NAME=health_checker_$i
+      - WORKER_ID=$i
     networks:
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./containers_data.txt:/containers_data.txt
     depends_on:
       rabbitmq:
-        condition: service_healthy" >> docker-compose.yaml
+        condition: service_healthy
+      server:
+        condition: service_started" >> docker-compose.yaml
   done
 }
 
@@ -651,24 +707,12 @@ networks:
 }
 
 check_params() {
-    # C_DEC_PA_WORKERS: Number of [Counters of Decades Per Author] Processes
-    # C_REV_PB_WORKERS: Number of [Counters of Reviews Per Book] Processes
-    # MERGER_WORKERS: Number of [Merger] Processes
-    # HEALTH_CHECKERS: Number of [Health Checker] Processes
+    # WORKERS: Number of workers or replicas per process.
+    # HEALTH_CHECKERS: Number of [Health Checker] processes.
 
-    if [ -z "$C_DEC_PA_WORKERS" ]; then
-        echo "Using default values for C_DEC_PA_WORKERS=1"
-        export C_DEC_PA_WORKERS=1
-    fi
-
-    if [ -z "$C_REV_PB_WORKERS" ]; then
-        echo "Using default values for C_REV_PB_WORKERS=1"
-        export C_REV_PB_WORKERS=1
-    fi
-
-    if [ -z "$MERGER_WORKERS" ]; then
-        echo "Using default values for MERGER_WORKERS=1"
-        export MERGER_WORKERS=1
+    if [ -z "$WORKERS" ]; then
+        echo "Using default values for WORKERS=1"
+        export WORKERS=1
     fi
 
     if [ -z "$HEALTH_CHECKERS" ]; then
@@ -677,7 +721,7 @@ check_params() {
     fi
     
     local MAX_WORKERS=5
-    if [ $C_DEC_PA_WORKERS -gt $MAX_WORKERS ] || [ $C_REV_PB_WORKERS -gt $MAX_WORKERS ] || [ $MERGER_WORKERS -gt $MAX_WORKERS ] || [ $HEALTH_CHECKERS -gt $MAX_WORKERS ] ; then
+    if [ $WORKERS -gt $MAX_WORKERS ] || [ $HEALTH_CHECKERS -gt $MAX_WORKERS ] ; then
         echo "The maximum number of workers is $MAX_WORKERS"
         exit 1
     fi

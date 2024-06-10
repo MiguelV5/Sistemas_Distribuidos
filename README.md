@@ -57,22 +57,9 @@ Adicionalmente, se incluye un script de bash para creación dinámica del archiv
 (Si no se proveen valores, se toman los valores por defecto de 1 worker)
 
 ```bash
-C_DEC_PA_WORKERS=3 C_REV_PB_WORKERS=3 MERGER_WORKERS=3 HEALTH_CHECKERS=3 ./create-compose.sh
+WORKERS=3 HEALTH_CHECKERS=3 ./create-compose.sh
 ```
 
-Tambien se proveen targets adicionales (up, down, logs) para facilitar la reinserción del cliente una vez que ya finalizó el anterior.
-
-```bash
-make docker-reinsert-client
-```
-
-```bash
-make docker-reinsert-client-logs
-```
-
-```bash
-make docker-reinsert-client-down
-```
 
 ## Informe
 
