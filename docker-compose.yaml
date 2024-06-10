@@ -562,10 +562,14 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
+      - HEALTH_CHECK_INTERVAL = 5
+      - HEALTH_CHECK_TIMEOUT = 1
+      - WORKER_ID = 1
     networks:
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./containers_data.txt:/containers_data.txt
     depends_on:
       rabbitmq:
         condition: service_healthy
