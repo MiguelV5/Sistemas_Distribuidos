@@ -1,4 +1,6 @@
+import csv
 from enum import Enum
+import io
 
 class QueryMessageType(Enum):
     EOF_B = 1
@@ -50,4 +52,10 @@ class SystemMessage:
         msg = raw_msg_body.decode()
         msg_type, client_id, worker_id, payload = msg.split("|")
         return cls(SystemMessageType(int(msg_type)), int(client_id), int(worker_id), payload)
+    
+    def get_batch_iter_from_payload(self):
+        if self.msg_type == SystemMessageType.DATA:
+            return csv.reader(io.StringIO(self.payload), delimiter=',', quotechar='"')
+        else:
+            return None
     
