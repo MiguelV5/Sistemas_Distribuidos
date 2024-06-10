@@ -661,7 +661,9 @@ add_health_checkers(){
       - ./containers_data.txt:/containers_data.txt
     depends_on:
       rabbitmq:
-        condition: service_healthy" >> docker-compose.yaml
+        condition: service_healthy
+      server:
+        condition: service_started" >> docker-compose.yaml
   done
 }
 

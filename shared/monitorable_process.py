@@ -24,7 +24,6 @@ class MonitorableProcess:
         signal.signal(signal.SIGTERM, self.__handle_shutdown)
         
     def __handle_shutdown(self, signum, frame):
-        logging.info("Shutting down...")
         if self.health_check_connection_handler:
             self.health_check_connection_handler.close()
         if self.mq_connection_handler:
@@ -33,10 +32,9 @@ class MonitorableProcess:
             process.terminate()       
     
     def __accept_incoming_health_checks(self):
-        logging.info("Starting to receive health checks")
+        logging.info("[MONITORABLE] Starting to receive health checks")
         self.listening_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         current_container_name = docker.from_env().containers.get(socket.gethostname()).name
-        logging.info(f"Current container name: {current_container_name}")
         
         self.listening_socket.bind((current_container_name, HEALTH_CHECK_PORT))
         self.listening_socket.listen()

@@ -573,6 +573,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      server:
+        condition: service_started
 
 networks:
   testing_net:
