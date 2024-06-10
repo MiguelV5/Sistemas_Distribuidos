@@ -16,8 +16,9 @@ class SentimentAnalyzer(MonitorableProcess):
                  input_exchange_name: str, 
                  output_exchange_name: str, 
                  input_queue_name: str, 
-                 output_queue_name: str):
-        super().__init__()
+                 output_queue_name: str,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queue = output_queue_name
         self.polarity_accumulator = PolarityAccumulator()
         self.mq_connection_handler = MQConnectionHandler(

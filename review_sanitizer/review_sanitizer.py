@@ -14,8 +14,13 @@ REQUIRED_SIZE_OF_ROW = 10
 
 
 class ReviewSanitizer(MonitorableProcess):
-    def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queues: list[str]):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 input_queue: str, 
+                 output_exchange: str, 
+                 output_queues: list[str],
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queues = output_queues
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
                                                          {output_queue: [output_queue] for output_queue in output_queues},

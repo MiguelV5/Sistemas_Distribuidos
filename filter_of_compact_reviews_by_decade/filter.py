@@ -11,8 +11,15 @@ SCORE_IDX = 2
 DECADE_IDX = 3
 
 class FilterOfCompactReviewsByDecade(MonitorableProcess):
-    def __init__(self, input_exchange: str, output_exchange: str, input_queue_of_reviews: str, output_queues: dict[str,str], decade_to_filter:int, num_of_input_workers: int):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 output_exchange: str, 
+                 input_queue_of_reviews: str, 
+                 output_queues: dict[str,str], 
+                 decade_to_filter:int, 
+                 num_of_input_workers: int,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_reviews = input_queue_of_reviews

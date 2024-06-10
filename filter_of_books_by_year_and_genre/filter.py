@@ -21,8 +21,9 @@ class FilterByGenreAndYear(MonitorableProcess):
                  output_queue_name: str, 
                  min_year_to_filter: int, 
                  max_year_to_filter: int,
-                 genre_to_filter: str):
-        super().__init__()
+                 genre_to_filter: str,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queue = output_queue_name
         self.min_year_to_filter = int(min_year_to_filter)
         self.max_year_to_filter = int(max_year_to_filter)

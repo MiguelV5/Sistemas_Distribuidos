@@ -37,8 +37,9 @@ class SystemMessageType(Enum):
     ALIVE = 5
 
 class SystemMessage:
-    def __init__(self, msg_type: Enum, client_id: int, worker_id: int = 1, payload: str = ""):
+    def __init__(self, msg_type: Enum, client_id: int = 0, worker_id: int = 1, payload: str = ""):
         self.msg_type = msg_type
+        # defaults to 0 ONLY for health checks
         self.client_id = client_id
         # defaults to 1, as there are processes that are not replicated
         self.worker_id = worker_id

@@ -1,5 +1,5 @@
 FROM python:3.11-slim
-RUN pip install --upgrade pip && pip3 install pika && pip3 install docker
+RUN pip install --upgrade pip && pip3 install pika
 
 COPY query3_result_generator /
 COPY shared /shared

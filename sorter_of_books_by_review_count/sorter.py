@@ -9,13 +9,19 @@ TITLE_IDX = 0
 SCORES_IDX = 1
 
 class Sorter(MonitorableProcess):
-    def __init__(self, input_exchange, output_exchange, input_queue, output_queue, required_top_of_books):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 output_exchange: str, 
+                 input_queue: str, 
+                 output_queue: str, 
+                 required_top_of_books: int,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue
         self.output_queue = output_queue
-        self.required_top_of_books = int(required_top_of_books)
+        self.required_top_of_books = required_top_of_books
         self.best_books = []
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange, 
                                                          output_queues_to_bind={self.output_queue: [self.output_queue]},

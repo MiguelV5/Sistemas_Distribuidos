@@ -7,8 +7,13 @@ TITLE_IDX = 0
 SCORES_IDX = 1
 
 class Generator(MonitorableProcess):
-    def __init__(self, input_exchange, output_exchange, input_queue, output_queue):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 output_exchange: str, 
+                 input_queue: str, 
+                 output_queue: str,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue

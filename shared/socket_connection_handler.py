@@ -31,20 +31,29 @@ class SocketConnectionHandler:
         self._stream.send(message)
         
         
-    
-    def read_message(self):
+    def read_message_raw(self):
         """
-        Reads a message from the client stream.
+        Reads a message from the client stream. Returns the raw bytes read.
         """
         logging.debug("action: read_message_size | result: in_progress")
         try: 
             size_of_message = int.from_bytes(self._stream.recv(4), byteorder='big')
             logging.debug(f"action: read_message_size | result: success | size: {size_of_message}")
-            message = self._stream.recv(size_of_message).decode('utf-8')
+            message = self._stream.recv(size_of_message)
         except OSError as e:
             logging.error(f"action: read_message_size | result: fail | error: {e}")
             raise OSError("Socket connection broken")
         return message
+
+
+    def read_message(self):
+        """
+        Reads a message from the client stream and decodes it.
+        """
+        return self.read_message_raw().decode('utf-8')
+    
+    
+
         
     def read_message_with_size_in_lines(self):
         """

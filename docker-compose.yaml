@@ -79,6 +79,7 @@ services:
       - OUTPUT_EXCHANGE=sanitized_books_ex
       - INPUT_QUEUE_OF_BOOKS=scraped_books_q
       - OUTPUT_QUEUE_OF_BOOKS=sanitized_books_q
+      - WORKER_NAME=book_sanitizer
     networks:
       - testing_net
     volumes:
@@ -100,6 +101,7 @@ services:
       - INPUT_QUEUE_OF_BOOKS=sanitized_books_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_PREPROC=towards_preprocessor__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_FILTER=towards_filter__preprocessed_books_with_year_q
+      - WORKER_NAME=year_preprocessor
     networks:
       - testing_net
     volumes:
@@ -123,6 +125,7 @@ services:
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_EXPANDER=towards_expander__preprocessed_books_with_decade_q
       - OUTPUT_QUEUE_OF_BOOKS_1=preprocessed_books_with_decade_q_1
       - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - WORKER_NAME=decade_preprocessor
     networks:
       - testing_net
     volumes:
@@ -145,6 +148,7 @@ services:
       - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS_1=sanitized_reviews_q_1
       - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - WORKER_NAME=review_sanitizer
     networks:
       - testing_net
     volumes:
@@ -169,6 +173,8 @@ services:
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - WORKER_NAME=merger_1
+      - WORKER_ID=1
     networks:
       - testing_net
     volumes:
@@ -195,6 +201,7 @@ services:
       - MIN_YEAR=2000
       - MAX_YEAR=2023
       - GENRE=Computers
+      - WORKER_NAME=filter_of_books_by_year_and_genre
     networks:
       - testing_net
     volumes:
@@ -216,6 +223,7 @@ services:
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_year_and_genre_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
       - TITLE_KEYWORD=distributed
+      - WORKER_NAME=filter_of_books_by_title
     networks:
       - testing_net
     volumes:
@@ -236,6 +244,7 @@ services:
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query1_result_generator
     networks:
       - testing_net
     volumes:
@@ -260,6 +269,7 @@ services:
       - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q
       - OUTPUT_QUEUE_OF_AUTHORS_1=expanded_authors_q_1
       - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - WORKER_NAME=author_expander
     networks:
       - testing_net
     volumes:
@@ -281,6 +291,8 @@ services:
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_1
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_1
+      - WORKER_NAME=counter_of_decades_per_author_1
+      - WORKER_ID=1
     networks:
       - testing_net
     volumes:
@@ -302,6 +314,8 @@ services:
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_1
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
+      - WORKER_NAME=filter_of_authors_by_decade_1
+      - WORKER_ID=1
     networks:
       - testing_net
     volumes:
@@ -323,6 +337,7 @@ services:
       - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
       - FILTERS_QUANTITY=1
+      - WORKER_NAME=query2_result_generator
     networks:
       - testing_net
     volumes:
@@ -349,6 +364,7 @@ services:
       - DECADE_TO_FILTER=1990
       - OUTPUT_QUEUE_OF_REVIEWS_1=compact_reviews_filtered_by_decade_q_1
       - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - WORKER_NAME=filter_of_compact_reviews_by_decade
     networks:
       - testing_net
     volumes:
@@ -370,6 +386,8 @@ services:
       - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_1
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - WORKER_NAME=counter_of_reviews_per_book_1
+      - WORKER_ID=1
     networks:
       - testing_net
     volumes:
@@ -393,6 +411,7 @@ services:
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_sorter=towards_sorter__books_filtered_by_review_count_q
       - NUM_OF_COUNTERS=1
       - MIN_REVIEWS=500
+      - WORKER_NAME=filter_of_books_by_review_count
     networks:
       - testing_net
     volumes:
@@ -413,6 +432,7 @@ services:
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=towards_query3__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query3_result_generator
     networks:
       - testing_net
     volumes:
@@ -437,6 +457,7 @@ services:
       - INPUT_QUEUE_OF_BOOKS=towards_sorter__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
       - TOP_OF_BOOKS=10
+      - WORKER_NAME=sorter_of_books_by_review_count
     networks:
       - testing_net
     volumes:
@@ -457,6 +478,7 @@ services:
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query4_result_generator
     networks:
       - testing_net
     volumes:
@@ -482,6 +504,7 @@ services:
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - GENRE=fiction
       - NUM_OF_INPUT_WORKERS=1
+      - WORKER_NAME=filter_of_merged_reviews_by_book_genre
     networks:
       - testing_net
     volumes:
@@ -502,6 +525,7 @@ services:
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
+      - WORKER_NAME=sentiment_analyzer
     networks:
       - testing_net
     volumes:
@@ -523,6 +547,7 @@ services:
       - INPUT_QUEUE_OF_BOOKS=sentiment_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
       - QUANTILE=0.9
+      - WORKER_NAME=filter_of_books_by_sentiment_quantile
     networks:
       - testing_net
     volumes:
@@ -543,6 +568,7 @@ services:
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
+      - WORKER_NAME=query5_result_generator
     networks:
       - testing_net
     volumes:
@@ -564,6 +590,7 @@ services:
       - LOGGING_LEVEL=INFO
       - HEALTH_CHECK_INTERVAL=5
       - HEALTH_CHECK_TIMEOUT=1
+      - WORKER_NAME=health_checker_1
       - WORKER_ID=1
     networks:
       - testing_net

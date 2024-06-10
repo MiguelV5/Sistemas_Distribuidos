@@ -2,6 +2,7 @@ import docker
 import docker.models
 import docker.models.containers
 import docker.types
+from shared.protocol_messages import SystemMessage, SystemMessageType
 from shared.socket_connection_handler import SocketConnectionHandler
 import logging
 from multiprocessing import Process
@@ -13,11 +14,12 @@ CONTROLLERS_NAMES_PATH = '/monitorable_controllers.txt'
 HEALTH_CHECK_PORT = 5000
 
 class HealthChecker(MonitorableProcess):
-    def __init__(self, health_check_interval: int, health_check_timeout: int, worker_id: int):
-        super().__init__()
+    def __init__(self, health_check_interval: int, health_check_timeout: int, worker_name: str, worker_id: int):
+        super().__init__(worker_name, worker_id)
         self.health_check_interval = health_check_interval
         self.health_check_timeout = health_check_timeout
-        self.worker_name = f"health_checker_{worker_id}"
+        self.worker_id = worker_id
+        self.worker_name = worker_name
         self.socket_connection_handler = None
        
     def start(self):
@@ -38,9 +40,11 @@ class HealthChecker(MonitorableProcess):
                 logging.debug(f"Connecting to container {container}")
                 self.socket_connection_handler = SocketConnectionHandler.connect_and_create(container, HEALTH_CHECK_PORT, self.health_check_timeout)
 
-                self.socket_connection_handler.send_message("health")
-                response = self.socket_connection_handler.read_message()
-                if response != "ok":
+                msg = SystemMessage(SystemMessageType.HEALTH_CHECK, worker_id=self.worker_id)
+                self.socket_connection_handler.send_message(msg.encode_to_str())
+                response = self.socket_connection_handler.read_message_raw()
+                response_msg = SystemMessage.decode_from_bytes(response)
+                if response_msg.msg_type != SystemMessageType.ALIVE:
                     logging.error(f"Container {container} is not healthy")
                     self.__revive_controller(container)
                 else:

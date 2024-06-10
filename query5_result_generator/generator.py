@@ -11,8 +11,9 @@ class Generator(MonitorableProcess):
                  input_exchange_name: str, 
                  output_exchange_name: str, 
                  input_queue_name: str, 
-                 output_queue_name: str):
-        super().__init__()
+                 output_queue_name: str,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queue = output_queue_name
         self.resulting_books_batch = "[Q5 Results]:  (Title, AvgPolarity)"
         self.mq_connection_handler = MQConnectionHandler(

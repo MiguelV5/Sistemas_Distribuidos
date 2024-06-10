@@ -12,8 +12,16 @@ DECADE_IDX = 3
 REVIEW_COUNT_IDX = 4
 
 class FilterByReviewsCount(MonitorableProcess):
-    def __init__(self, input_exchange, output_exchange, input_queue, output_queue_towards_query3, output_queue_towards_sorter, min_reviews, num_of_counters):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 output_exchange: str, 
+                 input_queue: str, 
+                 output_queue_towards_query3: str,
+                 output_queue_towards_sorter: str, 
+                 min_reviews: int, 
+                 num_of_counters: int,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue

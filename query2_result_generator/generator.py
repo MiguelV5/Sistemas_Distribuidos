@@ -5,8 +5,14 @@ from shared.monitorable_process import MonitorableProcess
 
 
 class Generator(MonitorableProcess):
-    def __init__(self, input_exchange_name: str, output_exchange_name: str, input_queue_name: str, output_queue_name: str, filters_quantity: int):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange_name: str, 
+                 output_exchange_name: str, 
+                 input_queue_name: str, 
+                 output_queue_name: str, 
+                 filters_quantity: int,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.input_exchange_name = input_exchange_name
         self.output_exchange_name = output_exchange_name
         self.input_queue_name = input_queue_name

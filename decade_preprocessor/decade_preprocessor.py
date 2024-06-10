@@ -13,8 +13,14 @@ CATEGORIES_IDX = 3
 REQUIRED_SIZE_OF_ROW = 4
 
 class DecadePreprocessor(MonitorableProcess):
-    def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue_towards_expander: str, output_queues_towards_mergers: list[str]):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 input_queue: str, 
+                 output_exchange: str, 
+                 output_queue_towards_expander: str, 
+                 output_queues_towards_mergers: list[str], 
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queue_towards_expander = output_queue_towards_expander
         self.output_queues_towards_mergers = output_queues_towards_mergers
         

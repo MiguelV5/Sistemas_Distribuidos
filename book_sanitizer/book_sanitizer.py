@@ -14,8 +14,13 @@ REQUIRED_SIZE_OF_ROW = 10
 
 class BookSanitizer(MonitorableProcess):
 
-    def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue: str):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 input_queue: str, 
+                 output_exchange: str, 
+                 output_queue: str, 
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queue = output_queue
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
                                                          {output_queue: [output_queue]},

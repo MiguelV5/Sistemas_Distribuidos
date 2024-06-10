@@ -1,9 +1,6 @@
 import signal
 import socket
-import docker
-import docker.models
-import docker.models.containers
-import docker.types
+from shared.protocol_messages import SystemMessage, SystemMessageType
 from shared.socket_connection_handler import SocketConnectionHandler
 import logging
 from multiprocessing import Process
@@ -14,7 +11,10 @@ from typing import Optional
 HEALTH_CHECK_PORT = 5000
 
 class MonitorableProcess:
-    def __init__(self):
+    def __init__(self, worker_name: str, worker_id: int = 1):
+        self.worker_name = worker_name
+        # defaults to 1, as there are processes that are not replicated
+        self.worder_id = worker_id
         self.health_check_connection_handler: Optional[SocketConnectionHandler] = None
         self.mq_connection_handler: Optional[MQConnectionHandler] = None
         self.joinable_processes: list[Process] = []
@@ -30,18 +30,18 @@ class MonitorableProcess:
             self.mq_connection_handler.close_connection()
         for process in self.joinable_processes:
             process.terminate()       
-    
+
+
     def __accept_incoming_health_checks(self):
         logging.info("[MONITORABLE] Starting to receive health checks")
         self.listening_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        current_container_name = docker.from_env().containers.get(socket.gethostname()).name
         
-        self.listening_socket.bind((current_container_name, HEALTH_CHECK_PORT))
+        self.listening_socket.bind((self.worker_name, HEALTH_CHECK_PORT))
         self.listening_socket.listen()
         while True:
             client_socket, _ = self.listening_socket.accept()
             self.health_check_connection_handler = SocketConnectionHandler.create_from_socket(client_socket)
             message = self.health_check_connection_handler.read_message()
-            if message == "health":
-                self.health_check_connection_handler.send_message("ok")
+            if message == SystemMessage(SystemMessageType.HEALTH_CHECK, worker_id=self.worder_id).encode_to_str():
+                self.health_check_connection_handler.send_message(SystemMessage(SystemMessageType.ALIVE, worker_id=self.worder_id).encode_to_str())
             self.health_check_connection_handler.close()

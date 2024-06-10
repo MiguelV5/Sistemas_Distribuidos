@@ -15,8 +15,14 @@ REQUIRED_SIZE_OF_ROW = 5
 
 
 class YearPreprocessor(MonitorableProcess):
-    def __init__(self, input_exchange: str, input_queue: str, output_exchange: str, output_queue_towards_preproc: str, output_queue_towards_filter: str):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 input_queue: str, 
+                 output_exchange: str, 
+                 output_queue_towards_preproc: str, 
+                 output_queue_towards_filter: str,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queue_towards_preproc = output_queue_towards_preproc
         self.output_queue_towards_filter = output_queue_towards_filter
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 

@@ -13,8 +13,9 @@ class FilterBySentimentQuantile(MonitorableProcess):
                  output_exchange_name: str, 
                  input_queue_name: str, 
                  output_queue_name: str,
-                 quantile: float):
-        super().__init__()
+                 quantile: float,
+                 worker_name: str):
+        super().__init__(worker_name)
         self.output_queue = output_queue_name
         self.quantile = quantile
         self.sorted_books_by_polarity = []

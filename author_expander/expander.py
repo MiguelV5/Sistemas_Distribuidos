@@ -9,8 +9,13 @@ AUTHORS_IDX = 0
 DECADE_IDX = 1
 
 class AuthorExpander(MonitorableProcess):
-    def __init__(self, input_exchange, output_exchange, input_queue_of_books, output_queues: dict[str,str]):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange, 
+                 output_exchange, 
+                 input_queue_of_books, 
+                 output_queues: dict[str,str],
+                 worker_name: str):
+        super().__init__(worker_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_books = input_queue_of_books

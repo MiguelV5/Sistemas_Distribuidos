@@ -5,8 +5,15 @@ from shared.monitorable_process import MonitorableProcess
 
 
 class CounterOfDecadesPerAuthor(MonitorableProcess):
-    def __init__(self, input_exchange, output_exchange, input_queue_of_authors, output_queue_of_authors):
-        super().__init__()
+    def __init__(self, 
+                 input_exchange: str, 
+                 output_exchange: str, 
+                 input_queue_of_authors: str, 
+                 output_queue_of_authors: str,
+                 worker_name: str,
+                 worker_id: int):
+        super().__init__(worker_name, worker_id)
+        self.worker_id = worker_id
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_authors = input_queue_of_authors
