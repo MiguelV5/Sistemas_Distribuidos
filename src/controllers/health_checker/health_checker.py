@@ -38,7 +38,7 @@ class HealthChecker(MonitorableProcess):
             try:
                 logging.debug(f"Connecting to controller {controller}")
                 self.socket_connection_handler = SocketConnectionHandler.connect_and_create(controller, HEALTH_CHECK_PORT, self.health_check_timeout)
-                msg = SystemMessage(msg_type=SystemMessageType.HEALTH_CHECK, client_id=0, controller_name=self.controller_name)
+                msg = SystemMessage(msg_type=SystemMessageType.HEALTH_CHECK, client_id=0, controller_name=self.controller_name, controller_seq_num=0)
                 self.socket_connection_handler.send_message(msg.encode_to_str())
 
                 response_msg = SystemMessage.decode_from_bytes(self.socket_connection_handler.read_message_raw())
