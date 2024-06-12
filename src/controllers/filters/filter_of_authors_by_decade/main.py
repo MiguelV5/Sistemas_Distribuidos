@@ -3,7 +3,7 @@ from filter import FilterOfAuthorsByDecade
 import logging
 
 def main():
-    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_AUTHORS", "OUTPUT_QUEUE_OF_AUTHORS", "MIN_DECADES_TO_FILTER", "CONTROLLER_NAME", "WORKER_ID"])
+    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_AUTHORS", "OUTPUT_QUEUE_OF_AUTHORS", "MIN_DECADES_TO_FILTER", "CONTROLLER_NAME"])
     init_log(config_params["LOGGING_LEVEL"])
     filter = FilterOfAuthorsByDecade(config_params["INPUT_EXCHANGE"], 
                                      config_params["OUTPUT_EXCHANGE"], 
