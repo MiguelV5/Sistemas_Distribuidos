@@ -57,6 +57,7 @@ class MQConnectionHandler:
 
     def setup_callback_for_input_queue(self, queue_name: str, callback):
         self.channel.basic_qos(prefetch_count=1)
+        self.channel.confirm_delivery()
         self.channel.basic_consume(queue=queue_name, on_message_callback=callback)
 
     def start_consuming(self):
@@ -67,7 +68,7 @@ class MQConnectionHandler:
         """
         Sends a message with a specified routing_key to inform the output_exchange about which queues to route the message to.
         """
-        self.channel.basic_publish(exchange=self.output_exchange_name, routing_key=routing_key, body=msg_body, properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent))
+        self.channel.basic_publish(exchange=self.output_exchange_name, routing_key=routing_key, body=msg_body, properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent), mandatory=True)
 
 
     def close_connection(self):
