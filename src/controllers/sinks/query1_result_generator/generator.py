@@ -9,8 +9,8 @@ class Generator(MonitorableProcess):
                  output_exchange_name: str, 
                  input_queue_name: str, 
                  output_queue_name: str,
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.output_queue = output_queue_name
         self.results_msg = "[Q1 Results]:  (Title, Authors, Publisher, Publication Year)"
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=output_exchange_name, 

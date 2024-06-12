@@ -15,8 +15,8 @@ class Generator(MonitorableProcess):
                  output_exchange: str, 
                  input_queue: str, 
                  output_queue: str,
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue

@@ -13,14 +13,12 @@ from shared.atomic_writer import AtomicWriter
 HEALTH_CHECK_PORT = 5000
 
 class MonitorableProcess:
-    def __init__(self, worker_name: str, worker_id: int = 1):
-        self.worker_name = worker_name
-        # defaults to 1, as there are processes that are not replicated
-        self.worder_id = worker_id
+    def __init__(self, controller_name: str):
+        self.controller_name = controller_name
         self.health_check_connection_handler: Optional[SocketConnectionHandler] = None
         self.mq_connection_handler: Optional[MQConnectionHandler] = None
         self.joinable_processes: list[Process] = []
-        self.state_file_path = f"/{worker_name}_state.json"
+        self.state_file_path = f"/{controller_name}_state.json"
         self.state = self.__load_state_file()
         p = Process(target=self.__accept_incoming_health_checks)
         self.joinable_processes.append(p)
@@ -40,16 +38,19 @@ class MonitorableProcess:
         logging.info("[MONITORABLE] Starting to receive health checks")
         self.listening_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        self.listening_socket.bind((self.worker_name, HEALTH_CHECK_PORT))
+        self.listening_socket.bind((self.controller_name, HEALTH_CHECK_PORT))
         self.listening_socket.listen()
         while True:
             client_socket, _ = self.listening_socket.accept()
             self.health_check_connection_handler = SocketConnectionHandler.create_from_socket(client_socket)
-            message = self.health_check_connection_handler.read_message()
-            if message == SystemMessage(SystemMessageType.HEALTH_CHECK, worker_id=self.worder_id).encode_to_str():
-                self.health_check_connection_handler.send_message(SystemMessage(SystemMessageType.ALIVE, worker_id=self.worder_id).encode_to_str())
+            message = SystemMessage.decode_from_bytes(self.health_check_connection_handler.read_message_raw())
+
+            if message.msg_type == SystemMessageType.HEALTH_CHECK:
+                alive_msg = SystemMessage(msg_type=SystemMessageType.ALIVE, client_id=0, controller_name=self.controller_name, controller_seq_num=0).encode_to_str()
+                self.health_check_connection_handler.send_message(alive_msg)
             self.health_check_connection_handler.close()
             
+
     def __load_state_file(self) -> dict:
         try:
             with open(self.state_file_path, 'r') as f:
@@ -60,3 +61,4 @@ class MonitorableProcess:
     def save_state_file(self):
         writer = AtomicWriter(self.state_file_path)
         writer.write(json.dumps(self.state))                          
+            

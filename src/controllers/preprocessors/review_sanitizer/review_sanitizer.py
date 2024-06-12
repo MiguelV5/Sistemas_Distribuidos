@@ -19,8 +19,8 @@ class ReviewSanitizer(MonitorableProcess):
                  input_queue: str, 
                  output_exchange: str, 
                  output_queues: list[str],
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.output_queues = output_queues
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
                                                          {output_queue: [output_queue] for output_queue in output_queues},

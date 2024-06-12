@@ -3,7 +3,7 @@ from filter import FilterOfCompactReviewsByDecade
 import logging
 
 def main():
-    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE","INPUT_QUEUE_OF_REVIEWS", "NUM_OF_DYN_OUTPUT_QUEUES", "DECADE_TO_FILTER","NUM_OF_INPUT_WORKERS", "WORKER_NAME"])
+    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE","INPUT_QUEUE_OF_REVIEWS", "NUM_OF_DYN_OUTPUT_QUEUES", "DECADE_TO_FILTER","NUM_OF_INPUT_WORKERS", "CONTROLLER_NAME"])
     output_queues = []
     for i in range(1, int(config_params["NUM_OF_DYN_OUTPUT_QUEUES"]) + 1):
         output_queues.append(f"OUTPUT_QUEUE_OF_REVIEWS_{i}")
@@ -15,7 +15,7 @@ def main():
                                             output_queues=config_params_output_queues,
                                             decade_to_filter=int(config_params["DECADE_TO_FILTER"]),
                                             num_of_input_workers=int(config_params["NUM_OF_INPUT_WORKERS"]),
-                                            worker_name=config_params["WORKER_NAME"])
+                                            controller_name=config_params["CONTROLLER_NAME"])
     logging.info("Starting filter")
     filter.start()
     

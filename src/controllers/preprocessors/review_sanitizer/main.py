@@ -8,7 +8,7 @@ def main():
                                   "OUTPUT_EXCHANGE", 
                                   "INPUT_QUEUE_OF_REVIEWS", 
                                   "NUM_OF_DYN_OUTPUT_QUEUES",
-                                  "WORKER_NAME"])
+                                  "CONTROLLER_NAME"])
     
     dyn_output_queues_env = []
     for i in range(1, int(config_params["NUM_OF_DYN_OUTPUT_QUEUES"]) + 1):
@@ -23,7 +23,7 @@ def main():
                                        input_queue=config_params["INPUT_QUEUE_OF_REVIEWS"],
                                        output_exchange=config_params["OUTPUT_EXCHANGE"],
                                        output_queues=dyn_output_queues,
-                                       worker_name=config_params["WORKER_NAME"])
+                                       controller_name=config_params["CONTROLLER_NAME"])
     review_sanitizer.start()
 
 

@@ -9,6 +9,7 @@ import signal
 AMOUNT_OF_QUERY_RESULTS = 5
 class Server:
     def __init__(self,server_port, input_exchange, input_queue_of_query_results, output_exchange_of_data, output_queue_of_reviews, output_queue_of_books):
+        self.c_name_for_system_msgs = "server"
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', server_port))
         self.server_socket.listen()

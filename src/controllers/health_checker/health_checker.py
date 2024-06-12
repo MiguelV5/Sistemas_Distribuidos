@@ -14,12 +14,11 @@ CONTROLLERS_NAMES_PATH = '/monitorable_controllers.txt'
 HEALTH_CHECK_PORT = 5000
 
 class HealthChecker(MonitorableProcess):
-    def __init__(self, health_check_interval: int, health_check_timeout: int, worker_name: str, worker_id: int):
-        super().__init__(worker_name, worker_id)
+    def __init__(self, health_check_interval: int, health_check_timeout: int, controller_name: str):
+        super().__init__(controller_name)
         self.health_check_interval = health_check_interval
         self.health_check_timeout = health_check_timeout
-        self.worker_id = worker_id
-        self.worker_name = worker_name
+        self.controller_name = controller_name
         self.socket_connection_handler = None
        
     def start(self):
@@ -27,37 +26,36 @@ class HealthChecker(MonitorableProcess):
         with open(CONTROLLERS_NAMES_PATH, 'r') as file:
             controllers = file.read().splitlines()
         for controller in controllers:
-            if controller == self.worker_name: 
+            if controller == self.controller_name: 
                 continue
             p = Process(target=self.__check_controllers_health, args=(controller,))
             self.joinable_processes.append(p)
             p.start()
             
 
-    def __check_controllers_health(self, container: str):
+    def __check_controllers_health(self, controller: str):
         while True:
             try:
-                logging.debug(f"Connecting to container {container}")
-                self.socket_connection_handler = SocketConnectionHandler.connect_and_create(container, HEALTH_CHECK_PORT, self.health_check_timeout)
-
-                msg = SystemMessage(SystemMessageType.HEALTH_CHECK, worker_id=self.worker_id)
+                logging.debug(f"Connecting to controller {controller}")
+                self.socket_connection_handler = SocketConnectionHandler.connect_and_create(controller, HEALTH_CHECK_PORT, self.health_check_timeout)
+                msg = SystemMessage(msg_type=SystemMessageType.HEALTH_CHECK, client_id=0, controller_name=self.controller_name)
                 self.socket_connection_handler.send_message(msg.encode_to_str())
-                response = self.socket_connection_handler.read_message_raw()
-                response_msg = SystemMessage.decode_from_bytes(response)
+
+                response_msg = SystemMessage.decode_from_bytes(self.socket_connection_handler.read_message_raw())
                 if response_msg.msg_type != SystemMessageType.ALIVE:
-                    logging.error(f"Container {container} is not healthy")
-                    self.__revive_controller(container)
+                    logging.error(f"Controller {controller} is not healthy")
+                    self.__revive_controller(controller)
                 else:
-                    logging.debug(f"Container {container} is healthy")
+                    logging.debug(f"Controller {controller} is healthy")
             except Exception as e:
-                logging.error(f"Failed to connect to container {container}: {str(e)}")
-                self.__revive_controller(container)
+                logging.error(f"Failed to connect to controller {controller}: {str(e)}")
+                self.__revive_controller(controller)
             
             time.sleep(self.health_check_interval)
     
     def __revive_controller(self, controller: str):
         docker.APIClient().start(controller)
-        logging.info(f"Container {controller} has been restarted")
+        logging.info(f"Controller {controller} has been restarted")
         
         
         

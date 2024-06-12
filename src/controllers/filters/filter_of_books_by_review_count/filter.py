@@ -20,8 +20,8 @@ class FilterByReviewsCount(MonitorableProcess):
                  output_queue_towards_sorter: str, 
                  min_reviews: int, 
                  num_of_counters: int,
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue

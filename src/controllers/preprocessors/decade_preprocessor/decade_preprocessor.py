@@ -19,8 +19,8 @@ class DecadePreprocessor(MonitorableProcess):
                  output_exchange: str, 
                  output_queue_towards_expander: str, 
                  output_queues_towards_mergers: list[str], 
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.output_queue_towards_expander = output_queue_towards_expander
         self.output_queues_towards_mergers = output_queues_towards_mergers
         

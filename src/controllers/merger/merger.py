@@ -23,10 +23,8 @@ class Merger(MonitorableProcess):
                  input_queue_name_books: str,
                  output_queue_name_compact_reviews: str,
                  output_queue_name_full_reviews: str,
-                 worker_name: str,
-                 worker_id: int):
-        super().__init__(worker_name, worker_id)
-        self.worker_id = worker_id
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange_name_reviews = input_exchange_name_reviews
         self.input_exchange_name_books = input_exchange_name_books
         self.output_exchange_name = output_exchange_name

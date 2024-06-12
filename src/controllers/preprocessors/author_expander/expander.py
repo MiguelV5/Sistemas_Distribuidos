@@ -14,8 +14,8 @@ class AuthorExpander(MonitorableProcess):
                  output_exchange, 
                  input_queue_of_books, 
                  output_queues: dict[str,str],
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_books = input_queue_of_books

@@ -18,8 +18,8 @@ class FilterReviewByBookGenre(MonitorableProcess):
                  output_queue_name: str, 
                  genre_to_filter: str,
                  num_of_input_workers: int,
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.output_queue = output_queue_name
         self.genre_to_filter = genre_to_filter
         self.eofs_received = 0

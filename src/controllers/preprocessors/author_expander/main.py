@@ -3,7 +3,7 @@ from expander import AuthorExpander
 import logging
 
 def main():
-    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "NUM_OF_DYN_OUTPUT_QUEUES", "WORKER_NAME"])
+    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "NUM_OF_DYN_OUTPUT_QUEUES", "CONTROLLER_NAME"])
     output_queues = []
     for i in range(1, int(config_params["NUM_OF_DYN_OUTPUT_QUEUES"]) + 1):
         output_queues.append(f"OUTPUT_QUEUE_OF_AUTHORS_{i}")
@@ -14,7 +14,7 @@ def main():
                               output_exchange=config_params["OUTPUT_EXCHANGE"],
                               input_queue_of_books=config_params["INPUT_QUEUE_OF_BOOKS"],
                               output_queues=config_params_output_queues,
-                              worker_name=config_params["WORKER_NAME"])
+                              controller_name=config_params["CONTROLLER_NAME"])
     logging.info("Starting author expander")
     expander.start()
     

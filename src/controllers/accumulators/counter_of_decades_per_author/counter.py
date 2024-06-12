@@ -10,10 +10,8 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
                  output_exchange: str, 
                  input_queue_of_authors: str, 
                  output_queue_of_authors: str,
-                 worker_name: str,
-                 worker_id: int):
-        super().__init__(worker_name, worker_id)
-        self.worker_id = worker_id
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_authors = input_queue_of_authors

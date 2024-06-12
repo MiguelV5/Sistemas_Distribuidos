@@ -21,8 +21,8 @@ class YearPreprocessor(MonitorableProcess):
                  output_exchange: str, 
                  output_queue_towards_preproc: str, 
                  output_queue_towards_filter: str,
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.output_queue_towards_preproc = output_queue_towards_preproc
         self.output_queue_towards_filter = output_queue_towards_filter
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 

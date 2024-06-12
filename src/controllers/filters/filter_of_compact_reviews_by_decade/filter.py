@@ -18,8 +18,8 @@ class FilterOfCompactReviewsByDecade(MonitorableProcess):
                  output_queues: dict[str,str], 
                  decade_to_filter:int, 
                  num_of_input_workers: int,
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_reviews = input_queue_of_reviews

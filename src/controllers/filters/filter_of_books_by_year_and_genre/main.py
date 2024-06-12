@@ -3,7 +3,7 @@ from filter import FilterByGenreAndYear
 import logging
 
 def main():
-    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "OUTPUT_QUEUE_OF_BOOKS", "MIN_YEAR", "MAX_YEAR", "GENRE", "WORKER_NAME"])
+    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "OUTPUT_QUEUE_OF_BOOKS", "MIN_YEAR", "MAX_YEAR", "GENRE", "CONTROLLER_NAME"])
     init_log(config_params["LOGGING_LEVEL"])
     logging.info("Filter of books by year and genre started.")
     filter = FilterByGenreAndYear(config_params["INPUT_EXCHANGE"], 
@@ -13,7 +13,7 @@ def main():
                                   config_params["MIN_YEAR"], 
                                   config_params["MAX_YEAR"],
                                   config_params["GENRE"],
-                                  config_params["WORKER_NAME"])
+                                  config_params["CONTROLLER_NAME"])
     filter.start()
     
 if __name__ == "__main__":

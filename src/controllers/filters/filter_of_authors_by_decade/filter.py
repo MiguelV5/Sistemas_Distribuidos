@@ -11,9 +11,8 @@ class FilterOfAuthorsByDecade(MonitorableProcess):
                  input_queue_name: str, 
                  output_queue_name: str, 
                  min_decades_to_filter: int,
-                 worker_name: str,
-                 worker_id: int):
-        super().__init__(worker_name, worker_id)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange_name = input_exchange_name
         self.output_exchange_name = output_exchange_name
         self.input_queue_name = input_queue_name

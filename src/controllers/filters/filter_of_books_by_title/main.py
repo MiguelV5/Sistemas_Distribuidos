@@ -3,7 +3,7 @@ from filter import FilterByTitle
 import logging
 
 def main():
-    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "OUTPUT_QUEUE_OF_BOOKS", "TITLE_KEYWORD", "WORKER_NAME"])
+    config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "OUTPUT_QUEUE_OF_BOOKS", "TITLE_KEYWORD", "CONTROLLER_NAME"])
     init_log(config_params["LOGGING_LEVEL"])
     logging.info("Filter of authors by title started.")
     filter = FilterByTitle(config_params["INPUT_EXCHANGE"], 
@@ -11,7 +11,7 @@ def main():
                            config_params["INPUT_QUEUE_OF_BOOKS"], 
                            config_params["OUTPUT_QUEUE_OF_BOOKS"], 
                            config_params["TITLE_KEYWORD"],
-                           config_params["WORKER_NAME"])
+                           config_params["CONTROLLER_NAME"])
     filter.start()
     
 if __name__ == "__main__":

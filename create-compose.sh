@@ -99,7 +99,7 @@ add_preprocessors() {
       - OUTPUT_EXCHANGE=sanitized_books_ex
       - INPUT_QUEUE_OF_BOOKS=scraped_books_q
       - OUTPUT_QUEUE_OF_BOOKS=sanitized_books_q
-      - WORKER_NAME=book_sanitizer
+      - CONTROLLER_NAME=book_sanitizer
     networks:
       - testing_net
     volumes:
@@ -121,7 +121,7 @@ add_preprocessors() {
       - INPUT_QUEUE_OF_BOOKS=sanitized_books_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_PREPROC=towards_preprocessor__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_FILTER=towards_filter__preprocessed_books_with_year_q
-      - WORKER_NAME=year_preprocessor
+      - CONTROLLER_NAME=year_preprocessor
     networks:
       - testing_net
     volumes:
@@ -149,7 +149,7 @@ add_preprocessors() {
         echo "      - OUTPUT_QUEUE_OF_BOOKS_$i=preprocessed_books_with_decade_q_$i" >> docker-compose.yaml
     done
     echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
-      - WORKER_NAME=decade_preprocessor
+      - CONTROLLER_NAME=decade_preprocessor
     networks:
       - testing_net
     volumes:
@@ -174,7 +174,7 @@ add_preprocessors() {
           echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=sanitized_reviews_q_$i" >> docker-compose.yaml
       done
       echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
-      - WORKER_NAME=review_sanitizer
+      - CONTROLLER_NAME=review_sanitizer
     networks:
       - testing_net
     volumes:
@@ -204,8 +204,7 @@ add_mergers() {
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_$i
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
-      - WORKER_NAME=merger_$i
-      - WORKER_ID=$i
+      - CONTROLLER_NAME=merger_$i
     networks:
       - testing_net
     volumes:
@@ -240,7 +239,7 @@ add_query1_processes() {
       - MIN_YEAR=2000
       - MAX_YEAR=2023
       - GENRE=Computers
-      - WORKER_NAME=filter_of_books_by_year_and_genre
+      - CONTROLLER_NAME=filter_of_books_by_year_and_genre
     networks:
       - testing_net
     volumes:
@@ -262,7 +261,7 @@ add_query1_processes() {
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_year_and_genre_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
       - TITLE_KEYWORD=distributed
-      - WORKER_NAME=filter_of_books_by_title
+      - CONTROLLER_NAME=filter_of_books_by_title
     networks:
       - testing_net
     volumes:
@@ -283,7 +282,7 @@ add_query1_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_title_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
-      - WORKER_NAME=query1_result_generator
+      - CONTROLLER_NAME=query1_result_generator
     networks:
       - testing_net
     volumes:
@@ -315,7 +314,7 @@ add_query2_processes() {
           echo "      - OUTPUT_QUEUE_OF_AUTHORS_$i=expanded_authors_q_$i" >> docker-compose.yaml
       done
       echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
-      - WORKER_NAME=author_expander
+      - CONTROLLER_NAME=author_expander
     networks:
       - testing_net
     volumes:
@@ -340,8 +339,7 @@ add_query2_processes() {
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
-      - WORKER_NAME=counter_of_decades_per_author_$i
-      - WORKER_ID=$i
+      - CONTROLLER_NAME=counter_of_decades_per_author_$i
     networks:
       - testing_net
     volumes:
@@ -367,8 +365,7 @@ add_query2_processes() {
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
-      - WORKER_NAME=filter_of_authors_by_decade_$i
-      - WORKER_ID=$i
+      - CONTROLLER_NAME=filter_of_authors_by_decade_$i
     networks:
       - testing_net
     volumes:
@@ -393,7 +390,7 @@ add_query2_processes() {
       - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
       - FILTERS_QUANTITY=$WORKERS
-      - WORKER_NAME=query2_result_generator
+      - CONTROLLER_NAME=query2_result_generator
     networks:
       - testing_net
     volumes:
@@ -427,7 +424,7 @@ add_query3_processes() {
           echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=compact_reviews_filtered_by_decade_q_$i" >> docker-compose.yaml
       done
       echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
-      - WORKER_NAME=filter_of_compact_reviews_by_decade
+      - CONTROLLER_NAME=filter_of_compact_reviews_by_decade
     networks:
       - testing_net
     volumes:
@@ -452,8 +449,7 @@ add_query3_processes() {
       - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_$i
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
-      - WORKER_NAME=counter_of_reviews_per_book_$i
-      - WORKER_ID=$i
+      - CONTROLLER_NAME=counter_of_reviews_per_book_$i
     networks:
       - testing_net
     volumes:
@@ -481,7 +477,7 @@ add_query3_processes() {
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_sorter=towards_sorter__books_filtered_by_review_count_q
       - NUM_OF_COUNTERS=$WORKERS
       - MIN_REVIEWS=500
-      - WORKER_NAME=filter_of_books_by_review_count
+      - CONTROLLER_NAME=filter_of_books_by_review_count
     networks:
       - testing_net
     volumes:
@@ -502,7 +498,7 @@ add_query3_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=towards_query3__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
-      - WORKER_NAME=query3_result_generator
+      - CONTROLLER_NAME=query3_result_generator
     networks:
       - testing_net
     volumes:
@@ -533,7 +529,7 @@ add_query4_processes() {
       - INPUT_QUEUE_OF_BOOKS=towards_sorter__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
       - TOP_OF_BOOKS=10
-      - WORKER_NAME=sorter_of_books_by_review_count
+      - CONTROLLER_NAME=sorter_of_books_by_review_count
     networks:
       - testing_net
     volumes:
@@ -554,7 +550,7 @@ add_query4_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
-      - WORKER_NAME=query4_result_generator
+      - CONTROLLER_NAME=query4_result_generator
     networks:
       - testing_net
     volumes:
@@ -588,7 +584,7 @@ add_query5_processes() {
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - GENRE=fiction
       - NUM_OF_INPUT_WORKERS=$WORKERS
-      - WORKER_NAME=filter_of_merged_reviews_by_book_genre
+      - CONTROLLER_NAME=filter_of_merged_reviews_by_book_genre
     networks:
       - testing_net
     volumes:
@@ -609,7 +605,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
-      - WORKER_NAME=sentiment_analyzer
+      - CONTROLLER_NAME=sentiment_analyzer
     networks:
       - testing_net
     volumes:
@@ -631,7 +627,7 @@ add_query5_processes() {
       - INPUT_QUEUE_OF_BOOKS=sentiment_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
       - QUANTILE=0.9
-      - WORKER_NAME=filter_of_books_by_sentiment_quantile
+      - CONTROLLER_NAME=filter_of_books_by_sentiment_quantile
     networks:
       - testing_net
     volumes:
@@ -652,7 +648,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
-      - WORKER_NAME=query5_result_generator
+      - CONTROLLER_NAME=query5_result_generator
     networks:
       - testing_net
     volumes:
@@ -679,8 +675,7 @@ add_health_checkers(){
       - LOGGING_LEVEL=INFO
       - HEALTH_CHECK_INTERVAL=5
       - HEALTH_CHECK_TIMEOUT=1
-      - WORKER_NAME=health_checker_$i
-      - WORKER_ID=$i
+      - CONTROLLER_NAME=health_checker_$i
     networks:
       - testing_net
     volumes:

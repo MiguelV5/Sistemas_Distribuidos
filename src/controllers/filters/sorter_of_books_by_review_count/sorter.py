@@ -15,8 +15,8 @@ class Sorter(MonitorableProcess):
                  input_queue: str, 
                  output_queue: str, 
                  required_top_of_books: int,
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue = input_queue

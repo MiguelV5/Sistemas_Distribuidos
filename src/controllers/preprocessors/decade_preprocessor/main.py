@@ -9,7 +9,7 @@ def main():
                                   "INPUT_QUEUE_OF_BOOKS", 
                                   "OUTPUT_QUEUE_OF_BOOKS_TOWARDS_EXPANDER", 
                                   "NUM_OF_DYN_OUTPUT_QUEUES",
-                                  "WORKER_NAME"])
+                                  "CONTROLLER_NAME"])
     dyn_output_queues_env = []
     for i in range(1, int(config_params["NUM_OF_DYN_OUTPUT_QUEUES"]) + 1):
         dyn_output_queues_env.append(f"OUTPUT_QUEUE_OF_BOOKS_{i}")
@@ -24,7 +24,7 @@ def main():
                                              output_exchange=config_params["OUTPUT_EXCHANGE"],
                                              output_queue_towards_expander=config_params["OUTPUT_QUEUE_OF_BOOKS_TOWARDS_EXPANDER"],
                                              output_queues_towards_mergers=dyn_output_queues,
-                                             worker_name=config_params["WORKER_NAME"])
+                                             controller_name=config_params["CONTROLLER_NAME"])
     decade_preprocessor.start()
 
 

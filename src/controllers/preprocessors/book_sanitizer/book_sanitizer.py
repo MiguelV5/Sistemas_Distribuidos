@@ -19,8 +19,8 @@ class BookSanitizer(MonitorableProcess):
                  input_queue: str, 
                  output_exchange: str, 
                  output_queue: str, 
-                 worker_name: str):
-        super().__init__(worker_name)
+                 controller_name: str):
+        super().__init__(controller_name)
         self.output_queue = output_queue
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
                                                          {output_queue: [output_queue]},
