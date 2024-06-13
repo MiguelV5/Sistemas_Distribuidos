@@ -1,3 +1,4 @@
+import functools
 import pika
 
 class MQConnectionHandler:
@@ -55,10 +56,13 @@ class MQConnectionHandler:
                 self.channel.queue_bind(exchange=output_exchange_name, queue=queue_name, routing_key=binding_key)
 
 
-    def setup_callback_for_input_queue(self, queue_name: str, callback):
+    def setup_callback_for_input_queue(self, queue_name: str, callback, process_message=None):
         self.channel.basic_qos(prefetch_count=1)
         self.channel.confirm_delivery()
-        self.channel.basic_consume(queue=queue_name, on_message_callback=callback)
+        if process_message is None:
+            self.channel.basic_consume(queue=queue_name, on_message_callback=callback)
+        else:
+            self.channel.basic_consume(queue=queue_name, on_message_callback=functools.partial(callback, args=(process_message)))
 
     def start_consuming(self):
         self.channel.start_consuming()
