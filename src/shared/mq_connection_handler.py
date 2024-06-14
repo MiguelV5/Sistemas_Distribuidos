@@ -61,12 +61,12 @@ class MQConnectionHandler:
 
     def setup_callbacks_for_input_queue(self, 
                                         queue_name: str, 
-                                        state_handler_callback: Callable, 
+                                        main_callback: Callable, 
                                         inner_processor: Optional[Callable] = None):
         if inner_processor is None:
-            self.channel.basic_consume(queue=queue_name, on_message_callback=state_handler_callback)
+            self.channel.basic_consume(queue=queue_name, on_message_callback=main_callback)
         else:
-            self.channel.basic_consume(queue=queue_name, on_message_callback=functools.partial(state_handler_callback, args=(inner_processor)))
+            self.channel.basic_consume(queue=queue_name, on_message_callback=functools.partial(main_callback, args=(inner_processor)))
 
     def start_consuming(self):
         self.channel.start_consuming()
