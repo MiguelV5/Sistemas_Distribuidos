@@ -26,7 +26,7 @@ class FilterOfAuthorsByDecade(MonitorableProcess):
                                                          output_queues_to_bind={self.output_queue_name: [self.output_queue_name]}, 
                                                          input_exchange_name=self.input_exchange_name, 
                                                          input_queues_to_recv_from=[self.input_queue_name])
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.generic_callback, self.__filter_authors_by_decades_quantity)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_name, self.state_handler_callback, self.__filter_authors_by_decades_quantity)
         self.mq_connection_handler.channel.start_consuming()
         
             
@@ -36,7 +36,7 @@ class FilterOfAuthorsByDecade(MonitorableProcess):
         logging.debug(f"Received message: {msg}")
         if msg == constants.FINISH_MSG:
             logging.info("EOF received. Sending EOF message to output queue")
-            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_number, constants.FINISH_MSG) )
+            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_number, constants.FINISH_MSG))
         else:
             author, decades = msg.split(",")
             if int(decades) >= int(self.min_decades_to_filter):

@@ -37,7 +37,7 @@ class FilterOfCompactReviewsByDecade(MonitorableProcess):
                                                          output_queues_to_bind=self.output_queues,
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue_of_reviews])
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_reviews, self.__filter_reviews)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_reviews, self.__filter_reviews)
         self.mq_connection_handler.channel.start_consuming()
             
     def __filter_reviews(self, ch, method, properties, body):

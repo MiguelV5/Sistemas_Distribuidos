@@ -32,7 +32,7 @@ class AuthorExpander(MonitorableProcess):
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue_of_books])       
  
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_books, self.__expand_authors)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_books, self.__expand_authors)
         self.mq_connection_handler.start_consuming()
         
     

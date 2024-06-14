@@ -1,4 +1,5 @@
 import functools
+from typing import Callable, Optional
 import pika
 
 class MQConnectionHandler:
@@ -29,6 +30,8 @@ class MQConnectionHandler:
             self.__declare_output_flows(output_exchange_name, output_queues_to_bind)
         if input_exchange_name is not None:
             self.__declare_input_flows(input_exchange_name, input_queues_to_recv_from, aux_input_exchange_name)
+        self.channel.basic_qos(prefetch_count=1)
+        self.channel.confirm_delivery()
 
 
     def __declare_input_flows(self, 
@@ -56,13 +59,14 @@ class MQConnectionHandler:
                 self.channel.queue_bind(exchange=output_exchange_name, queue=queue_name, routing_key=binding_key)
 
 
-    def setup_callback_for_input_queue(self, queue_name: str, callback, process_message=None):
-        self.channel.basic_qos(prefetch_count=1)
-        self.channel.confirm_delivery()
-        if process_message is None:
-            self.channel.basic_consume(queue=queue_name, on_message_callback=callback)
+    def setup_callbacks_for_input_queue(self, 
+                                        queue_name: str, 
+                                        state_handler_callback: Callable, 
+                                        inner_processor: Optional[Callable] = None):
+        if inner_processor is None:
+            self.channel.basic_consume(queue=queue_name, on_message_callback=state_handler_callback)
         else:
-            self.channel.basic_consume(queue=queue_name, on_message_callback=functools.partial(callback, args=(process_message)))
+            self.channel.basic_consume(queue=queue_name, on_message_callback=functools.partial(state_handler_callback, args=(inner_processor)))
 
     def start_consuming(self):
         self.channel.start_consuming()

@@ -25,7 +25,7 @@ class Generator(MonitorableProcess):
                                                          input_queues_to_recv_from=[self.input_queue])
         
     def start(self):
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue, self.__generate)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue, self.__generate)
         self.mq_connection_handler.start_consuming()
         
     def __generate(self, ch, method, properties, body):

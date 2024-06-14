@@ -28,7 +28,7 @@ class Generator(MonitorableProcess):
         self.response_msg = "[Q3 Results]:  (Title, Reviews, Authors)"
         
     def start(self):
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue, self.__generate_query3_result)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue, self.__generate_query3_result)
         self.mq_connection_handler.start_consuming()
         
     def __generate_query3_result(self, ch, method, properties, body):

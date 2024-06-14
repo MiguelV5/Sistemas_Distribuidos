@@ -31,7 +31,7 @@ class YearPreprocessor(MonitorableProcess):
                                                          input_exchange,
                                                          [input_queue])
         
-        self.mq_connection_handler.setup_callback_for_input_queue(input_queue, self.__preprocess_batch)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue, self.__preprocess_batch)
 
     def __preprocess_batch(self, ch, method, properties, body):
         msg = body.decode()

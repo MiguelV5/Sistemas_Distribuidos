@@ -36,7 +36,7 @@ class FilterByReviewsCount(MonitorableProcess):
                                                          input_queues_to_recv_from=[self.input_queue])        
         
     def start(self):
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue, self.__filter_books)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue, self.__filter_books)
         self.mq_connection_handler.start_consuming()
         
     def __filter_books(self, ch, method, properties, body):

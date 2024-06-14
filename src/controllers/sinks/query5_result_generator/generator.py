@@ -22,7 +22,7 @@ class Generator(MonitorableProcess):
             input_exchange_name=input_exchange_name, 
             input_queues_to_recv_from=[input_queue_name]
         )
-        self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__accumulate_results)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.__accumulate_results)
         
             
     def __accumulate_results(self, ch, method, properties, body):

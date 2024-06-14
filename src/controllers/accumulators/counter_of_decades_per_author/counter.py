@@ -25,7 +25,7 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
                                                          output_queues_to_bind={self.output_queue_of_authors: [self.output_queue_of_authors]},
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue_of_authors])
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_authors, self.__count_authors)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_authors, self.__count_authors)
         self.mq_connection_handler.start_consuming()
             
     def __count_authors(self, ch, method, properties, body):

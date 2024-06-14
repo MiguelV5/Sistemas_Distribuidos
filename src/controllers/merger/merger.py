@@ -46,8 +46,8 @@ class Merger(MonitorableProcess):
                                                          input_queues_to_recv_from=[self.input_queue_name_reviews, self.input_queue_name_books],
                                                          aux_input_exchange_name=self.input_exchange_name_books)
         
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name_books, self.__handle_books) 
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name_reviews, self.__handle_reviews)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_name_books, self.__handle_books) 
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_name_reviews, self.__handle_reviews)
         self.mq_connection_handler.channel.start_consuming()
             
     def __handle_books(self, ch, method, properties, body):

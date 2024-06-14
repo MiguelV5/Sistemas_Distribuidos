@@ -30,7 +30,7 @@ class CounterOfReviewsPerBook(MonitorableProcess):
                                                          input_queues_to_recv_from=[self.input_queue_name])
        
     def start(self):
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_name, self.__count_reviews)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_name, self.__count_reviews)
         self.mq_connection_handler.channel.start_consuming()
     
     def __count_reviews(self, ch, method, properties, body):

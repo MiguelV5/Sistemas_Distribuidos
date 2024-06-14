@@ -29,7 +29,7 @@ class FilterByTitle(MonitorableProcess):
             input_exchange_name=input_exchange_name, 
             input_queues_to_recv_from=[input_queue_name]
         )
-        self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__filter_books_by_title)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.__filter_books_by_title)
         
             
     def __filter_books_by_title(self, ch, method, properties, body):

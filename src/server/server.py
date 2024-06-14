@@ -56,7 +56,7 @@ class Server:
                                                          [self.input_queue_of_query_results])
         
         self.pipe_sender = pipe_sender
-        self.mq_connection_handler.setup_callback_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
         self.mq_connection_handler.start_consuming()
         
     def __process_query_result(self, ch, method, properties, body):

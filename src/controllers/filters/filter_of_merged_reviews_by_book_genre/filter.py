@@ -30,7 +30,7 @@ class FilterReviewByBookGenre(MonitorableProcess):
             input_exchange_name=input_exchange_name, 
             input_queues_to_recv_from=[input_queue_name]
         )
-        self.mq_connection_handler.setup_callback_for_input_queue(input_queue_name, self.__filter_reviews_by_book_genre)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.__filter_reviews_by_book_genre)
         
             
     def __filter_reviews_by_book_genre(self, ch, method, properties, body):
