@@ -4,11 +4,11 @@ from shared.stream import Stream
 
 class SocketConnectionHandler:
     
-    def __init__(self, sock):
+    def __init__(self, sock: socket.socket):
         self._stream = Stream(sock)
 
     @classmethod
-    def create_from_socket(cls, sock):
+    def create_from_socket(cls, sock: socket.socket):
         return cls(sock)
     
     @classmethod
