@@ -5,7 +5,7 @@ from shared.socket_connection_handler import SocketConnectionHandler
 import logging
 from multiprocessing import Process
 from shared.mq_connection_handler import MQConnectionHandler
-from typing import Optional, TypeAlias
+from typing import Any, Optional, TypeAlias
 import json
 from shared.atomic_writer import AtomicWriter
 
@@ -16,7 +16,8 @@ ClientID_t: TypeAlias = int
 BufferName_t: TypeAlias = str
 ControllerName_t: TypeAlias = str
 ControllerSeqNum_t: TypeAlias = int
-LocalState_t: TypeAlias = dict[ClientID_t, dict[BufferName_t, dict[ControllerName_t, ControllerSeqNum_t]]]
+BufferContent_t: TypeAlias = dict[ControllerName_t, ControllerSeqNum_t] | Any
+LocalState_t: TypeAlias = dict[ClientID_t, dict[BufferName_t, BufferContent_t]]
 
 class MonitorableProcess:
     def __init__(self, controller_name: str):
