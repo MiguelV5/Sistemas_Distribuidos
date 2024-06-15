@@ -87,3 +87,9 @@ class MonitorableProcess:
             ch.basic_ack(delivery_tag=method.delivery_tag)                  
             
 
+    def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
+        last_message_seq_num = self.state.get(client_id, {}).get("latest_message_per_controller", {}).get(controller_name, 0)
+        return last_message_seq_num + 1
+    
+    def update_self_seq_number(self, client_id: int, seq_num: int):
+        self.state.update({client_id: {self.controller_name: seq_num}})
