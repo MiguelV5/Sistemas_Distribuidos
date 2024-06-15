@@ -75,7 +75,7 @@ class MonitorableProcess:
         The inner callback should not save state nor ack messages as it is handled here
         """
         received_msg = SystemMessage.decode_from_bytes(body)
-        latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 0)
+        latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 1)
             
         if received_msg.controller_seq_num == latest_seq_num_from_controller:
             logging.debug(f"Duplicate message: {received_msg}")
@@ -86,10 +86,4 @@ class MonitorableProcess:
             self.__save_state_file()
             ch.basic_ack(delivery_tag=method.delivery_tag)                  
             
-            
-    def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
-        last_message_seq_num = self.state.get(client_id, {}).get("latest_message_per_controller", {}).get(controller_name, 0)
-        return last_message_seq_num + 1
-    
-    def update_self_seq_number(self, client_id: int, seq_num: int):
-        self.state.update({client_id: {self.controller_name: seq_num}})
+

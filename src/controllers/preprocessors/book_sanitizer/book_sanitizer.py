@@ -40,6 +40,7 @@ class BookSanitizer(MonitorableProcess):
 
     
     def __handle_eof(self, received_sys_msg: SystemMessage):
+        logging.info(f"Received EOF_B from client: {received_sys_msg.client_id}")
         seq_num_to_send = self.state.get(received_sys_msg.client_id, {}).get("seq_num_to_send", 1)
         msg_to_send = SystemMessage(SystemMessageType.EOF_B, received_sys_msg.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
