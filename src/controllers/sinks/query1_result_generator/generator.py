@@ -2,6 +2,7 @@ from shared.mq_connection_handler import MQConnectionHandler
 import logging
 from shared import constants
 from shared.monitorable_process import MonitorableProcess
+from shared.protocol_messages import SystemMessage, SystemMessageType
 
 class Generator(MonitorableProcess):
     def __init__(self, 
@@ -22,16 +23,13 @@ class Generator(MonitorableProcess):
     def start(self):
         self.mq_connection_handler.start_consuming()
         
-    def __get_results(self, ch, method, properties, body):
-        msg = body.decode()
-        if msg == constants.FINISH_MSG:
+    def __get_results(self, ch, method, properties, body: SystemMessage):
+        msg = body.payload
+        if body.type == SystemMessageType.EOF_B:
             logging.info("Received EOF")
-            self.mq_connection_handler.send_message(self.output_queue, self.results_msg)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, 0, self.results_msg).encode_to_str())
             logging.info("Sending Q1 results to output queue")
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.results_msg = "[Q1 Results]:"
         else: 
             self.results_msg += "\n" + msg 
-            ch.basic_ack(delivery_tag=method.delivery_tag)
         
         

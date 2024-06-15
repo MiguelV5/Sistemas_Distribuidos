@@ -34,9 +34,9 @@ class FilterOfAuthorsByDecade(MonitorableProcess):
         msg = body.payload
         seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
         logging.debug(f"Received message: {msg}")
-        if msg == constants.FINISH_MSG:
+        if body.type == SystemMessageType.EOF_B:
             logging.info("EOF received. Sending EOF message to output queue")
-            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, constants.FINISH_MSG).encode_to_str())
+            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
         else:
             author, decades = msg.split(",")
             if int(decades) >= int(self.min_decades_to_filter):

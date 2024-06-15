@@ -4,6 +4,7 @@ from shared import constants
 import csv
 import io
 from shared.monitorable_process import MonitorableProcess
+from shared.protocol_messages import SystemMessage, SystemMessageType
 
 
 TITLE_IDX = 0
@@ -29,14 +30,15 @@ class FilterByTitle(MonitorableProcess):
             input_exchange_name=input_exchange_name, 
             input_queues_to_recv_from=[input_queue_name]
         )
-        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.__filter_books_by_title)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.state_handler_callback,self.__filter_books_by_title)
         
             
-    def __filter_books_by_title(self, ch, method, properties, body):
-        msg = body.decode()
-        if msg == constants.FINISH_MSG:
-            self.mq_connection_handler.send_message(self.output_queue, msg)
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+    def __filter_books_by_title(self, ch, method, properties, body: SystemMessage):
+        msg = body.payload
+        if body.type == SystemMessageType.EOF_B:
+            seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.update_self_seq_number(body.client_id, seq_num_to_send)
         else:
             msg = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             row = next(msg)
@@ -46,11 +48,10 @@ class FilterByTitle(MonitorableProcess):
             year = row[YEAR_IDX]
             
             if self.title_keyword.lower() in title.lower():
+                seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
                 msg_to_send = f"{title},\"{authors}\",{publisher},{year}"           
-                self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
-
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        
+                self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, msg_to_send).encode_to_str())
+                self.update_self_seq_number(body.client_id, seq_num_to_send)
        
     def start(self):
         self.mq_connection_handler.channel.start_consuming()
