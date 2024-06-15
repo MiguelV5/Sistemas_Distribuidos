@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+from shared.protocol_messages import SystemMessage, SystemMessageType
 from shared.socket_connection_handler import SocketConnectionHandler
 import socket
 from shared.mq_connection_handler import MQConnectionHandler
@@ -9,7 +10,9 @@ import signal
 AMOUNT_OF_QUERY_RESULTS = 5
 class Server:
     def __init__(self,server_port, input_exchange, input_queue_of_query_results, output_exchange_of_data, output_queue_of_reviews, output_queue_of_books):
-        self.c_name_for_system_msgs = "server"
+        self.controller_name_for_system_msgs = "server"
+        self.seq_num_for_system_msgs = 1
+
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', server_port))
         self.server_socket.listen()
@@ -111,18 +114,36 @@ class Server:
             logging.error("Error handling client connection: {}".format(str(e)))
             
             
-    def __handle_incoming_client_data(self, connection_handler: SocketConnectionHandler, output_queues_handler: MQConnectionHandler, queue_name: str):
+    def __handle_incoming_client_data(self, client_connection_handler: SocketConnectionHandler, output_queues_handler: MQConnectionHandler, queue_name: str):
         try:           
             while True:
-                message = connection_handler.read_message()
+                message = client_connection_handler.read_message()
+                sys_msg_type = SystemMessageType.DATA
                 if message == constants.FINISH_MSG:
-                    logging.info("Finished receiving file data")
-                    output_queues_handler.send_message(queue_name, message)
+                    if queue_name == self.output_queue_of_books:
+                        sys_msg_type = SystemMessageType.EOF_B
+                        self.seq_num_for_system_msgs = 1
+                    elif queue_name == self.output_queue_of_reviews:
+                        sys_msg_type = SystemMessageType.EOF_R
+
+                    sys_msg = SystemMessage(msg_type=sys_msg_type, 
+                                            client_id=0, 
+                                            controller_name=self.controller_name_for_system_msgs, 
+                                            controller_seq_num=self.seq_num_for_system_msgs).encode_to_str()
+                    output_queues_handler.send_message(queue_name, sys_msg)
+                    self.seq_num_for_system_msgs += 1
                     break
-                connection_handler.send_message(constants.OK_MSG)
-                output_queues_handler.send_message(queue_name, message)
+                else:
+                    sys_msg = SystemMessage(msg_type=sys_msg_type, 
+                                            client_id=0, 
+                                            controller_name=self.controller_name_for_system_msgs, 
+                                            controller_seq_num=self.seq_num_for_system_msgs, 
+                                            payload=message).encode_to_str()
+                    output_queues_handler.send_message(queue_name, message)
+                    self.seq_num_for_system_msgs += 1
+                    client_connection_handler.send_message(constants.OK_MSG)
         except Exception as e:
             logging.error("Error handling file data: {}".format(str(e)))
             self.finished_with_client_data = True
-            connection_handler.send_message("Error")
+            client_connection_handler.send_message("Error")
             

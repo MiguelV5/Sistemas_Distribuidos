@@ -17,7 +17,6 @@ BufferName_t: TypeAlias = str
 ControllerName_t: TypeAlias = str
 ControllerSeqNum_t: TypeAlias = int
 BufferContent_t: TypeAlias = dict[ControllerName_t, ControllerSeqNum_t] | Any
-LocalState_t: TypeAlias = dict[ClientID_t, dict[BufferName_t, BufferContent_t]]
 
 class MonitorableProcess:
     def __init__(self, controller_name: str):
@@ -26,7 +25,7 @@ class MonitorableProcess:
         self.mq_connection_handler: Optional[MQConnectionHandler] = None
         self.joinable_processes: list[Process] = []
         self.state_file_path = f"/{controller_name}_state.json"
-        self.state: LocalState_t = self.__load_state_file()
+        self.state: dict[ClientID_t, dict[BufferName_t, BufferContent_t]] = self.__load_state_file()
         p = Process(target=self.__accept_incoming_health_checks)
         self.joinable_processes.append(p)
         p.start()
@@ -52,7 +51,7 @@ class MonitorableProcess:
             self.health_check_connection_handler = SocketConnectionHandler.create_from_socket(client_socket)
             message = SystemMessage.decode_from_bytes(self.health_check_connection_handler.read_message_raw())
 
-            if message.msg_type == SystemMessageType.HEALTH_CHECK:
+            if message.type == SystemMessageType.HEALTH_CHECK:
                 alive_msg = SystemMessage(msg_type=SystemMessageType.ALIVE, client_id=0, controller_name=self.controller_name, controller_seq_num=0).encode_to_str()
                 self.health_check_connection_handler.send_message(alive_msg)
             self.health_check_connection_handler.close()
@@ -65,32 +64,31 @@ class MonitorableProcess:
         except FileNotFoundError:
             return {}
         
-    def save_state_file(self):
+    def __save_state_file(self):
         writer = AtomicWriter(self.state_file_path)
         writer.write(json.dumps(self.state))
         
     def state_handler_callback(self, ch, method, properties, body, inner_processor):
-        msg = SystemMessage.decode_from_bytes(body)
-        last_message_seq_num = self.state.get(msg.client_id, {}).get("last_message_processed", {}).get(msg.controller_name, 0)
+        """
+        IMPORTANT: The state of any buffer apart from the latest_message_processed should be handled by the inner callback if needed as it is specific to each controller. This applies, for example, to the LOCAL seq number to send.
+
+        The inner callback should not save state nor ack messages as it is handled here
+        """
+        received_msg = SystemMessage.decode_from_bytes(body)
+        latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_processed", {}).get(received_msg.controller_name, 0)
             
-        if msg.controller_seq_num == last_message_seq_num:
-            logging.debug(f"Duplicate message: {msg}")
+        if received_msg.controller_seq_num == latest_seq_num_from_controller:
+            logging.debug(f"Duplicate message: {received_msg}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
-            # Call the actual callback of the controller
-            inner_processor(ch, method, properties, msg)
-            # Update last seq num from sender controller
-            self.state.update({msg.client_id: {"last_message_processed": {msg.controller_name: msg.controller_seq_num}}})
-            # Buffer state should be handled by the actual callback if needed as it is specific to the controller
-            # Also for the self seq number, it should be handled by the actual callback as it can send multiple messages from a chunk
-            # Update the state file only after the actual callback has been executed
-            # Ack only after the state is stored to avoid losing messages, it can result in handling the same message twice but it ensures no message is lost as the state is updated correctly
-            self.save_state_file()
+            inner_processor(received_msg)
+            self.state.update({received_msg.client_id: {"latest_message_processed": {received_msg.controller_name: received_msg.controller_seq_num}}})
+            self.__save_state_file()
             ch.basic_ack(delivery_tag=method.delivery_tag)                  
             
             
     def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
-        last_message_seq_num = self.state.get(client_id, {}).get("last_message_processed", {}).get(controller_name, 0)
+        last_message_seq_num = self.state.get(client_id, {}).get("latest_message_processed", {}).get(controller_name, 0)
         return last_message_seq_num + 1
     
     def update_self_seq_number(self, client_id: int, seq_num: int):

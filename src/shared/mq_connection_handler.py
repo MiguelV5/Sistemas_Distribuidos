@@ -72,7 +72,7 @@ class MQConnectionHandler:
         self.channel.start_consuming()
 
 
-    def send_message(self, routing_key, msg_body):
+    def send_message(self, routing_key: str, msg_body: str):
         """
         Sends a message with a specified routing_key to inform the output_exchange about which queues to route the message to.
         """

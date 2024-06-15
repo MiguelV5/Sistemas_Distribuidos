@@ -42,7 +42,7 @@ class HealthChecker(MonitorableProcess):
                 self.socket_connection_handler.send_message(msg.encode_to_str())
 
                 response_msg = SystemMessage.decode_from_bytes(self.socket_connection_handler.read_message_raw())
-                if response_msg.msg_type != SystemMessageType.ALIVE:
+                if response_msg.type != SystemMessageType.ALIVE:
                     logging.error(f"Controller {controller} is not healthy")
                     self.__revive_controller(controller)
                 else:
