@@ -32,22 +32,22 @@ class BookSanitizer(MonitorableProcess):
         self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue, self.state_handler_callback, self.__process_msg_from_sv)
 
 
-    def __process_msg_from_sv(self, received_sys_msg: SystemMessage):
-        if received_sys_msg.type == SystemMessageType.EOF_B:
-            self.__handle_eof(received_sys_msg)
-        elif received_sys_msg.type == SystemMessageType.DATA:
-            self.__sanitize_books_and_send(received_sys_msg)
+    def __process_msg_from_sv(self, body: SystemMessage):
+        if body.type == SystemMessageType.EOF_B:
+            self.__handle_eof(body)
+        elif body.type == SystemMessageType.DATA:
+            self.__sanitize_books_and_send(body)
 
     
-    def __handle_eof(self, received_sys_msg: SystemMessage):
-        logging.info(f"Received EOF_B from client: {received_sys_msg.client_id}")
-        seq_num_to_send = self.state.get(received_sys_msg.client_id, {}).get("seq_num_to_send", 1)
-        msg_to_send = SystemMessage(SystemMessageType.EOF_B, received_sys_msg.client_id, self.controller_name, seq_num_to_send).encode_to_str()
+    def __handle_eof(self, body: SystemMessage):
+        logging.info(f"Received EOF_B from client: {body.client_id}")
+        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+        msg_to_send = SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
-        self.state.update({received_sys_msg.client_id: {"seq_num_to_send": 1}})
+        self.update_self_seq_number(body.client_id, seq_num_to_send)
 
-    def __sanitize_books_and_send(self, received_sys_msg: SystemMessage):
-        books_batch = received_sys_msg.get_batch_iter_from_payload()
+    def __sanitize_books_and_send(self, body: SystemMessage):
+        books_batch = body.get_batch_iter_from_payload()
         payload_to_send = ""
         for book in books_batch:
             if len(book) < REQUIRED_SIZE_OF_ROW:
@@ -68,11 +68,10 @@ class BookSanitizer(MonitorableProcess):
             payload_to_send += self.__format_sanitized_book(title, authors, publisher, published_date, categories)
         
         if payload_to_send:
-            seq_num_to_send = self.state.get(received_sys_msg.client_id, {}).get("seq_num_to_send", 1)
-            msg_to_send = SystemMessage(SystemMessageType.DATA, received_sys_msg.client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str()
+            seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+            msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str()
             self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
-            seq_num_to_send += 1
-            self.state.update({received_sys_msg.client_id: {"seq_num_to_send": seq_num_to_send}})
+            self.update_self_seq_number(body.client_id, seq_num_to_send)
     
 
     def __fix_title_format(self, title):

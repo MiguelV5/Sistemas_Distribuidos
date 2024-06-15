@@ -32,18 +32,18 @@ class FilterOfAuthorsByDecade(MonitorableProcess):
             
     def __filter_authors_by_decades_quantity(self, ch, method, properties, body: SystemMessage):
         msg = body.payload
-        next_seq_number = self.get_next_seq_number(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
         logging.debug(f"Received message: {msg}")
         if msg == constants.FINISH_MSG:
             logging.info("EOF received. Sending EOF message to output queue")
-            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_number, constants.FINISH_MSG))
+            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, constants.FINISH_MSG).encode_to_str())
         else:
             author, decades = msg.split(",")
             if int(decades) >= int(self.min_decades_to_filter):
-                self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_number, msg))
+                self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, msg).encode_to_str())
                 logging.debug(f"Sent message to output queue: {msg}")
             else:
                 logging.debug(f"Author {author} was filtered out. Decades: {decades} < {self.min_decades_to_filter}")
-        self.update_self_seq_number(body.client_id, next_seq_number)
+        self.update_self_seq_number(body.client_id, seq_num_to_send)
         
        
