@@ -104,6 +104,7 @@ add_preprocessors() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/preprocessors/books_sanitizer/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -126,6 +127,7 @@ add_preprocessors() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/preprocessors/year_preprocessor/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -154,6 +156,7 @@ add_preprocessors() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/preprocessors/decade_preprocessor/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -179,6 +182,7 @@ add_preprocessors() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/preprocessors/review_sanitizer/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -209,6 +213,7 @@ add_mergers() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/merger/backup_$i:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -244,6 +249,7 @@ add_query1_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/filter_of_books_by_year_and_genre/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -266,6 +272,7 @@ add_query1_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/filter_of_books_by_title/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -287,6 +294,7 @@ add_query1_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/sinks/query1_result_generator/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -319,6 +327,7 @@ add_query2_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/preprocessors/author_expander/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -344,6 +353,7 @@ add_query2_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/accumulators/counter_of_decades_per_author/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -370,6 +380,7 @@ add_query2_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/filter_of_authors_by_decade/backup_$i:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -395,6 +406,7 @@ add_query2_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/sinks/query2_result_generator/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -429,6 +441,7 @@ add_query3_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/filter_of_compact_reviews_by_decade/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -454,6 +467,7 @@ add_query3_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/accumulators/counter_of_reviews_per_book/backup_$i:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy" >> docker-compose.yaml
@@ -482,6 +496,7 @@ add_query3_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/filter_of_books_by_review_count/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -503,6 +518,7 @@ add_query3_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/sinks/query3_result_generator/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -534,6 +550,7 @@ add_query4_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/sorter_of_books_by_review_count/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -555,6 +572,7 @@ add_query4_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/sinks/query4_result_generator/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -589,6 +607,7 @@ add_query5_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/filter_of_merged_reviews_by_book_genre/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -610,6 +629,7 @@ add_query5_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/accumulators/sentiment_analyzer/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -632,6 +652,7 @@ add_query5_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/filters/filter_of_books_by_sentiment_quantile/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -653,6 +674,7 @@ add_query5_processes() {
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/controllers/sinks/query5_result_generator/backup:/backup
     depends_on:
       rabbitmq:
         condition: service_healthy

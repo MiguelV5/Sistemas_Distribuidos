@@ -24,7 +24,7 @@ class MonitorableProcess:
         self.health_check_connection_handler: Optional[SocketConnectionHandler] = None
         self.mq_connection_handler: Optional[MQConnectionHandler] = None
         self.joinable_processes: list[Process] = []
-        self.state_file_path = f"/{controller_name}_state.json"
+        self.state_file_path = f"/backup/{controller_name}_state.json"
         self.state: dict[ClientID_t, dict[BufferName_t, BufferContent_t]] = self.__load_state_file()
         p = Process(target=self.__accept_incoming_health_checks)
         self.joinable_processes.append(p)
