@@ -58,8 +58,8 @@ class FilterByGenreAndYear(MonitorableProcess):
                     seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
                     msg_to_send = f"{title},\"{authors}\",{publisher},{year_str}" + "\n"            
                     self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, msg_to_send).encode_to_str())
-                    self.update_self_seq_number(body.client_id, seq_num_to_send)           
-        
+                    self.update_self_seq_number(body.client_id, seq_num_to_send)
+                    
        
     def start(self):
         self.mq_connection_handler.channel.start_consuming()
