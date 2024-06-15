@@ -66,11 +66,10 @@ class MQConnectionHandler:
         if inner_processor is None:
             self.channel.basic_consume(queue=queue_name, on_message_callback=main_callback)
         else:
-            self.channel.basic_consume(queue=queue_name, on_message_callback=functools.partial(main_callback, args=(inner_processor)))
+            self.channel.basic_consume(queue=queue_name, on_message_callback=functools.partial(main_callback, inner_processor=(inner_processor)))
 
     def start_consuming(self):
         self.channel.start_consuming()
-
 
     def send_message(self, routing_key: str, msg_body: str):
         """
