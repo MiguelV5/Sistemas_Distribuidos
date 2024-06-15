@@ -139,7 +139,7 @@ class Server:
                                             controller_name=self.controller_name_for_system_msgs, 
                                             controller_seq_num=self.seq_num_for_system_msgs, 
                                             payload=message).encode_to_str()
-                    output_queues_handler.send_message(queue_name, message)
+                    output_queues_handler.send_message(queue_name, sys_msg)
                     self.seq_num_for_system_msgs += 1
                     client_connection_handler.send_message(constants.OK_MSG)
         except Exception as e:
