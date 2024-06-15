@@ -22,7 +22,6 @@ class BookSanitizer(MonitorableProcess):
                  output_queue: str, 
                  controller_name: str):
         super().__init__(controller_name)
-        self.seq_num_to_send = 1
 
         self.output_queue = output_queue
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
@@ -41,10 +40,10 @@ class BookSanitizer(MonitorableProcess):
 
     
     def __handle_eof(self, received_sys_msg: SystemMessage):
-        msg_to_send = SystemMessage(SystemMessageType.EOF_B, received_sys_msg.client_id, self.controller_name, self.seq_num_to_send).encode_to_str()
+        seq_num_to_send = self.state.get(received_sys_msg.client_id, {}).get("seq_num_to_send", 1)
+        msg_to_send = SystemMessage(SystemMessageType.EOF_B, received_sys_msg.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
-        self.seq_num_to_send = 1
-        self.state.update({received_sys_msg.client_id: {"seq_num_to_send": self.seq_num_to_send}})
+        self.state.update({received_sys_msg.client_id: {"seq_num_to_send": 1}})
 
     def __sanitize_books_and_send(self, received_sys_msg: SystemMessage):
         books_batch = received_sys_msg.get_batch_iter_from_payload()
@@ -68,10 +67,11 @@ class BookSanitizer(MonitorableProcess):
             payload_to_send += self.__format_sanitized_book(title, authors, publisher, published_date, categories)
         
         if payload_to_send:
-            msg_to_send = SystemMessage(SystemMessageType.DATA, received_sys_msg.client_id, self.controller_name, self.seq_num_to_send, payload_to_send).encode_to_str()
+            seq_num_to_send = self.state.get(received_sys_msg.client_id, {}).get("seq_num_to_send", 1)
+            msg_to_send = SystemMessage(SystemMessageType.DATA, received_sys_msg.client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str()
             self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
-            self.seq_num_to_send += 1
-            self.state.update({received_sys_msg.client_id: {"seq_num_to_send": self.seq_num_to_send}})
+            seq_num_to_send += 1
+            self.state.update({received_sys_msg.client_id: {"seq_num_to_send": seq_num_to_send}})
     
 
     def __fix_title_format(self, title):

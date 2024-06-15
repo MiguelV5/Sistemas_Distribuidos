@@ -22,7 +22,6 @@ class ReviewSanitizer(MonitorableProcess):
                  output_queues: list[str],
                  controller_name: str):
         super().__init__(controller_name)
-        self.seq_num_to_send = 1
 
         self.output_queues = output_queues
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
@@ -41,11 +40,11 @@ class ReviewSanitizer(MonitorableProcess):
 
 
     def __handle_eof(self, received_sys_msg: SystemMessage):
-        msg_to_send = SystemMessage(SystemMessageType.EOF_R, received_sys_msg.client_id, self.controller_name, self.seq_num_to_send).encode_to_str()
+        seq_num_to_send = self.state.get(received_sys_msg.client_id, {}).get("seq_num_to_send", 1)
+        msg_to_send = SystemMessage(SystemMessageType.EOF_R, received_sys_msg.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         for output_queue in self.output_queues:
             self.mq_connection_handler.send_message(output_queue, msg_to_send)
-        self.seq_num_to_send = 1
-        self.state.update({received_sys_msg.client_id: {"seq_num_to_send": self.seq_num_to_send}})
+        self.state.update({received_sys_msg.client_id: {"seq_num_to_send": 1}})
 
     def __sanitize_reviews_and_send(self, received_sys_msg: SystemMessage):
         reviews_batch = received_sys_msg.get_batch_iter_from_payload()
@@ -66,14 +65,15 @@ class ReviewSanitizer(MonitorableProcess):
             payloads_to_send_towards_mergers[selected_queue] += self.__format_sanitized_review(title, review_score, review_text)
 
         at_least_one_msg_was_sent = False
+        seq_num_to_send = self.state.get(received_sys_msg.client_id, {}).get("seq_num_to_send", 1)
         for output_queue in self.output_queues:
             if payloads_to_send_towards_mergers[output_queue]:
-                msg_to_send = SystemMessage(SystemMessageType.DATA, received_sys_msg.client_id, self.controller_name, self.seq_num_to_send, payloads_to_send_towards_mergers[output_queue]).encode_to_str()
+                msg_to_send = SystemMessage(SystemMessageType.DATA, received_sys_msg.client_id, self.controller_name, seq_num_to_send, payloads_to_send_towards_mergers[output_queue]).encode_to_str()
                 self.mq_connection_handler.send_message(output_queue, msg_to_send)
                 at_least_one_msg_was_sent = True
         if at_least_one_msg_was_sent:
-            self.seq_num_to_send += 1
-            self.state.update({received_sys_msg.client_id: {"seq_num_to_send": self.seq_num_to_send}})
+            seq_num_to_send += 1
+            self.state.update({received_sys_msg.client_id: {"seq_num_to_send": seq_num_to_send}})
 
 
     def __fix_title_format(self, title):
