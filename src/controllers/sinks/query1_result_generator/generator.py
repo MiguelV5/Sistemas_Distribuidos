@@ -18,12 +18,12 @@ class Generator(MonitorableProcess):
                                                          output_queues_to_bind={self.output_queue: [self.output_queue]}, 
                                                          input_exchange_name=input_exchange_name, 
                                                          input_queues_to_recv_from=[input_queue_name])
-        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.__get_results)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.state_handler_callback, self.__get_results)
         
     def start(self):
         self.mq_connection_handler.start_consuming()
         
-    def __get_results(self, ch, method, properties, body: SystemMessage):
+    def __get_results(self, body: SystemMessage):
         msg = body.payload
         if body.type == SystemMessageType.EOF_B:
             logging.info("Received EOF")

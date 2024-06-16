@@ -76,8 +76,6 @@ class MonitorableProcess:
         """
         received_msg = SystemMessage.decode_from_bytes(body)
         latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 1)
-        
-        logging.info(f"Received message: {received_msg.controller_seq_num} latest: {latest_seq_num_from_controller}")
             
         if received_msg.controller_seq_num <= latest_seq_num_from_controller:
             logging.debug(f"Duplicate message: {received_msg}")
@@ -91,14 +89,10 @@ class MonitorableProcess:
 
     def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
         last_message_seq_num = self.state.get(client_id, {}).get("latest_message_per_controller", {}).get(controller_name, 0)
-        logging.info(f"Last message seq num: {last_message_seq_num + 1}")
         return last_message_seq_num + 1
     
     def update_self_seq_number(self, client_id: int, seq_num: int):
-        logging.info(f"Updating seq num to: {seq_num}")
-        logging.info(f"State before update: {self.state}")
         self.__update_seq_num_state(client_id, self.controller_name, seq_num)
-        logging.info(f"State after update: {self.state}")
         
     def __update_seq_num_state(self, client_id, controller_name, seq_num):
         if client_id in self.state:

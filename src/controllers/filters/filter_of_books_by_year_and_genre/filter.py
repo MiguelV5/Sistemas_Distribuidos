@@ -38,7 +38,7 @@ class FilterByGenreAndYear(MonitorableProcess):
         self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.state_handler_callback, self.__filter_books_by_year_and_genre)
         
             
-    def __filter_books_by_year_and_genre(self, ch, method, properties, body: SystemMessage):
+    def __filter_books_by_year_and_genre(self, body: SystemMessage):
         msg = body.payload
         if body.type == SystemMessageType.EOF_B:
             seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)

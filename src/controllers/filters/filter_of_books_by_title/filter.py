@@ -30,10 +30,10 @@ class FilterByTitle(MonitorableProcess):
             input_exchange_name=input_exchange_name, 
             input_queues_to_recv_from=[input_queue_name]
         )
-        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.state_handler_callback,self.__filter_books_by_title)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.state_handler_callback, self.__filter_books_by_title)
         
             
-    def __filter_books_by_title(self, ch, method, properties, body: SystemMessage):
+    def __filter_books_by_title(self, body: SystemMessage):
         msg = body.payload
         if body.type == SystemMessageType.EOF_B:
             seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
