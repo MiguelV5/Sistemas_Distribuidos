@@ -79,17 +79,17 @@ class MonitorableProcess:
         received_msg = SystemMessage.decode_from_bytes(body)
         latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 0)
             
-        if received_msg.controller_seq_num == latest_seq_num_from_controller:
+        if received_msg.controller_seq_num <= latest_seq_num_from_controller:
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            logging.info(f"[DUPLICATE DETECTED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
+            logging.debug(f"[DUPLICATE DETECTED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
         else:
             inner_processor(received_msg)
-            logging.info(f"[PROCESSED MESSAGE]: type {received_msg.type} from client {received_msg.client_id} with received seq num {received_msg.controller_seq_num}")
+            logging.debug(f"[PROCESSED MESSAGE]: type {received_msg.type} from client {received_msg.client_id} with received seq num {received_msg.controller_seq_num}")
             self.__update_seq_num_state(received_msg.client_id, received_msg.controller_name, received_msg.controller_seq_num)
             self.__save_state_file()
-            logging.info(f"[STATE SAVED]: {self.state}")
+            logging.debug(f"[STATE SAVED]: {self.state}")
             ch.basic_ack(delivery_tag=method.delivery_tag)    
-            logging.info(f"[ACKNOWLEDGED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
+            logging.debug(f"[ACKNOWLEDGED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
             
 
     def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
