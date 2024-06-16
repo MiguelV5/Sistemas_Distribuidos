@@ -70,7 +70,6 @@ class ReviewSanitizer(MonitorableProcess):
             if payloads_to_send_towards_mergers[output_queue]:
                 msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payloads_to_send_towards_mergers[output_queue]).encode_to_str()
                 self.mq_connection_handler.send_message(output_queue, msg_to_send)
-                at_least_one_msg_was_sent = True
                 self.update_self_seq_number(body.client_id, seq_num_to_send)    
 
 

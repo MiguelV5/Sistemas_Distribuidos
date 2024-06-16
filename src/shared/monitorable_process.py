@@ -1,5 +1,6 @@
 import signal
 import socket
+import time
 from shared.protocol_messages import SystemMessage, SystemMessageType
 from shared.socket_connection_handler import SocketConnectionHandler
 import logging
@@ -60,7 +61,8 @@ class MonitorableProcess:
     def __load_state_file(self) -> dict:
         try:
             with open(self.state_file_path, 'r') as f:
-                return json.load(f)
+                state_json = json.load(f)
+                return {int(k): v for k, v in state_json.items()}
         except FileNotFoundError:
             return {}
         
@@ -75,16 +77,19 @@ class MonitorableProcess:
         The inner callback should not save state nor ack messages as it is handled here
         """
         received_msg = SystemMessage.decode_from_bytes(body)
-        latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 1)
+        latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 0)
             
-        if received_msg.controller_seq_num <= latest_seq_num_from_controller:
-            logging.debug(f"Duplicate message: {received_msg}")
+        if received_msg.controller_seq_num == latest_seq_num_from_controller:
             ch.basic_ack(delivery_tag=method.delivery_tag)
+            logging.info(f"[DUPLICATE DETECTED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
         else:
             inner_processor(received_msg)
+            logging.info(f"[PROCESSED MESSAGE]: type {received_msg.type} from client {received_msg.client_id} with received seq num {received_msg.controller_seq_num}")
             self.__update_seq_num_state(received_msg.client_id, received_msg.controller_name, received_msg.controller_seq_num)
             self.__save_state_file()
-            ch.basic_ack(delivery_tag=method.delivery_tag)                  
+            logging.info(f"[STATE SAVED]: {self.state}")
+            ch.basic_ack(delivery_tag=method.delivery_tag)    
+            logging.info(f"[ACKNOWLEDGED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
             
 
     def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
