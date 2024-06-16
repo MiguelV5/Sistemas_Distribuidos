@@ -24,7 +24,7 @@ class MonitorableProcess:
         self.health_check_connection_handler: Optional[SocketConnectionHandler] = None
         self.mq_connection_handler: Optional[MQConnectionHandler] = None
         self.joinable_processes: list[Process] = []
-        self.state_file_path = f"/backup/{controller_name}_state.json"
+        self.state_file_path = f"{controller_name}_state.json"
         self.state: dict[ClientID_t, dict[BufferName_t, BufferContent_t]] = self.__load_state_file()
         p = Process(target=self.__accept_incoming_health_checks)
         self.joinable_processes.append(p)
@@ -76,20 +76,35 @@ class MonitorableProcess:
         """
         received_msg = SystemMessage.decode_from_bytes(body)
         latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 1)
+        
+        logging.info(f"Received message: {received_msg.controller_seq_num} latest: {latest_seq_num_from_controller}")
             
         if received_msg.controller_seq_num <= latest_seq_num_from_controller:
             logging.debug(f"Duplicate message: {received_msg}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
             inner_processor(received_msg)
-            self.state.update({received_msg.client_id: {"latest_message_per_controller": {received_msg.controller_name: received_msg.controller_seq_num}}})
+            self.__update_seq_num_state(received_msg.client_id, received_msg.controller_name, received_msg.controller_seq_num)
             self.__save_state_file()
             ch.basic_ack(delivery_tag=method.delivery_tag)                  
             
 
     def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
         last_message_seq_num = self.state.get(client_id, {}).get("latest_message_per_controller", {}).get(controller_name, 0)
+        logging.info(f"Last message seq num: {last_message_seq_num + 1}")
         return last_message_seq_num + 1
     
     def update_self_seq_number(self, client_id: int, seq_num: int):
-        self.state.update({client_id: {self.controller_name: seq_num}})
+        logging.info(f"Updating seq num to: {seq_num}")
+        logging.info(f"State before update: {self.state}")
+        self.__update_seq_num_state(client_id, self.controller_name, seq_num)
+        logging.info(f"State after update: {self.state}")
+        
+    def __update_seq_num_state(self, client_id, controller_name, seq_num):
+        if client_id in self.state:
+            if "latest_message_per_controller" in self.state[client_id]:
+                self.state[client_id]["latest_message_per_controller"][controller_name] = seq_num
+            else:
+                self.state[client_id]["latest_message_per_controller"] = {controller_name: seq_num}
+        else:
+            self.state[client_id] = {"latest_message_per_controller": {controller_name: seq_num}}

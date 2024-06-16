@@ -122,7 +122,6 @@ class Server:
                 if message == constants.FINISH_MSG:
                     if queue_name == self.output_queue_of_books:
                         sys_msg_type = SystemMessageType.EOF_B
-                        self.seq_num_for_system_msgs = 1
                     elif queue_name == self.output_queue_of_reviews:
                         sys_msg_type = SystemMessageType.EOF_R
 
