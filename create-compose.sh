@@ -37,8 +37,10 @@ add_server() {
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
-      - INPUT_EXCHANGE=query_results_ex
+      - INPUT_EXCHANGE_OF_QUERY_RESULTS=query_results_ex
+      - INPUT_EXCHANGE_OF_MERGERS_CONFIRMS=mergers_confirms_ex
       - INPUT_QUEUE_OF_QUERY_RESULTS=query_results_q
+      - INPUT_QUEUE_OF_MERGERS_CONFIRMS=mergers_confirms_q
       - OUTPUT_EXCHANGE_OF_DATA=scraped_data_ex
       - OUTPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
@@ -199,11 +201,12 @@ add_mergers() {
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=mergers_outputs_ex
       - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_$i
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_$i
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
       - CONTROLLER_NAME=merger_$i
     networks:
       - testing_net
@@ -415,7 +418,7 @@ add_query3_processes() {
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
       - NUM_OF_INPUT_WORKERS=$WORKERS
@@ -578,7 +581,7 @@ add_query5_processes() {
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q

@@ -1,17 +1,26 @@
 import logging
 import multiprocessing
-from shared.protocol_messages import SystemMessage, SystemMessageType
+from shared.monitorable_process import MonitorableProcess
+from shared.protocol_messages import QueryMessage, QueryMessageType, SystemMessage, SystemMessageType
 from shared.socket_connection_handler import SocketConnectionHandler
 import socket
 from shared.mq_connection_handler import MQConnectionHandler
 from shared import constants
 import signal
+from multiprocessing.connection import Connection as PipeConnection
 
 AMOUNT_OF_QUERY_RESULTS = 5
-class Server:
-    def __init__(self,server_port, input_exchange, input_queue_of_query_results, output_exchange_of_data, output_queue_of_reviews, output_queue_of_books):
+class Server(MonitorableProcess):
+    def __init__(self,server_port, 
+                 input_exchange_of_query_results, 
+                 input_exchange_of_mergers_confirms, 
+                 input_queue_of_query_results, 
+                 input_queue_of_mergers_confirms,
+                 output_exchange_of_data, 
+                 output_queue_of_reviews, 
+                 output_queue_of_books):
         self.controller_name_for_system_msgs = "server"
-        self.seq_num_for_system_msgs = 1
+        self.seq_num_for_system_msgs = 0
 
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', server_port))
@@ -19,11 +28,14 @@ class Server:
         self.client_sock = None
         self.server_is_running = True     
         self.finished_with_client_data = False
-        self.received_query_results = 0
         self.mq_connection_handler = None
+        # the server accepts up to 5 known clients
+        self.state = {i: {"client_name": f"client_{i}"} for i in range(1, 6)}
 
-        self.input_exchange = input_exchange
+        self.input_exchange_of_query_results = input_exchange_of_query_results
+        self.input_exchange_of_mergers_confirms = input_exchange_of_mergers_confirms
         self.input_queue_of_query_results = input_queue_of_query_results
+        self.input_queue_of_mergers_confirms = input_queue_of_mergers_confirms
         self.output_exchange_of_data = output_exchange_of_data
         self.output_queue_of_reviews = output_queue_of_reviews
         self.output_queue_of_books = output_queue_of_books
@@ -41,108 +53,122 @@ class Server:
     
     
     def run(self):
-        pipe_receiver, pipe_sender = multiprocessing.Pipe()
-        results_handler_process = multiprocessing.Process(target=self.__handle_results_from_queue, args=(pipe_sender,))
-        results_handler_process.start()
+        # PENDING: use pipes on the client side instead. This way the client can receive streamed results and synchronize whenever the server sends the WAIT message and then the CONTINUE message
+        incoming_sys_msgs_handler_process = multiprocessing.Process(target=self.__handle_incoming_sys_queues)
+        incoming_sys_msgs_handler_process.start()
         
-        self.__listen_to_client(pipe_receiver)
-        results_handler_process.join()
+        self.__listen_to_clients()
+        incoming_sys_msgs_handler_process.join()
 
 
-    # ==============================================================================================================
-
-
-    def __handle_results_from_queue(self, pipe_sender):
-        self.mq_connection_handler = MQConnectionHandler(None,
-                                                         None,
-                                                         self.input_exchange,
-                                                         [self.input_queue_of_query_results])
-        
-        self.pipe_sender = pipe_sender
-        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_query_results, self.__process_query_result)
-        self.mq_connection_handler.start_consuming()
-        
-    def __process_query_result(self, ch, method, properties, body):
-        result = body.decode()            
-        self.pipe_sender.send(result)
-        self.received_query_results += 1
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-    
-    # ==============================================================================================================
-
-
-    def __send_queries_results_to_client(self, 
-                                         connection_handler: SocketConnectionHandler, 
-                                         pipe_receiver):
-        while self.received_query_results < AMOUNT_OF_QUERY_RESULTS:
-            if pipe_receiver.poll(None):
-                query_result = pipe_receiver.recv()
-                connection_handler.send_message(query_result)
-                self.received_query_results += 1
-        connection_handler.send_message(constants.FINISH_MSG)
-        self.received_query_results = 0
-               
-   
-    def __listen_to_client(self, pipe_receiver):
+    def __listen_to_clients(self):
+        joinable_processes = []
         while self.server_is_running:
             self.client_sock, _ = self.server_socket.accept()
             if self.client_sock is not None:
-                self.__handle_client_connection(pipe_receiver)
-         
+                p = multiprocessing.Process(target=self.__handle_client_incoming_connection)
+                joinable_processes.append(p)
+                p.start()
+                self.client_sock = None
+
+        for p in joinable_processes:
+            p.join()
+            joinable_processes.remove(p)
 
 
-    def __handle_client_connection(self, pipe_receiver):
+    # ==============================================================================================================
+
+
+    def __handle_incoming_sys_queues(self, sender_pipe: PipeConnection):
+        self.mq_connection_handler = MQConnectionHandler(None,
+                                                         None,
+                                                         self.input_exchange_of_query_results,
+                                                         [self.input_queue_of_query_results, self.input_queue_of_mergers_confirms],
+                                                         self.input_exchange_of_mergers_confirms)
+        
+        self.sender_pipe = sender_pipe
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_query_results, self.state_handler_callback, self.__process_msgs_from_sinks)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_mergers_confirms, self.state_handler_callback, self.__process_mergers_confirms)
+        self.mq_connection_handler.start_consuming()
+        
+
+    def __process_msgs_from_sinks(self, body: SystemMessage):
+        if body.type == SystemMessageType.DATA:
+            msg_for_client = QueryMessage(QueryMessageType.SV_RESULT, body.client_id, body.payload).encode_to_str()
+            self.__send_direct_msg_to_client(body.client_id, msg_for_client)
+        elif body.type == SystemMessageType.EOF_B or body.type == SystemMessageType.EOF_R:
+            results_sent_to_client = self.state.get(body.client_id, {}).get("results_sent_to_client", 0)
+            self.state.update({body.client_id: {"results_sent_to_client": results_sent_to_client + 1}})
+            if results_sent_to_client == AMOUNT_OF_QUERY_RESULTS:
+                msg_for_client = QueryMessage(QueryMessageType.SV_FINISHED, body.client_id).encode_to_str()
+                self.__send_direct_msg_to_client(body.client_id, msg_for_client)
+
+
+    def __process_mergers_confirms(self, body: SystemMessage):
+        if body.type == SystemMessageType.EOF_B:
+            msg_for_client = QueryMessage(QueryMessageType.CONTINUE, body.client_id).encode_to_str()
+            self.__send_direct_msg_to_client(body.client_id, msg_for_client)
+
+
+    def __send_direct_msg_to_client(self, client_id, msg_for_client):
+        client_name = self.state[client_id]["client_name"]
+        client_responses_sock = SocketConnectionHandler.connect_and_create(client_name, constants.CLIENT_RESULTS_PORT)
+        client_responses_sock.send_message(msg_for_client)
+        client_responses_sock.close()
+
+    
+    # ==============================================================================================================
+
+   
+
+    def __handle_client_incoming_connection(self):
         output_queues_handler = MQConnectionHandler(self.output_exchange_of_data,
                                                     {self.output_queue_of_reviews: [self.output_queue_of_reviews], 
                                                      self.output_queue_of_books: [self.output_queue_of_books]},
                                                     None,
                                                     None)
         try:
-            connection_handler = SocketConnectionHandler.create_from_socket(self.client_sock)
-            self.finished_with_client_data = False
-            while not self.finished_with_client_data:  
-                message = connection_handler.read_message()
-                if message == constants.START_BOOKS_MSG:
-                    logging.info("Starting books data receiving")
-                    self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_books)
-                elif message == constants.START_REVIEWS_MSG:
-                    logging.info("Starting reviews data receiving")
-                    self.__handle_incoming_client_data(connection_handler, output_queues_handler, self.output_queue_of_reviews)
-                    self.finished_with_client_data = True
-            self.__send_queries_results_to_client(connection_handler, pipe_receiver)
+            connection_handler = SocketConnectionHandler.create_from_socket(self.client_sock)  
+            self.__handle_client_msgs(connection_handler, output_queues_handler)
         except Exception as e:
             logging.error("Error handling client connection: {}".format(str(e)))
+        finally:
+            connection_handler.close()
+            output_queues_handler.close_connection()
+            self.client_sock.close()
             
             
-    def __handle_incoming_client_data(self, client_connection_handler: SocketConnectionHandler, output_queues_handler: MQConnectionHandler, queue_name: str):
+    def __handle_client_msgs(self, 
+                             client_connection_handler: SocketConnectionHandler, 
+                             output_queues_handler: MQConnectionHandler):
         try:           
-            while True:
-                message = client_connection_handler.read_message()
-                sys_msg_type = SystemMessageType.DATA
-                if message == constants.FINISH_MSG:
-                    if queue_name == self.output_queue_of_books:
-                        sys_msg_type = SystemMessageType.EOF_B
-                    elif queue_name == self.output_queue_of_reviews:
-                        sys_msg_type = SystemMessageType.EOF_R
+            self.finished_with_client_data = False
+            while not self.finished_with_client_data:
+                client_msg = QueryMessage.decode_from_str(client_connection_handler.read_message())
+                response_for_client = QueryMessage(QueryMessageType.DATA_ACK, client_msg.client_id).encode_to_str()
+                if client_msg.type == QueryMessageType.EOF_B:
+                    response_for_client = QueryMessage(QueryMessageType.WAIT_FOR_SV, client_msg.client_id).encode_to_str()
+                    sys_msg = SystemMessage(SystemMessageType.EOF_B, client_msg.client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str()
+                    output_queues_handler.send_message(self.output_queue_of_books, sys_msg)
+                    client_connection_handler.send_message(response_for_client)
+                elif client_msg.type == QueryMessageType.EOF_R:
+                    sys_msg = SystemMessage(SystemMessageType.EOF_R, client_msg.client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str()
+                    output_queues_handler.send_message(self.output_queue_of_reviews, sys_msg)
+                    client_connection_handler.send_message(response_for_client)
+                    self.finished_with_client_data = True
+                elif client_msg.type == QueryMessageType.DATA_B:
+                    sys_msg = SystemMessage(SystemMessageType.DATA, client_msg.client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs, client_msg.payload).encode_to_str()
+                    output_queues_handler.send_message(self.output_queue_of_books, sys_msg)
+                    client_connection_handler.send_message(response_for_client)
+                elif client_msg.type == QueryMessageType.DATA_R:
+                    sys_msg = SystemMessage(SystemMessageType.DATA, client_msg.client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs, client_msg.payload).encode_to_str()
+                    output_queues_handler.send_message(self.output_queue_of_reviews, sys_msg)
+                    client_connection_handler.send_message(response_for_client)
 
-                    sys_msg = SystemMessage(msg_type=sys_msg_type, 
-                                            client_id=0, 
-                                            controller_name=self.controller_name_for_system_msgs, 
-                                            controller_seq_num=self.seq_num_for_system_msgs).encode_to_str()
-                    output_queues_handler.send_message(queue_name, sys_msg)
-                    self.seq_num_for_system_msgs += 1
-                    break
-                else:
-                    sys_msg = SystemMessage(msg_type=sys_msg_type, 
-                                            client_id=0, 
-                                            controller_name=self.controller_name_for_system_msgs, 
-                                            controller_seq_num=self.seq_num_for_system_msgs, 
-                                            payload=message).encode_to_str()
-                    output_queues_handler.send_message(queue_name, sys_msg)
-                    self.seq_num_for_system_msgs += 1
-                    client_connection_handler.send_message(constants.OK_MSG)
+                self.seq_num_for_system_msgs += 1
+                    
         except Exception as e:
             logging.error("Error handling file data: {}".format(str(e)))
-            self.finished_with_client_data = True
-            client_connection_handler.send_message("Error")
-            
+
+
+

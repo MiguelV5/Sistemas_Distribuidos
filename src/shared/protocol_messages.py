@@ -8,18 +8,22 @@ SEPARATOR = "<|>"
 class QueryMessageType(Enum):
     EOF_B = 1
     EOF_R = 2
-    DATA = 3
-    DATA_ACK = 4
-    WAIT_FOR_SV = 5
+    DATA_B = 3
+    DATA_R = 4
+    DATA_ACK = 5
+    WAIT_FOR_SV = 6
+    CONTINUE = 7
+    SV_RESULT = 8
+    SV_FINISHED = 9
 
 class QueryMessage:
     def __init__(self, msg_type: Enum, client_id: int, payload: str = ""):
-        self.msg_type = msg_type
+        self.type = msg_type
         self.client_id = client_id
         self.payload = payload
 
     def encode_to_str(self) -> str:
-        return f"{self.msg_type.value}{SEPARATOR}{self.client_id}{SEPARATOR}{self.payload}"
+        return f"{self.type.value}{SEPARATOR}{self.client_id}{SEPARATOR}{self.payload}"
     
     @classmethod
     def decode_from_str(cls, msg: str):
