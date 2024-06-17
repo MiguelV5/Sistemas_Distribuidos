@@ -7,7 +7,7 @@ import socket
 from shared.mq_connection_handler import MQConnectionHandler
 from shared import constants
 import signal
-from multiprocessing.connection import Connection as PipeConnection
+
 
 AMOUNT_OF_QUERY_RESULTS = 5
 class Server(MonitorableProcess):
@@ -79,14 +79,13 @@ class Server(MonitorableProcess):
     # ==============================================================================================================
 
 
-    def __handle_incoming_sys_queues(self, sender_pipe: PipeConnection):
+    def __handle_incoming_sys_queues(self):
         self.mq_connection_handler = MQConnectionHandler(None,
                                                          None,
                                                          self.input_exchange_of_query_results,
                                                          [self.input_queue_of_query_results, self.input_queue_of_mergers_confirms],
                                                          self.input_exchange_of_mergers_confirms)
         
-        self.sender_pipe = sender_pipe
         self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_query_results, self.state_handler_callback, self.__process_msgs_from_sinks)
         self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_mergers_confirms, self.state_handler_callback, self.__process_mergers_confirms)
         self.mq_connection_handler.start_consuming()
@@ -114,7 +113,6 @@ class Server(MonitorableProcess):
         client_name = self.state[client_id]["client_name"]
         client_responses_sock = SocketConnectionHandler.connect_and_create(client_name, constants.CLIENT_RESULTS_PORT)
         client_responses_sock.send_message(msg_for_client)
-        client_responses_sock.close()
 
     
     # ==============================================================================================================
@@ -166,9 +164,10 @@ class Server(MonitorableProcess):
                     client_connection_handler.send_message(response_for_client)
 
                 self.seq_num_for_system_msgs += 1
-                    
+        except OSError as e:
+            logging.info(f"Client disconnected: {client_connection_handler.host}")           
         except Exception as e:
-            logging.error("Error handling file data: {}".format(str(e)))
+            raise e
 
 
 

@@ -44,8 +44,8 @@ services:
         condition: service_healthy
 
 
-  client:
-    container_name: client
+  client_1:
+    container_name: client_1
     image: client:latest
     entrypoint: python3 /main.py
     volumes:
@@ -60,14 +60,13 @@ services:
       - REVIEWS_FILE_PATH=/data/books_rating.csv
       - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
+      - CLIENT_ID=1
     networks:
       - testing_net
     depends_on:
       server:
         condition: service_started
-
-  # ================================================================
-
+    
 
   book_sanitizer:
     container_name: book_sanitizer

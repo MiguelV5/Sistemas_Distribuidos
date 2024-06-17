@@ -6,6 +6,7 @@ class SocketConnectionHandler:
     
     def __init__(self, sock: socket.socket):
         self._stream = Stream(sock)
+        self.host, _ = sock.getpeername()
 
     @classmethod
     def create_from_socket(cls, sock: socket.socket):
@@ -68,7 +69,7 @@ class SocketConnectionHandler:
         except OSError as e:
             logging.error(f"action: read_message_size | result: fail | error: {e}")
             raise OSError("Socket connection broken")
-        return message, size_of_message, size_in_lines
+        return message, size_in_lines
         
         
     def close(self):

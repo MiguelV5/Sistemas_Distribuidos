@@ -54,10 +54,11 @@ add_server() {
 " >> docker-compose.yaml
 }
 
-add_client() {
-    echo "
-  client:
-    container_name: client
+add_clients() {
+    for ((i=1; i<=$CLIENTS; i++)); do
+        echo "
+  client_$i:
+    container_name: client_$i
     image: client:latest
     entrypoint: python3 /main.py
     volumes:
@@ -72,14 +73,16 @@ add_client() {
       - REVIEWS_FILE_PATH=/data/books_rating.csv
       - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
+      - CLIENT_ID=$i
     networks:
       - testing_net
     depends_on:
       server:
         condition: service_started
+    " >> docker-compose.yaml
+    done
 
   # ================================================================
-" >> docker-compose.yaml
 }
 
 
@@ -707,6 +710,11 @@ check_params() {
     # WORKERS: Number of workers or replicas per process.
     # HEALTH_CHECKERS: Number of [Health Checker] processes.
 
+    if [ -z "$CLIENTS" ]; then
+        echo "Using default values for CLIENTS=1"
+        export CLIENTS=1
+    fi
+
     if [ -z "$WORKERS" ]; then
         echo "Using default values for WORKERS=1"
         export WORKERS=1
@@ -717,9 +725,9 @@ check_params() {
         export HEALTH_CHECKERS=1
     fi
     
-    local MAX_WORKERS=5
-    if [ $WORKERS -gt $MAX_WORKERS ] || [ $HEALTH_CHECKERS -gt $MAX_WORKERS ] ; then
-        echo "The maximum number of workers is $MAX_WORKERS"
+    local MAX_INSTANCES=5
+    if [ $CLIENTS -gt $MAX_INSTANCES ] || [ $WORKERS -gt $MAX_INSTANCES ] || [ $HEALTH_CHECKERS -gt $MAX_INSTANCES ] ; then
+        echo "The maximum number of instances per configuration is $MAX_INSTANCES"
         exit 1
     fi
 
@@ -734,7 +742,7 @@ check_params
 add_compose_header
 add_rabbitmq
 add_server
-add_client
+add_clients
 add_preprocessors
 add_mergers
 add_query1_processes
