@@ -2,6 +2,7 @@ from shared.mq_connection_handler import MQConnectionHandler
 import logging
 from shared import constants
 from shared.monitorable_process import MonitorableProcess
+from shared.protocol_messages import SystemMessage, SystemMessageType
 
 
 class CounterOfDecadesPerAuthor(MonitorableProcess):
@@ -17,7 +18,8 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         self.input_queue_of_authors = input_queue_of_authors
         self.output_queue_of_authors = output_queue_of_authors
         self.mq_connection_handler = None
-        self.authors_decades = {}
+        #self.authors_decades = {}
+        self.__parse_decades_state()
         
         
     def start(self):
@@ -25,32 +27,50 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
                                                          output_queues_to_bind={self.output_queue_of_authors: [self.output_queue_of_authors]},
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue_of_authors])
-        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_authors, self.__count_authors)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_authors, self.state_handler_callback ,self.__count_authors)
         self.mq_connection_handler.start_consuming()
             
-    def __count_authors(self, ch, method, properties, body):
+    def __count_authors(self, body: SystemMessage):
         """ 
         The body is a csv line with the following format in the line: "author, decade" 
         The counter should count the number of authors per decade and send the result to the output queue.
         """
-        msg = body.decode()
+        msg = body.payload
         logging.debug(f"Received message: {msg}")
-        if msg == constants.FINISH_MSG:
+        if body.type == SystemMessageType.EOF_B:
             logging.info("Received EOF. Sending results and EOF to output queue")
             self.__send_results()
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            self.authors_decades = {}
         else:
             logging.debug(f"Processing message: {msg}")
             author, decade = msg.split(',')
-            self.authors_decades.setdefault(author, set()).add(decade)
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.__update_authors_decades_per_client(body.client_id, author, decade)
         
-    def __send_results(self):
-        for author, decades in self.authors_decades.items():
+    def __send_results(self, client_id):
+        for author, decades in self.state[client_id]["authors_decades"].items():
+            seq_num_to_send = self.get_seq_num_to_sendber(client_id, self.controller_name)
             output_msg = ""
             output_msg += author + ',' + str(len(decades))
-            self.mq_connection_handler.send_message(self.output_queue_of_authors, output_msg)
+            self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.DATA, client_id, self.controller_name, seq_num_to_send, output_msg).encode_to_str())
             logging.debug(f"Sent message to output queue: {output_msg}")
-        self.mq_connection_handler.send_message(self.output_queue_of_authors, constants.FINISH_MSG)
+        seq_num_to_send = self.get_seq_num_to_sendber(client_id, self.controller_name)
+        self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, seq_num_to_send).encode_to_str())   
+        self.update_self_seq_number(client_id, seq_num_to_send)
         
+    def __update_authors_decades_per_client(self, client_id, author, decade):
+        if client_id in self.state:
+            if "authors_decades" in self.state[client_id]:
+                if author in self.state[client_id]["authors_decades"]:
+                    self.state[client_id]["authors_decades"][author].add(decade)
+                else:
+                    self.state[client_id]["authors_decades"][author] = set([decade])
+            else:
+                self.state[client_id]["authors_decades"] = {author: set([decade])}
+        else:
+            self.state[client_id] = {"authors_decades": {author: set([decade])}}
+            
+    def __parse_decades_state(self):   
+        # Convert list returned by json to set
+        for client_id, client_data in self.state.items():
+            if "authors_decades" in client_data:
+                for author, decades in client_data["authors_decades"].items():
+                    self.state[client_id]["authors_decades"][author] = set(decades)

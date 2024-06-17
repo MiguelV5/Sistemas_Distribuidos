@@ -41,7 +41,7 @@ class FilterByGenreAndYear(MonitorableProcess):
     def __filter_books_by_year_and_genre(self, body: SystemMessage):
         msg = body.payload
         if body.type == SystemMessageType.EOF_B:
-            seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+            seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
             
         else:
@@ -55,7 +55,7 @@ class FilterByGenreAndYear(MonitorableProcess):
                 if int(year_str) >= self.min_year_to_filter and \
                         int(year_str) <= self.max_year_to_filter and \
                         self.genre_to_filter in categories:
-                    seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+                    seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
                     msg_to_send = f"{title},\"{authors}\",{publisher},{year_str}" + "\n"            
                     self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, msg_to_send).encode_to_str())
                     self.update_self_seq_number(body.client_id, seq_num_to_send)

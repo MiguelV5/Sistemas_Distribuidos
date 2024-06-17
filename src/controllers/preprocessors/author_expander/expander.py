@@ -4,6 +4,7 @@ import csv
 import io
 from shared import constants
 from shared.monitorable_process import MonitorableProcess
+from shared.protocol_messages import SystemMessage, SystemMessageType
 
 AUTHORS_IDX = 0
 DECADE_IDX = 1
@@ -32,33 +33,34 @@ class AuthorExpander(MonitorableProcess):
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue_of_books])       
  
-        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_books, self.__expand_authors)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_books, self.state_handler_callback, self.__expand_authors)
         self.mq_connection_handler.start_consuming()
         
     
-    def __expand_authors(self, ch, method, properties, body):
+    def __expand_authors(self, body: SystemMessage):
         """ 
         The body is a csv batch with the following format in a line: "['author_1',...,'author_n'], decade" 
         The expansion should create multiple lines, one for each author, with the following format: "author_i, decade"
         """
-        msg = body.decode()
+        msg = body.payload
         logging.debug(f"Received message from input queue: {msg}")
-        if msg == constants.FINISH_MSG:
+        if body.type == SystemMessageType.EOF_B:
+            seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
             for queue_name in self.output_queues:
-                self.mq_connection_handler.send_message(queue_name, constants.FINISH_MSG)
+                self.mq_connection_handler.send_message(queue_name, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
             logging.info("Sent EOF message to output queues")
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.update_self_seq_number(body.client_id, seq_num_to_send)
         else:
             batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             for row in batch:
                 authors = eval(row[AUTHORS_IDX])
                 decade = row[DECADE_IDX]
                 for author in authors:
+                    seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
                     output_msg = f"{author},{decade}"
-                    self.mq_connection_handler.send_message(self.__select_queue(author), output_msg)
+                    self.mq_connection_handler.send_message(self.__select_queue(author), SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, output_msg).encode_to_str())
                     logging.debug(f"Sent message to queue: {output_msg}")
-
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+                    self.update_self_seq_number(body.client_id, seq_num_to_send)
         
     def __select_queue(self, author: str) -> str:
         """

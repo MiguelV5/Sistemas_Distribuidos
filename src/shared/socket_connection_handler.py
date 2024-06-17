@@ -26,7 +26,6 @@ class SocketConnectionHandler:
         """
         message = message.encode('utf-8')
         size_of_message = len(message)
-        logging.debug(f"action: send_message | result: in_progress | size: {size_of_message}")
         self._stream.send(int(size_of_message).to_bytes(4, byteorder='big'))
         self._stream.send(message)
         
@@ -35,10 +34,8 @@ class SocketConnectionHandler:
         """
         Reads a message from the client stream. Returns the raw bytes read.
         """
-        logging.debug("action: read_message_size | result: in_progress")
         try: 
             size_of_message = int.from_bytes(self._stream.recv(4), byteorder='big')
-            logging.debug(f"action: read_message_size | result: success | size: {size_of_message}")
             message = self._stream.recv(size_of_message)
         except OSError as e:
             logging.error(f"action: read_message_size | result: fail | error: {e}")
@@ -59,10 +56,8 @@ class SocketConnectionHandler:
         """
         Reads a message from the client stream.
         """
-        logging.debug("action: read_message_size | result: in_progress")
         try: 
             size_of_message = int.from_bytes(self._stream.recv(4), byteorder='big')
-            logging.debug(f"action: read_message_size | result: success | size: {size_of_message}")
             message = self._stream.recv(size_of_message).decode('utf-8')
             size_in_lines = message.count("\n")
         except OSError as e:

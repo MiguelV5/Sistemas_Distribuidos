@@ -41,7 +41,7 @@ class ReviewSanitizer(MonitorableProcess):
 
     def __handle_eof(self, body: SystemMessage):
         logging.info(f"Received EOF_R from client: {body.client_id}")
-        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         for output_queue in self.output_queues:
             self.mq_connection_handler.send_message(output_queue, msg_to_send)
@@ -65,7 +65,7 @@ class ReviewSanitizer(MonitorableProcess):
             selected_queue = self.__select_queue(title)
             payloads_to_send_towards_mergers[selected_queue] += self.__format_sanitized_review(title, review_score, review_text)
 
-        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
         for output_queue in self.output_queues:
             if payloads_to_send_towards_mergers[output_queue]:
                 msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payloads_to_send_towards_mergers[output_queue]).encode_to_str()

@@ -47,7 +47,7 @@ class DecadePreprocessor(MonitorableProcess):
     
     def __handle_eof(self, body: SystemMessage):
         logging.info(f"Received EOF_B from client: {body.client_id}")
-        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         for output_queue in self.output_queues_towards_mergers:
             self.mq_connection_handler.send_message(output_queue, msg_to_send)
@@ -72,15 +72,15 @@ class DecadePreprocessor(MonitorableProcess):
             selected_merger_queue = self.__select_merger_queue(title)
             payload_to_send_towards_mergers[selected_merger_queue] += self.__format_book_for_merger(title, authors, categories, decade)
             
-        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
         if payload_to_send_towards_expander:
             msg_for_expander = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send_towards_expander).encode_to_str()
-            # self.mq_connection_handler.send_message(self.output_queue_towards_expander, msg_for_expander)
+            self.mq_connection_handler.send_message(self.output_queue_towards_expander, msg_for_expander)
             
         for output_queue in self.output_queues_towards_mergers:
             if payload_to_send_towards_mergers[output_queue]:
                 msg_for_merger = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send_towards_mergers[output_queue]).encode_to_str()
-                # self.mq_connection_handler.send_message(output_queue, msg_for_merger)
+                self.mq_connection_handler.send_message(output_queue, msg_for_merger)
         self.update_self_seq_number(body.client_id, seq_num_to_send)
         
 

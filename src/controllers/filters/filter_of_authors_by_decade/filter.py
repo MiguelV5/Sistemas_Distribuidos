@@ -30,9 +30,9 @@ class FilterOfAuthorsByDecade(MonitorableProcess):
         self.mq_connection_handler.channel.start_consuming()
         
             
-    def __filter_authors_by_decades_quantity(self, ch, method, properties, body: SystemMessage):
+    def __filter_authors_by_decades_quantity(self, body: SystemMessage):
         msg = body.payload
-        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
         logging.debug(f"Received message: {msg}")
         if body.type == SystemMessageType.EOF_B:
             logging.info("EOF received. Sending EOF message to output queue")

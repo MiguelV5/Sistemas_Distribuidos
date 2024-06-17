@@ -41,7 +41,7 @@ class BookSanitizer(MonitorableProcess):
     
     def __handle_eof(self, body: SystemMessage):
         logging.info(f"Received EOF_B from client: {body.client_id}")
-        seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
         msg_to_send = SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
         self.update_self_seq_number(body.client_id, seq_num_to_send)
@@ -68,7 +68,7 @@ class BookSanitizer(MonitorableProcess):
             payload_to_send += self.__format_sanitized_book(title, authors, publisher, published_date, categories)
         
         if payload_to_send:
-            seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+            seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
             msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str()
             self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
             self.update_self_seq_number(body.client_id, seq_num_to_send)

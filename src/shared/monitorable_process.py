@@ -68,7 +68,7 @@ class MonitorableProcess:
         
     def __save_state_file(self):
         writer = AtomicWriter(self.state_file_path)
-        writer.write(json.dumps(self.state))
+        writer.write(json.dumps(self.state, default=self.__serialize_sets))
         
     def state_handler_callback(self, ch, method, properties, body, inner_processor):
         """
@@ -92,7 +92,7 @@ class MonitorableProcess:
             logging.debug(f"[ACKNOWLEDGED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
             
 
-    def get_next_seq_number(self, client_id: int, controller_name: str) -> int:
+    def get_seq_num_to_sendber(self, client_id: int, controller_name: str) -> int:
         last_message_seq_num = self.state.get(client_id, {}).get("latest_message_per_controller", {}).get(controller_name, 0)
         return last_message_seq_num + 1
     
@@ -107,3 +107,9 @@ class MonitorableProcess:
                 self.state[client_id]["latest_message_per_controller"] = {controller_name: seq_num}
         else:
             self.state[client_id] = {"latest_message_per_controller": {controller_name: seq_num}}
+            
+    def __serialize_sets(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+
+        return obj
