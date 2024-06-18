@@ -95,7 +95,7 @@ class Merger(MonitorableProcess):
             self.__handle_incoming_reviews_data(body)
 
     def __handle_eof_reviews(self, client_id):
-        seq_num_to_send = self.get_next_seq_number(client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
 
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, client_id, self.controller_name, seq_num_to_send).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
@@ -123,12 +123,12 @@ class Merger(MonitorableProcess):
                 compact_output_payload += compact_review 
                 full_output_payload += full_review 
         if compact_output_payload:
-            seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
             msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, compact_output_payload).encode_to_str()
             self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
             self.update_self_seq_number(body.client_id, seq_num_to_send)
         if full_output_payload:
-            seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
             msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, full_output_payload).encode_to_str()
             self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
             self.update_self_seq_number(body.client_id, seq_num_to_send)
