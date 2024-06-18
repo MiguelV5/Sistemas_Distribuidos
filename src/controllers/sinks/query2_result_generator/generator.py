@@ -34,8 +34,8 @@ class Generator(MonitorableProcess):
     def __get_results(self, body: SystemMessage):
         msg = body.payload
         if body.type == SystemMessageType.EOF_B:
-            client_eofs_received = self.eofs_received.get(body.client_id, 0) + 1
-            self.eofs_received[body.client_id] = client_eofs_received
+            client_eofs_received = self.eofs_received.get(body.client_id, {}).get("eof_received", 0) + 1
+            self.eofs_received[body.client_id].update({"eof_received": client_eofs_received})
             if int(client_eofs_received) == int(self.filters_quantity):
                 seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
                 logging.info("Sending Q2 results to output queue: " + self.response_msg)
