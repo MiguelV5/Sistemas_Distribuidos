@@ -27,7 +27,8 @@ class Generator(MonitorableProcess):
         msg = body.payload
         if body.type == SystemMessageType.EOF_B:
             logging.info("Received EOF")
-            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, 0, self.results_msg).encode_to_str())
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, 1, self.results_msg).encode_to_str())
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, 2, self.results_msg).encode_to_str())
             logging.info("Sending Q1 results to output queue")
         else: 
             self.results_msg += "\n" + msg 
