@@ -51,7 +51,7 @@ class DecadePreprocessor(MonitorableProcess):
         msg_to_send = SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         for output_queue in self.output_queues_towards_mergers:
             self.mq_connection_handler.send_message(output_queue, msg_to_send)
-        # self.mq_connection_handler.send_message(self.output_queue_towards_expander, msg_to_send)
+        self.mq_connection_handler.send_message(self.output_queue_towards_expander, msg_to_send)
         self.update_self_seq_number(body.client_id, seq_num_to_send)
 
 

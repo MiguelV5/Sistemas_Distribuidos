@@ -1,11 +1,15 @@
+import json
+from shared.atomic_writer import AtomicWriter
 from shared.mq_connection_handler import MQConnectionHandler
 import logging
-import io
-import csv
-from shared import constants
 from shared.monitorable_process import MonitorableProcess
 from shared.protocol_messages import SystemMessage, SystemMessageType
 
+from typing import TypeAlias
+
+from shared.monitorable_process import ClientID_t
+BookTitle_t: TypeAlias = str
+BookData_t: TypeAlias = list[str, str, str, str]
 
 BOOK_TITLE_IDX = 0
 BOOK_AUTHORS_IDX = 1
@@ -28,6 +32,9 @@ class Merger(MonitorableProcess):
                  output_queue_of_books_confirms: str,
                  controller_name: str):
         super().__init__(controller_name)
+        self.books_state_file_path = "books_state.json"
+        self.books_state: dict[ClientID_t, dict[BookTitle_t, BookData_t]] = self.__load_books_state_file()
+
         self.input_exchange_name_reviews = input_exchange_name_reviews
         self.input_exchange_name_books = input_exchange_name_books
         self.output_exchange_name = output_exchange_name
@@ -52,6 +59,9 @@ class Merger(MonitorableProcess):
         self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_reviews, self.state_handler_callback, self.__handle_review_preprocessor_msgs)
         self.mq_connection_handler.channel.start_consuming()
 
+
+    # ==============================================================================================================
+
             
     def __handle_books_preprocessors_msgs(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_B:
@@ -65,15 +75,17 @@ class Merger(MonitorableProcess):
             if book: 
                 title = book[BOOK_TITLE_IDX]
                 self.__update_books_data_state(body.client_id, title, book)
+        self.__save_books_state_file()
+        
 
     def __handdle_eof_books(self, client_id):
-        logging.info("Received EOF_B. Saving and sending confirmation to server.")
-        # Needs to force state saving before sending confirmation. Otherwise the last book might be lost.
-        self.save_state_file()
+        logging.info("Received EOF_B. Sending confirmation to server.")
         msg_for_server = SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, 1).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue_of_books_confirms, msg_for_server)
         logging.info("Sent EOF_B confirmation to server")
 
+    
+    # ==============================================================================================================
     
         
     def __handle_review_preprocessor_msgs(self, body: SystemMessage):
@@ -84,14 +96,18 @@ class Merger(MonitorableProcess):
 
     def __handle_eof_reviews(self, client_id):
         seq_num_to_send = self.get_next_seq_number(client_id, self.controller_name)
+
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, client_id, self.controller_name, seq_num_to_send).encode_to_str()
-        # self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
+        self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
         logging.info("Sent EOF_R message to compact reviews queue")
+
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, client_id, self.controller_name, seq_num_to_send).encode_to_str()
-        # self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
+        self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
         logging.info("Sent EOF_R message to full reviews queue")
+
         self.update_self_seq_number(client_id, seq_num_to_send)
         self.__update_books_data_state(client_id, None, None, reset_for_client=True)
+        self.__save_books_state_file()
 
     def __handle_incoming_reviews_data(self, body: SystemMessage):
         compact_output_payload = ""
@@ -101,7 +117,7 @@ class Merger(MonitorableProcess):
             title = review[REVIEW_TITLE_IDX]
             score = review[REVIEW_SCORE_IDX]
             text = review[REVIEW_TEXT_IDX]
-            books_data_of_client = self.state.get(body.client_id, {}).get("books_data", {})
+            books_data_of_client = self.books_state.get(body.client_id, {})
             if title in books_data_of_client:
                 compact_review, full_review = self.__merge_review_with_book(title, score, text, books_data_of_client[title])
                 compact_output_payload += compact_review 
@@ -109,12 +125,12 @@ class Merger(MonitorableProcess):
         if compact_output_payload:
             seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
             msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, compact_output_payload).encode_to_str()
-            # self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
+            self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
             self.update_self_seq_number(body.client_id, seq_num_to_send)
         if full_output_payload:
             seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
             msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, full_output_payload).encode_to_str()
-            # self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
+            self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
             self.update_self_seq_number(body.client_id, seq_num_to_send)
 
     def __merge_review_with_book(self, title, score, text, book_data):
@@ -125,22 +141,26 @@ class Merger(MonitorableProcess):
         full_review = f"{title},\"{categories}\",{text}" + "\n"
         return compact_review, full_review
     
+      
+    # ==============================================================================================================
 
-        
+
     def __update_books_data_state(self, client_id, title, book_data, reset_for_client=False):
         if reset_for_client:
-            self.state[client_id]["books_data"] = {}
-        if client_id in self.state:
-            if "books_data" in self.state[client_id]:
-                self.state[client_id]["books_data"][title] = book_data
-            else:
-                self.state[client_id]["books_data"] = {title: book_data}
+            self.books_state[client_id] = {}
+        if client_id in self.books_state:
+            self.books_state[client_id][title] = book_data
         else:
-            self.state[client_id] = {"books_data": {title: book_data}}
-            
-            
-                    
-                    
+            self.books_state[client_id] = {title: book_data}
 
-        
+    def __save_books_state_file(self):
+        writer = AtomicWriter(self.books_state_file_path)
+        writer.write(json.dumps(self.books_state))
     
+    def __load_books_state_file(self) -> dict:
+        try:
+            with open(self.books_state_file_path, 'r') as f:
+                state_json = json.load(f)
+                return {int(k): v for k, v in state_json.items()}
+        except FileNotFoundError:
+            return {}
