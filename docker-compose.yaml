@@ -28,11 +28,14 @@ services:
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
-      - INPUT_EXCHANGE=query_results_ex
+      - INPUT_EXCHANGE_OF_QUERY_RESULTS=query_results_ex
+      - INPUT_EXCHANGE_OF_MERGERS_CONFIRMS=mergers_confirms_ex
       - INPUT_QUEUE_OF_QUERY_RESULTS=query_results_q
+      - INPUT_QUEUE_OF_MERGERS_CONFIRMS=mergers_confirms_q
       - OUTPUT_EXCHANGE_OF_DATA=scraped_data_ex
       - OUTPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
+      - MERGERS_QUANTITY=3
     networks:
       - testing_net
     volumes:
@@ -42,8 +45,8 @@ services:
         condition: service_healthy
 
 
-  client:
-    container_name: client
+  client_1:
+    container_name: client_1
     image: client:latest
     entrypoint: python3 /main.py
     volumes:
@@ -58,14 +61,13 @@ services:
       - REVIEWS_FILE_PATH=/data/books_rating.csv
       - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
+      - CLIENT_ID=1
     networks:
       - testing_net
     depends_on:
       server:
         condition: service_started
-
-  # ================================================================
-
+    
 
   book_sanitizer:
     container_name: book_sanitizer
@@ -172,11 +174,12 @@ services:
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=mergers_outputs_ex
       - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_1
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_1
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
       - CONTROLLER_NAME=merger_1
     networks:
       - testing_net
@@ -196,11 +199,12 @@ services:
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=mergers_outputs_ex
       - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
       - CONTROLLER_NAME=merger_2
     networks:
       - testing_net
@@ -220,11 +224,12 @@ services:
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=mergers_outputs_ex
       - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
       - CONTROLLER_NAME=merger_3
     networks:
       - testing_net
@@ -494,7 +499,7 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
       - NUM_OF_INPUT_WORKERS=3
@@ -678,7 +683,7 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q

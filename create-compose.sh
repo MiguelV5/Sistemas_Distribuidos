@@ -37,11 +37,14 @@ add_server() {
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - SERVER_PORT=8080
-      - INPUT_EXCHANGE=query_results_ex
+      - INPUT_EXCHANGE_OF_QUERY_RESULTS=query_results_ex
+      - INPUT_EXCHANGE_OF_MERGERS_CONFIRMS=mergers_confirms_ex
       - INPUT_QUEUE_OF_QUERY_RESULTS=query_results_q
+      - INPUT_QUEUE_OF_MERGERS_CONFIRMS=mergers_confirms_q
       - OUTPUT_EXCHANGE_OF_DATA=scraped_data_ex
       - OUTPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
+      - MERGERS_QUANTITY=$WORKERS
     networks:
       - testing_net
     volumes:
@@ -52,10 +55,11 @@ add_server() {
 " >> docker-compose.yaml
 }
 
-add_client() {
-    echo "
-  client:
-    container_name: client
+add_clients() {
+    for ((i=1; i<=$CLIENTS; i++)); do
+        echo "
+  client_$i:
+    container_name: client_$i
     image: client:latest
     entrypoint: python3 /main.py
     volumes:
@@ -70,14 +74,16 @@ add_client() {
       - REVIEWS_FILE_PATH=/data/books_rating.csv
       - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
+      - CLIENT_ID=$i
     networks:
       - testing_net
     depends_on:
       server:
         condition: service_started
+    " >> docker-compose.yaml
+    done
 
   # ================================================================
-" >> docker-compose.yaml
 }
 
 
@@ -199,11 +205,12 @@ add_mergers() {
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
       - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
-      - OUTPUT_EXCHANGE=merged_reviews_ex
+      - OUTPUT_EXCHANGE=mergers_outputs_ex
       - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_$i
       - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_$i
       - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
       - CONTROLLER_NAME=merger_$i
     networks:
       - testing_net
@@ -415,7 +422,7 @@ add_query3_processes() {
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
       - NUM_OF_INPUT_WORKERS=$WORKERS
@@ -578,7 +585,7 @@ add_query5_processes() {
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INPUT_EXCHANGE=merged_reviews_ex
+      - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
@@ -704,6 +711,11 @@ check_params() {
     # WORKERS: Number of workers or replicas per process.
     # HEALTH_CHECKERS: Number of [Health Checker] processes.
 
+    if [ -z "$CLIENTS" ]; then
+        echo "Using default values for CLIENTS=1"
+        export CLIENTS=1
+    fi
+
     if [ -z "$WORKERS" ]; then
         echo "Using default values for WORKERS=1"
         export WORKERS=1
@@ -714,9 +726,9 @@ check_params() {
         export HEALTH_CHECKERS=1
     fi
     
-    local MAX_WORKERS=5
-    if [ $WORKERS -gt $MAX_WORKERS ] || [ $HEALTH_CHECKERS -gt $MAX_WORKERS ] ; then
-        echo "The maximum number of workers is $MAX_WORKERS"
+    local MAX_INSTANCES=5
+    if [ $CLIENTS -gt $MAX_INSTANCES ] || [ $WORKERS -gt $MAX_INSTANCES ] || [ $HEALTH_CHECKERS -gt $MAX_INSTANCES ] ; then
+        echo "The maximum number of instances per configuration is $MAX_INSTANCES"
         exit 1
     fi
 
@@ -731,7 +743,7 @@ check_params
 add_compose_header
 add_rabbitmq
 add_server
-add_client
+add_clients
 add_preprocessors
 add_mergers
 add_query1_processes

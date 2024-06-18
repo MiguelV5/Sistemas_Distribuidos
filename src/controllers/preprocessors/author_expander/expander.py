@@ -45,7 +45,7 @@ class AuthorExpander(MonitorableProcess):
         msg = body.payload
         logging.debug(f"Received message from input queue: {msg}")
         if body.type == SystemMessageType.EOF_B:
-            seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
             for queue_name in self.output_queues:
                 self.mq_connection_handler.send_message(queue_name, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
             logging.info("Sent EOF message to output queues")
@@ -56,7 +56,7 @@ class AuthorExpander(MonitorableProcess):
                 authors = eval(row[AUTHORS_IDX])
                 decade = row[DECADE_IDX]
                 for author in authors:
-                    seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
+                    seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
                     output_msg = f"{author},{decade}"
                     self.mq_connection_handler.send_message(self.__select_queue(author), SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, output_msg).encode_to_str())
                     logging.debug(f"Sent message to queue: {output_msg}")

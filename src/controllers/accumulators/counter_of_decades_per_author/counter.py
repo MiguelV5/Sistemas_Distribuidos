@@ -47,12 +47,12 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         
     def __send_results(self, client_id):
         for author, decades in self.state[client_id]["authors_decades"].items():
-            seq_num_to_send = self.get_seq_num_to_sendber(client_id, self.controller_name)
+            seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
             output_msg = ""
             output_msg += author + ',' + str(len(decades))
             self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.DATA, client_id, self.controller_name, seq_num_to_send, output_msg).encode_to_str())
             logging.debug(f"Sent message to output queue: {output_msg}")
-        seq_num_to_send = self.get_seq_num_to_sendber(client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
         self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, seq_num_to_send).encode_to_str())   
         self.update_self_seq_number(client_id, seq_num_to_send)
         

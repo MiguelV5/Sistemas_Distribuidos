@@ -44,7 +44,7 @@ class YearPreprocessor(MonitorableProcess):
 
     def __handle_eof(self, body: SystemMessage):
         logging.info(f"Received EOF_B from client: {body.client_id}")
-        seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
+        seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
         msg_to_send = SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue_towards_preproc, msg_to_send)
         self.mq_connection_handler.send_message(self.output_queue_towards_filter, msg_to_send)
@@ -71,7 +71,7 @@ class YearPreprocessor(MonitorableProcess):
             payload_to_send_towards_filter += self.__format_book_for_filter(title, authors, publisher, year, categories)
         
         if payload_to_send_towards_preproc and payload_to_send_towards_filter:
-            seq_num_to_send = self.get_seq_num_to_sendber(body.client_id, self.controller_name)
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
             msg_for_preproc = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send_towards_preproc).encode_to_str()
             msg_for_filter = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send_towards_filter).encode_to_str()
             self.mq_connection_handler.send_message(self.output_queue_towards_preproc, msg_for_preproc)
