@@ -4,6 +4,8 @@ import logging
 import csv
 import io
 from shared.monitorable_process import MonitorableProcess
+from shared.protocol_messages import SystemMessage, SystemMessageType
+
 
 TITLE_IDX = 0
 AUTHORS_IDX = 1
@@ -29,42 +31,42 @@ class FilterByReviewsCount(MonitorableProcess):
         self.output_queue_towards_sorter = output_queue_towards_sorter
         self.num_of_counters = int(num_of_counters)
         self.min_reviews = int(min_reviews)
-        self.eofs_received = 0
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=self.output_exchange, 
                                                          output_queues_to_bind={self.output_queue_towards_query3: [self.output_queue_towards_query3], self.output_queue_towards_sorter: [output_queue_towards_sorter]},
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue])        
         
     def start(self):
-        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue, self.__filter_books)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue, self.state_handler_callback, self.__filter_books)
         self.mq_connection_handler.start_consuming()
         
-    def __filter_books(self, ch, method, properties, body):
+    def __filter_books(self, body: SystemMessage):
         """ 
         The body is a csv line with the following format in the line: "title,review_score,decade,reviews_count" 
         The filter should filter out books with reviews_count less than min_reviews and send the result to the outputsqueue.
         """
-        msg = body.decode()
+        msg = body.payload
         logging.debug(f"Received message from input queue: {msg}")
-        if msg == constants.FINISH_MSG:
-            self.eofs_received += 1
-            if self.eofs_received == self.num_of_counters:
+        if body.type == SystemMessageType.EOF_R:
+            client_eofs_received = self.state.get(body.client_id, {}).get("eof_received", 0) + 1
+            self.state[body.client_id].update({"eofs_received": client_eofs_received})
+            if client_eofs_received == self.num_of_counters:
+                next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
                 logging.info("Received EOF from all counters. Sending EOF to output queues.")
-                self.mq_connection_handler.send_message(self.output_queue_towards_query3, constants.FINISH_MSG)
-                self.mq_connection_handler.send_message(self.output_queue_towards_sorter, constants.FINISH_MSG)
-                self.eofs_received = 0
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+                self.mq_connection_handler.send_message(self.output_queue_towards_query3, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
+                self.mq_connection_handler.send_message(self.output_queue_towards_sorter, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
+                self.update_self_seq_number(body.client_id, next_seq_num)
         else:
             review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
             for row in review:
                 reviews_count = int(row[REVIEW_COUNT_IDX])
                 if reviews_count >= self.min_reviews:
+                    next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
                     self.mq_connection_handler.send_message(self.output_queue_towards_query3, f"{row[TITLE_IDX]},{reviews_count},\"{row[AUTHORS_IDX]}\"")
                     logging.debug(f"Sent message to output queue towards query3:{self.output_queue_towards_query3} : {row[TITLE_IDX]},{reviews_count},\"{row[AUTHORS_IDX]}\"")
-                    self.mq_connection_handler.send_message(self.output_queue_towards_sorter, f"{row[TITLE_IDX]},\"{row[SCORE_IDX]}\"")
+                    msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, f"{row[TITLE_IDX]},{reviews_count},\"{row[AUTHORS_IDX]}\"").encode_to_str()
+                    self.mq_connection_handler.send_message(self.output_queue_towards_sorter, msg_to_send)
+                    self.update_self_seq_number(body.client_id, next_seq_num)
                     logging.debug(f"Sent message to output queue towards sorter: {self.output_queue_towards_sorter}{row[TITLE_IDX]},\"{row[SCORE_IDX]}\"")
                 else:
                     logging.debug(f"Discarded message: {row[TITLE_IDX]}. Reviews count: {row[REVIEW_COUNT_IDX]} < {self.min_reviews}")
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        
-        
