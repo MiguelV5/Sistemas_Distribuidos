@@ -55,7 +55,6 @@ class Server(MonitorableProcess):
     
     
     def run(self):
-        # PENDING: use pipes on the client side instead. This way the client can receive streamed results and synchronize whenever the server sends the WAIT message and then the CONTINUE message
         incoming_sys_msgs_handler_process = multiprocessing.Process(target=self.__handle_incoming_sys_queues)
         incoming_sys_msgs_handler_process.start()
         
