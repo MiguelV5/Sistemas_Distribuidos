@@ -66,7 +66,7 @@ class MonitorableProcess:
         except FileNotFoundError:
             return {}
         
-    def __save_state_file(self):
+    def save_state_file(self):
         writer = AtomicWriter(self.state_file_path)
         writer.write(json.dumps(self.state))
         
@@ -74,19 +74,19 @@ class MonitorableProcess:
         """
         IMPORTANT: The state of any buffer apart from the latest_message_per_controller should be handled by the inner callback if needed as it is specific to each controller. This applies, for example, to the LOCAL seq number to send.
 
-        The inner callback should not save state nor ack messages as it is handled here
+        The inner callback should not ack messages as it is handled here
         """
         received_msg = SystemMessage.decode_from_bytes(body)
         latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 0)
             
         if received_msg.controller_seq_num <= latest_seq_num_from_controller:
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            logging.debug(f"[DUPLICATE DETECTED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
+            logging.info(f"[DUPLICATE DETECTED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
         else:
             inner_processor(received_msg)
             logging.debug(f"[PROCESSED MESSAGE]: type {received_msg.type} from client {received_msg.client_id} with received seq num {received_msg.controller_seq_num}")
             self.__update_seq_num_state(received_msg.client_id, received_msg.controller_name, received_msg.controller_seq_num)
-            self.__save_state_file()
+            self.save_state_file()
             logging.debug(f"[STATE SAVED]: {self.state}")
             ch.basic_ack(delivery_tag=method.delivery_tag)    
             logging.debug(f"[ACKNOWLEDGED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")

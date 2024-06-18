@@ -18,9 +18,12 @@ class Server(MonitorableProcess):
                  input_queue_of_mergers_confirms,
                  output_exchange_of_data, 
                  output_queue_of_reviews, 
-                 output_queue_of_books):
+                 output_queue_of_books,
+                 mergers_quantity):
         self.controller_name_for_system_msgs = "server"
-        self.seq_num_for_system_msgs = 0
+        self.state = {}
+        self.state_file_path = f"{self.controller_name_for_system_msgs}_state.json"
+        self.seq_num_for_system_msgs = 1
 
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', server_port))
@@ -29,8 +32,7 @@ class Server(MonitorableProcess):
         self.server_is_running = True     
         self.finished_with_client_data = False
         self.mq_connection_handler = None
-        # the server accepts up to 5 known clients
-        self.state = {i: {"client_name": f"client_{i}"} for i in range(1, 6)}
+        self.required_merger_confirms = mergers_quantity
 
         self.input_exchange_of_query_results = input_exchange_of_query_results
         self.input_exchange_of_mergers_confirms = input_exchange_of_mergers_confirms
@@ -105,13 +107,19 @@ class Server(MonitorableProcess):
 
     def __process_mergers_confirms(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_B:
-            msg_for_client = QueryMessage(QueryMessageType.CONTINUE, body.client_id).encode_to_str()
-            self.__send_direct_msg_to_client(body.client_id, msg_for_client)
+            logging.info(f"Received EOF_B confirmation from merger: {body.controller_name} for client {body.client_id}")
+            received_confirms = self.state.get(body.client_id, {}).get("received_mergers_confirms", 1)
+            should_send_continue_msg = received_confirms == self.required_merger_confirms
+            if should_send_continue_msg:
+                msg_for_client = QueryMessage(QueryMessageType.CONTINUE, body.client_id).encode_to_str()
+                self.__send_direct_msg_to_client(body.client_id, msg_for_client)
+            self.state.update({body.client_id: {"received_mergers_confirms": received_confirms + 1}})
 
 
     def __send_direct_msg_to_client(self, client_id, msg_for_client):
-        client_name = self.state[client_id]["client_name"]
+        client_name = f"client_{client_id}"
         client_responses_sock = SocketConnectionHandler.connect_and_create(client_name, constants.CLIENT_RESULTS_PORT)
+        logging.info(f"Sending CONTINUE message to {client_name}")
         client_responses_sock.send_message(msg_for_client)
 
     

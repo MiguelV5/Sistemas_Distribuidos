@@ -44,6 +44,7 @@ add_server() {
       - OUTPUT_EXCHANGE_OF_DATA=scraped_data_ex
       - OUTPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
+      - MERGERS_QUANTITY=$WORKERS
     networks:
       - testing_net
     volumes:

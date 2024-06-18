@@ -34,7 +34,7 @@ class Client:
         logging.info("Starting client")
         try:
             receiver_pipe, sender_pipe = multiprocessing.Pipe()
-            p = multiprocessing.Process(target=self.__handle_server_results_streaming, args=(sender_pipe))
+            p = multiprocessing.Process(target=self.__handle_server_results_streaming, args=(sender_pipe,))
             p.start()
             self.data_connection_handler = SocketConnectionHandler.connect_and_create(self.server_ip, self.server_port)
             logging.info("Connected to server at {}:{}".format(self.server_ip, self.server_port))
@@ -57,7 +57,7 @@ class Client:
             try:
                 sv_sock, _ = listener_for_sv_results.accept()
                 results_connection_handler = SocketConnectionHandler.create_from_socket(sv_sock)
-                received_msg_str, size_in_lines = self.data_connection_handler.read_message_with_size_in_lines()
+                received_msg_str, size_in_lines = results_connection_handler.read_message_with_size_in_lines()
                 received_msg = QueryMessage.decode_from_str(received_msg_str)
                 if received_msg.type == QueryMessageType.CONTINUE:
                     sender_pipe.send(CONTINUE_WITH_REVIEWS_DATA)
@@ -84,6 +84,7 @@ class Client:
 
 
     def send_books_data(self, receiver_pipe: PipeConnection, file: io.TextIOWrapper):
+        logging.info("[ SENDING BOOKS DATA ] STARTED")
         completed_books = False
         _csv_header = file.readline()
         while not completed_books:
@@ -108,6 +109,7 @@ class Client:
                     break
 
     def send_reviews_data(self, file):
+        logging.info("[ SENDING REVIEWS DATA ] STARTED")
         completed_reviews = False
         _csv_header = file.readline()
         while not completed_reviews:

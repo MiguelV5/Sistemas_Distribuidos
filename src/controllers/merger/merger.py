@@ -11,9 +11,7 @@ BOOK_TITLE_IDX = 0
 BOOK_AUTHORS_IDX = 1
 BOOK_CATEGORIES_IDX = 2
 BOOK_DECADE_IDX = 3
-BOOK_AUTHORS = "authors"
-BOOK_CATEGORIES = "categories"
-BOOK_DECADE = "decade"
+
 
 REVIEW_TITLE_IDX = 0
 REVIEW_SCORE_IDX = 1
@@ -71,9 +69,10 @@ class Merger(MonitorableProcess):
     def __handdle_eof_books(self, client_id):
         logging.info("Received EOF_B. Saving and sending confirmation to server.")
         # Needs to force state saving before sending confirmation. Otherwise the last book might be lost.
-        self.__save_state_file()
-        msg_for_server = SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, 0).encode_to_str()
+        self.save_state_file()
+        msg_for_server = SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, 1).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue_of_books_confirms, msg_for_server)
+        logging.info("Sent EOF_B confirmation to server")
 
     
         
@@ -86,10 +85,10 @@ class Merger(MonitorableProcess):
     def __handle_eof_reviews(self, client_id):
         seq_num_to_send = self.get_next_seq_number(client_id, self.controller_name)
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, client_id, self.controller_name, seq_num_to_send).encode_to_str()
-        self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
+        # self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
         logging.info("Sent EOF_R message to compact reviews queue")
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, client_id, self.controller_name, seq_num_to_send).encode_to_str()
-        self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
+        # self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
         logging.info("Sent EOF_R message to full reviews queue")
         self.update_self_seq_number(client_id, seq_num_to_send)
         self.__update_books_data_state(client_id, None, None, reset_for_client=True)
@@ -110,18 +109,18 @@ class Merger(MonitorableProcess):
         if compact_output_payload:
             seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
             msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, compact_output_payload).encode_to_str()
-            self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
+            # self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, msg_to_send)
             self.update_self_seq_number(body.client_id, seq_num_to_send)
         if full_output_payload:
             seq_num_to_send = self.get_next_seq_number(body.client_id, self.controller_name)
             msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, full_output_payload).encode_to_str()
-            self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
+            # self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, msg_to_send)
             self.update_self_seq_number(body.client_id, seq_num_to_send)
 
     def __merge_review_with_book(self, title, score, text, book_data):
-        authors = book_data[BOOK_AUTHORS]
-        categories = book_data[BOOK_CATEGORIES]
-        decade = book_data[BOOK_DECADE]
+        authors = book_data[BOOK_AUTHORS_IDX]
+        categories = book_data[BOOK_CATEGORIES_IDX]
+        decade = book_data[BOOK_DECADE_IDX]
         compact_review = f"{title},\"{authors}\",{score},{decade}" + "\n"
         full_review = f"{title},\"{categories}\",{text}" + "\n"
         return compact_review, full_review
