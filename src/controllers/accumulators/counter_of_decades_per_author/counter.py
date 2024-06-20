@@ -5,6 +5,9 @@ from shared.monitorable_process import MonitorableProcess
 from shared.protocol_messages import SystemMessage, SystemMessageType
 
 
+AUTHOR_IDX = 0
+DECADE_IDX = 1
+
 class CounterOfDecadesPerAuthor(MonitorableProcess):
     def __init__(self, 
                  input_exchange: str, 
@@ -34,23 +37,25 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         The body is a csv line with the following format in the line: "author, decade" 
         The counter should count the number of authors per decade and send the result to the output queue.
         """
-        msg = body.payload
-        logging.debug(f"Received message: {msg}")
+        logging.debug(f"Received message: {body.payload}")
         if body.type == SystemMessageType.EOF_B:
             logging.info(f"Received EOF_B from [ client_{body.client_id} ]. Sending results and EOF to output queue")
             self.__send_results(body.client_id)
         else:
-            logging.debug(f"Processing message: {msg}")
-            author, decade = msg.split(',')
-            self.__update_authors_decades_per_client(body.client_id, author, decade)
+            authors_decades_batch = body.get_batch_iter_from_payload()
+            for author_decade in authors_decades_batch:
+                author = author_decade[AUTHOR_IDX]
+                decade = author_decade[DECADE_IDX]
+                self.__update_authors_decades_per_client(body.client_id, author, decade)
         
     def __send_results(self, client_id):
         for author, decades in self.state[client_id]["authors_decades"].items():
             seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
-            output_msg = ""
-            output_msg += author + ',' + str(len(decades))
-            self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.DATA, client_id, self.controller_name, seq_num_to_send, output_msg).encode_to_str())
-            logging.debug(f"Sent message to output queue: {output_msg}")
+            payload_to_send = ""
+            payload_to_send += author + ',' + str(len(decades))
+            self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.DATA, client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str())
+            self.update_self_seq_number(client_id, seq_num_to_send)
+            
         seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
         self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, seq_num_to_send).encode_to_str())   
         self.update_self_seq_number(client_id, seq_num_to_send)

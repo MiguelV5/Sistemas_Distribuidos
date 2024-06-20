@@ -50,17 +50,25 @@ class AuthorExpander(MonitorableProcess):
             logging.info("Sent EOF message to output queues")
             self.update_self_seq_number(body.client_id, seq_num_to_send)
         else:
-            batch = body.get_batch_iter_from_payload()
-            for row in batch:
-                authors = eval(row[AUTHORS_IDX])
-                decade = row[DECADE_IDX]
+            books_batch = body.get_batch_iter_from_payload()
+            payload_per_controller = {queue_name: "" for queue_name in self.output_queues.keys()}
+            for book in books_batch:
+                authors = eval(book[AUTHORS_IDX])
+                decade = book[DECADE_IDX]
                 for author in authors:
-                    seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
-                    output_msg = f"{author},{decade}"
-                    self.mq_connection_handler.send_message(self.__select_queue(author), SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, output_msg).encode_to_str())
-                    logging.debug(f"Sent message to queue: {output_msg}")
-                    self.update_self_seq_number(body.client_id, seq_num_to_send)
-        
+                    selected_queue_for_author = self.__select_queue(author)
+                    payload_of_selected_queue = payload_per_controller.get(selected_queue_for_author, "")
+                    updated_payload = payload_of_selected_queue + f"{author},{decade}" + "\n"
+                    payload_per_controller[selected_queue_for_author] = updated_payload
+
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            for output_queue, payload in payload_per_controller.items():
+                self.mq_connection_handler.send_message(output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload).encode_to_str())
+            self.update_self_seq_number(body.client_id, seq_num_to_send)
+
+
+
+
     def __select_queue(self, author: str) -> str:
         """
         Should return the queue name where the author should be sent to.
