@@ -18,8 +18,7 @@ class Generator(MonitorableProcess):
         self.output_exchange_name = output_exchange_name
         self.input_queue_name = input_queue_name
         self.output_queue_name = output_queue_name
-        self.response_msg = "[Q2 Results]:  (Author,NumberOfDecades)"
-        self.eofs_received = {}
+        self.response_payload = constants.PAYLOAD_HEADER_Q2
         self.filters_quantity = filters_quantity
         self.mq_connection_handler = None
         
@@ -32,16 +31,21 @@ class Generator(MonitorableProcess):
         self.mq_connection_handler.start_consuming()
         
     def __get_results(self, body: SystemMessage):
-        msg = body.payload
         if body.type == SystemMessageType.EOF_B:
-            client_eofs_received = self.eofs_received.get(body.client_id, {}).get("eof_received", 0) + 1
-            self.eofs_received[body.client_id].update({"eof_received": client_eofs_received})
+            client_eofs_received = self.state.get(body.client_id, {}).get("eofs_received", 0) + 1
+            self.state[body.client_id].update({"eofs_received": client_eofs_received})
             if int(client_eofs_received) == int(self.filters_quantity):
-                seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
-                logging.info("Sending Q2 results to output queue: " + self.response_msg)
-                self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, self.response_msg).encode_to_str())  
+                logging.info(f"Received all EOFs from [ client_{body.client_id} ].")
+                next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
+                self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, next_seq_num).encode_to_str())
+                self.update_self_seq_number(next_seq_num)
+                self.state[body.client_id].update({"eofs_received": 0})
         else:
-            self.response_msg += "\n" + msg 
+            self.response_payload += "\n" + body.payload
+            next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
+            self.update_self_seq_number(body.client_id, next_seq_num)
+            self.response_payload = constants.PAYLOAD_HEADER_Q2
 
         
         

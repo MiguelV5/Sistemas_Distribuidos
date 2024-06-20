@@ -66,6 +66,7 @@ class Client:
                     # TODO: (ON EACH QUERY_GENERATOR) append the corresponding 'Results of QUERY X' to the results, at the start of every data msg payload
                     logging.info(f"{received_msg.payload}")
                 elif received_msg.type == QueryMessageType.SV_FINISHED:
+                    logging.info("[ SERVER FINISHED SENDING RESULTS ]")
                     finished_receiving_results = True
                 results_connection_handler.close()
             except Exception as e:

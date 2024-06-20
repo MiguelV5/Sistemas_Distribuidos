@@ -39,13 +39,12 @@ class FilterByGenreAndYear(MonitorableProcess):
         
             
     def __filter_books_by_year_and_genre(self, body: SystemMessage):
-        msg = body.payload
         if body.type == SystemMessageType.EOF_B:
             seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
             
         else:
-            batch = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
+            batch = body.get_batch_iter_from_payload()
             for row in batch:
                 title = row[TITLE_IDX]
                 authors = row[AUTHORS_IDX]

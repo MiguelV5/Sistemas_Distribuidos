@@ -15,7 +15,7 @@ class Generator(MonitorableProcess):
                  controller_name: str):
         super().__init__(controller_name)
         self.output_queue = output_queue_name
-        self.resulting_books_batch = "[Q5 Results]:  (Title, AvgPolarity)"
+        self.resulting_books_batch = constants.PAYLOAD_HEADER_Q5
         self.mq_connection_handler = MQConnectionHandler(
             output_exchange_name=output_exchange_name, 
             output_queues_to_bind={output_queue_name: [output_queue_name]}, 

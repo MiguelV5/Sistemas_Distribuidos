@@ -18,7 +18,6 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         self.input_queue_of_authors = input_queue_of_authors
         self.output_queue_of_authors = output_queue_of_authors
         self.mq_connection_handler = None
-        #self.authors_decades = {}
         self.__parse_decades_state()
         
         
@@ -27,7 +26,7 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
                                                          output_queues_to_bind={self.output_queue_of_authors: [self.output_queue_of_authors]},
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue_of_authors])
-        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_authors, self.state_handler_callback ,self.__count_authors)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue_of_authors, self.state_handler_callback,self.__count_authors)
         self.mq_connection_handler.start_consuming()
             
     def __count_authors(self, body: SystemMessage):
@@ -38,7 +37,7 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         msg = body.payload
         logging.debug(f"Received message: {msg}")
         if body.type == SystemMessageType.EOF_B:
-            logging.info("Received EOF. Sending results and EOF to output queue")
+            logging.info(f"Received EOF_B from [ client_{body.client_id} ]. Sending results and EOF to output queue")
             self.__send_results()
         else:
             logging.debug(f"Processing message: {msg}")

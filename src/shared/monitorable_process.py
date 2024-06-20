@@ -77,6 +77,9 @@ class MonitorableProcess:
         The inner callback should not ack messages as it is handled here
         """
         received_msg = SystemMessage.decode_from_bytes(body)
+        if received_msg.client_id not in self.state:
+            self.state[received_msg.client_id] = {}
+
         latest_seq_num_from_controller = self.state.get(received_msg.client_id, {}).get("latest_message_per_controller", {}).get(received_msg.controller_name, 0)
             
         if received_msg.controller_seq_num <= latest_seq_num_from_controller:

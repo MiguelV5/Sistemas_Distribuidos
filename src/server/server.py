@@ -98,7 +98,7 @@ class Server(MonitorableProcess):
             self.__send_direct_msg_to_client(body.client_id, msg_for_client)
         elif body.type == SystemMessageType.EOF_B or body.type == SystemMessageType.EOF_R:
             results_sent_to_client = self.state.get(body.client_id, {}).get("results_sent_to_client", 0)
-            self.state.update({body.client_id: {"results_sent_to_client": results_sent_to_client + 1}})
+            self.state[body.client_id].update({"results_sent_to_client": results_sent_to_client + 1})
             if results_sent_to_client == AMOUNT_OF_QUERY_RESULTS:
                 msg_for_client = QueryMessage(QueryMessageType.SV_FINISHED, body.client_id).encode_to_str()
                 self.__send_direct_msg_to_client(body.client_id, msg_for_client)
@@ -106,19 +106,20 @@ class Server(MonitorableProcess):
 
     def __process_mergers_confirms(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_B:
-            logging.info(f"Received EOF_B confirmation from merger: {body.controller_name} for client {body.client_id}")
+            logging.info(f"Received EOF_B confirmation from [ {body.controller_name} ] for [ client_{body.client_id} ]")
             received_confirms = self.state.get(body.client_id, {}).get("received_mergers_confirms", 1)
-            should_send_continue_msg = received_confirms == self.required_merger_confirms
+            logging
+            should_send_continue_msg = (received_confirms == self.required_merger_confirms)
             if should_send_continue_msg:
+                logging.info(f"Sending CONTINUE message to [ client_{body.client_id} ]")
                 msg_for_client = QueryMessage(QueryMessageType.CONTINUE, body.client_id).encode_to_str()
                 self.__send_direct_msg_to_client(body.client_id, msg_for_client)
-            self.state.update({body.client_id: {"received_mergers_confirms": received_confirms + 1}})
+            self.state[body.client_id].update({"received_mergers_confirms": received_confirms + 1})
 
 
     def __send_direct_msg_to_client(self, client_id, msg_for_client):
         client_name = f"client_{client_id}"
         client_responses_sock = SocketConnectionHandler.connect_and_create(client_name, constants.CLIENT_RESULTS_PORT)
-        logging.info(f"Sending CONTINUE message to {client_name}")
         client_responses_sock.send_message(msg_for_client)
 
     

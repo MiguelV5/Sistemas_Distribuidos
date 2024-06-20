@@ -79,7 +79,7 @@ class Merger(MonitorableProcess):
         
 
     def __handdle_eof_books(self, client_id):
-        logging.info("Received EOF_B. Sending confirmation to server.")
+        logging.info(f"Received EOF_B from [ client_{client_id} ]. Sending confirmation to server.")
         msg_for_server = SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, 1).encode_to_str()
         self.mq_connection_handler.send_message(self.output_queue_of_books_confirms, msg_for_server)
         logging.info("Sent EOF_B confirmation to server")

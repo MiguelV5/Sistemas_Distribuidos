@@ -40,7 +40,7 @@ class ReviewSanitizer(MonitorableProcess):
 
 
     def __handle_eof(self, body: SystemMessage):
-        logging.info(f"Received EOF_R from client: {body.client_id}")
+        logging.info(f"Received EOF_R from [ client_{body.client_id} ]")
         seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
         msg_to_send = SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
         for output_queue in self.output_queues:

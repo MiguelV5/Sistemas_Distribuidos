@@ -44,10 +44,10 @@ class FilterOfCompactReviewsByDecade(MonitorableProcess):
         """
         The message should have the following format: title,authors,score,decade
         """
-        msg = body.payload
         if body.type == SystemMessageType.EOF_R:
-            client_eofs_received = self.state.get(body.client_id, {}).get("eof_received", 0) + 1
+            client_eofs_received = self.state.get(body.client_id, {}).get("eofs_received", 0) + 1
             self.state[body.client_id].update({"eofs_received": client_eofs_received})
+            logging.info(f"EOFs received: {client_eofs_received}")
             if client_eofs_received == self.num_of_input_workers:
                 next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
                 for queue_name in self.output_queues:
@@ -55,8 +55,8 @@ class FilterOfCompactReviewsByDecade(MonitorableProcess):
                 logging.info("Received all EOFs. Sending to all output queues.")
                 self.update_self_seq_number(body.client_id, next_seq_num)
         else:
-            review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
-            for row in review:
+            reviews = body.get_batch_iter_from_payload()
+            for row in reviews:
                 title = row[TITLE_IDX]
                 authors = eval(row[AUTHORS_IDX])
                 score = row[SCORE_IDX]

@@ -36,25 +36,32 @@ class Sorter(MonitorableProcess):
         """
         The body is a csv line with the following format in the line: "title,[scores]"
         """
-        msg = body.payload
         if body.type == SystemMessageType.EOF_R:
+            logging.info(f"Received EOF_R from [ client_{body.client_id} ]")
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
-            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, f"\"{self.state[body.client_id]["best_books"]}\"").encode_to_str())
-            self.update_self_seq_number(body.client_id, next_seq_num)
-            next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            best_books = self.state[body.client_id].get("best_books", [])
+            if len(best_books) != 0:
+                self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, f"\"{best_books}\"").encode_to_str())
+                self.update_self_seq_number(body.client_id, next_seq_num)
+                next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
             self.state[body.client_id]["best_books"] = []
         else:
-            book = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
-            for row in book:
+            books = body.get_batch_iter_from_payload()
+            for row in books:
                 scores = eval(row[SCORES_IDX])
                 scores = list(map(int, scores))
                 avg_score = sum(scores) / len(scores)
                 if len(self.state[body.client_id].get("best_books",[])) < self.required_top_of_books:
-                    self.state[body.client_id].get("best_books",[]).append((row[TITLE_IDX], avg_score))
-                    self.state[body.client_id].get("best_books",[]).sort(key=lambda x: x[SCORES_IDX], reverse=True)
+                    best_books = self.state[body.client_id].get("best_books", [])
+                    best_books.append((row[TITLE_IDX], avg_score))
+                    best_books.sort(key=lambda x: x[SCORES_IDX], reverse=True)
+                    self.state[body.client_id].update({"best_books": best_books})
                 else:
                     if avg_score > self.state[body.client_id].get("best_books",[])[-1][SCORES_IDX]:
-                        self.state[body.client_id].get("best_books",[]).append((row[TITLE_IDX], avg_score))
-                        self.state[body.client_id].get("best_books",[]).sort(key=lambda x: x[SCORES_IDX], reverse=True)
-                        self.state[body.client_id].get("best_books",[]).pop()
+                        best_books = self.state[body.client_id].get("best_books", [])
+                        best_books.append((row[TITLE_IDX], avg_score))
+                        best_books.sort(key=lambda x: x[SCORES_IDX], reverse=True)
+                        best_books.pop()
+                        self.state[body.client_id].update({"best_books": best_books})
+

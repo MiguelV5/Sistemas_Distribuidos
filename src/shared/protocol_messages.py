@@ -1,6 +1,7 @@
 import csv
 from enum import Enum
 import io
+import logging
 
 
 SEPARATOR = "<|>"
@@ -58,6 +59,7 @@ class SystemMessage:
     def decode_from_bytes(cls, raw_msg_body: bytes):
         msg = raw_msg_body.decode()
         msg_type, client_id, controller_name, controller_seq_num, payload = msg.split(f"{SEPARATOR}")
+        
         return cls(SystemMessageType(int(msg_type)), int(client_id), controller_name, int(controller_seq_num), payload)
     
     def get_batch_iter_from_payload(self):

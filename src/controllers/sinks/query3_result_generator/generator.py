@@ -26,23 +26,26 @@ class Generator(MonitorableProcess):
                                                          output_queues_to_bind={self.output_queue: self.output_queue},
                                                          input_exchange_name=self.input_exchange,
                                                          input_queues_to_recv_from=[self.input_queue])
-        self.response_msg = "[Q3 Results]:  (Title, Reviews, Authors)"
+        self.response_payload = constants.PAYLOAD_HEADER_Q3
         
     def start(self):
-        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue, self.__generate_query3_result)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(self.input_queue, self.state_handler_callback, self.__generate_query3_result)
         self.mq_connection_handler.start_consuming()
         
     def __generate_query3_result(self, body: SystemMessage):
         """
         The body is a csv line with the following format in the line: "title,reviews_count,authors"
         """
-        msg = body.payload
         if body.type == SystemMessageType.EOF_R:
-            logging.info("Sending Q3 results to output queue")
+            logging.info(f"Received EOF_R from [ client_{body.client_id} ]")
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
-            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_msg).encode_to_str())   
-            self.response_msg = "[Q3 Results]:  (Title, Reviews, Authors)"
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
+            self.update_self_seq_number(body.client_id, next_seq_num)
         else:
-            review = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
-            for row in review:
-                self.response_msg += "\n" + f"{row[TITLE_IDX]}, {row[REVIEW_COUNT_IDX]}, \"{row[AUTHORS_IDX]}\""
+            reviews = body.get_batch_iter_from_payload()
+            for row in reviews:
+                self.response_payload += "\n" + f"{row[TITLE_IDX]}, {row[REVIEW_COUNT_IDX]}, \"{row[AUTHORS_IDX]}\""
+            next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
+            self.update_self_seq_number(body.client_id, next_seq_num)
+            self.response_payload = constants.PAYLOAD_HEADER_Q3

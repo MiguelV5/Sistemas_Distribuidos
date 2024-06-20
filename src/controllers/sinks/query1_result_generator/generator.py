@@ -13,7 +13,7 @@ class Generator(MonitorableProcess):
                  controller_name: str):
         super().__init__(controller_name)
         self.output_queue = output_queue_name
-        self.results_msg = "[Q1 Results]:  (Title, Authors, Publisher, Publication Year)"
+        self.response_payload = constants.PAYLOAD_HEADER_Q1
         self.mq_connection_handler = MQConnectionHandler(output_exchange_name=output_exchange_name, 
                                                          output_queues_to_bind={self.output_queue: [self.output_queue]}, 
                                                          input_exchange_name=input_exchange_name, 
@@ -24,13 +24,16 @@ class Generator(MonitorableProcess):
         self.mq_connection_handler.start_consuming()
         
     def __get_results(self, body: SystemMessage):
-        msg = body.payload
         if body.type == SystemMessageType.EOF_B:
-            logging.info("Received EOF")
-            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, 1, self.results_msg).encode_to_str())
-            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, 2, self.results_msg).encode_to_str())
-            logging.info("Sending Q1 results to output queue")
+            logging.info(f"Received EOF from [ client_{body.client_id} ]")
+            next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
+            self.update_self_seq_number(body.client_id, next_seq_num)
         else: 
-            self.results_msg += "\n" + msg 
+            self.response_payload += "\n" + body.payload
+            next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
+            self.update_self_seq_number(body.client_id, next_seq_num)
+            self.response_payload = constants.PAYLOAD_HEADER_Q1
         
         
