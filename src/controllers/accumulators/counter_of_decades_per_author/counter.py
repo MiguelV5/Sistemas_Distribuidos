@@ -38,7 +38,7 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         logging.debug(f"Received message: {msg}")
         if body.type == SystemMessageType.EOF_B:
             logging.info(f"Received EOF_B from [ client_{body.client_id} ]. Sending results and EOF to output queue")
-            self.__send_results()
+            self.__send_results(body.client_id)
         else:
             logging.debug(f"Processing message: {msg}")
             author, decade = msg.split(',')
