@@ -574,7 +574,6 @@ add_query4_processes() {
 
 add_query5_processes() {
     echo "filter_of_merged_reviews_by_book_genre" >> src/controllers/health_checker/monitorable_controllers.txt
-    echo "sentiment_analyzer" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "filter_of_books_by_sentiment_quantile" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "query5_result_generator" >> src/controllers/health_checker/monitorable_controllers.txt
     echo "
@@ -589,9 +588,12 @@ add_query5_processes() {
       - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
-      - OUTPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
       - GENRE=fiction
-      - NUM_OF_INPUT_WORKERS=$WORKERS
+      - NUM_OF_INPUT_WORKERS=$WORKERS" >> docker-compose.yaml
+      for ((i=1; i<=$WORKERS; i++)); do
+          echo "      - OUTPUT_QUEUE_OF_REVIEWS_$i=reviews_filtered_by_book_genre_q_$i" >> docker-compose.yaml
+      done
+      echo "      - NUM_OF_DYN_OUTPUT_QUEUES=$WORKERS
       - CONTROLLER_NAME=filter_of_merged_reviews_by_book_genre
     networks:
       - testing_net
@@ -599,10 +601,13 @@ add_query5_processes() {
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
-        condition: service_healthy
+        condition: service_healthy" >> docker-compose.yaml
 
-  sentiment_analyzer:
-    container_name: sentiment_analyzer
+    for ((i=1; i<=$WORKERS; i++)); do
+    echo "sentiment_analyzer_$i" >> src/controllers/health_checker/monitorable_controllers.txt
+    echo "
+  sentiment_analyzer_$i:
+    container_name: sentiment_analyzer_$i:
     image: sentiment_analyzer:latest
     entrypoint: python3 /main.py
     environment:
@@ -611,17 +616,20 @@ add_query5_processes() {
       - LOGGING_LEVEL=INFO
       - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
-      - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q
+      - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q_$i
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
       - CONTROLLER_NAME=sentiment_analyzer
+      - BATCH_SIZE=200
     networks:
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       rabbitmq:
-        condition: service_healthy
+        condition: service_healthy" >> docker-compose.yaml
+    done
 
+    echo "
   filter_of_books_by_sentiment_quantile:
     container_name: filter_of_books_by_sentiment_quantile
     image: filter_of_books_by_sentiment_quantile:latest
@@ -636,6 +644,7 @@ add_query5_processes() {
       - OUTPUT_QUEUE_OF_BOOKS=books_filtered_by_highest_sentiment_q
       - QUANTILE=0.9
       - CONTROLLER_NAME=filter_of_books_by_sentiment_quantile
+      - BATCH_SIZE=200
     networks:
       - testing_net
     volumes:
