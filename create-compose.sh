@@ -64,6 +64,7 @@ add_clients() {
     entrypoint: python3 /main.py
     volumes:
       - ./data:/data
+      - ./results:/results
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1

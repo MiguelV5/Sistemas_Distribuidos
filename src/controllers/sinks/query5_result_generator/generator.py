@@ -31,7 +31,7 @@ class Generator(MonitorableProcess):
             self.__handle_eof_reviews()
             ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
-            self.resulting_books_batch += "\n" + msg
+            self.resulting_books_batch += msg + "\n"
             ch.basic_ack(delivery_tag=method.delivery_tag)
         
     def __handle_eof_reviews(self):

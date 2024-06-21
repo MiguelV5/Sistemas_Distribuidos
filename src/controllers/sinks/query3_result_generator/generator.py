@@ -44,7 +44,7 @@ class Generator(MonitorableProcess):
         else:
             reviews = body.get_batch_iter_from_payload()
             for row in reviews:
-                self.response_payload += "\n" + f"{row[TITLE_IDX]}, {row[REVIEW_COUNT_IDX]}, \"{row[AUTHORS_IDX]}\""
+                self.response_payload += f"{row[TITLE_IDX]}, {row[REVIEW_COUNT_IDX]}, \"{row[AUTHORS_IDX]}\"" + "\n"
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)

@@ -42,7 +42,7 @@ class Generator(MonitorableProcess):
         else:
             books = eval(body.payload.replace("\"",""))
             for book in books:
-                self.response_payload += "\n" f"{book[TITLE_IDX]},{book[SCORES_IDX]}"
+                self.response_payload += f"{book[TITLE_IDX]},{book[SCORES_IDX]}" + "\n"
             logging.info("Sending Q4 results to output queue")
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())

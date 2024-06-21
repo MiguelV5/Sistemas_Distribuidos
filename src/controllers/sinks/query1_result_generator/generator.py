@@ -30,7 +30,7 @@ class Generator(MonitorableProcess):
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)
         else: 
-            self.response_payload += "\n" + body.payload
+            self.response_payload += body.payload + "\n"
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)
