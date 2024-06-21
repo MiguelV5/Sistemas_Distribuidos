@@ -38,7 +38,7 @@ class Generator(MonitorableProcess):
                 logging.info(f"Received all EOFs from [ client_{body.client_id} ].")
                 next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
                 self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, next_seq_num).encode_to_str())
-                self.update_self_seq_number(next_seq_num)
+                self.update_self_seq_number(body.client_id, next_seq_num)
                 self.state[body.client_id].update({"eofs_received": 0})
         else:
             self.response_payload += "\n" + body.payload
