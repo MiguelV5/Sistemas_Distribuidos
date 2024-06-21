@@ -54,6 +54,7 @@ class HealthChecker(MonitorableProcess):
                 hash_val = hash(controller) % self.num_of_healthcheckers
                 if hash_val == self.health_checker_idx:
                     controllers_to_check.append(controller)
+        logging.info(f"Controllers to check: {controllers_to_check}")  
         return controllers_to_check
             
                 
