@@ -607,7 +607,7 @@ add_query5_processes() {
     echo "sentiment_analyzer_$i" >> src/monitorable_controllers.txt
     echo "
   sentiment_analyzer_$i:
-    container_name: sentiment_analyzer_$i:
+    container_name: sentiment_analyzer_$i
     image: sentiment_analyzer:latest
     entrypoint: python3 /main.py
     environment:
@@ -693,6 +693,7 @@ add_health_checkers(){
       - HEALTH_CHECK_INTERVAL=5
       - HEALTH_CHECK_TIMEOUT=1
       - CONTROLLER_NAME=health_checker_$i
+      - NUM_OF_HEALTH_CHECKERS=$HEALTH_CHECKERS
     networks:
       - testing_net
     volumes:

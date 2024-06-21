@@ -35,7 +35,7 @@ services:
       - OUTPUT_EXCHANGE_OF_DATA=scraped_data_ex
       - OUTPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS=scraped_books_q
-      - MERGERS_QUANTITY=1
+      - MERGERS_QUANTITY=3
     networks:
       - testing_net
     volumes:
@@ -63,6 +63,56 @@ services:
       - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
       - CLIENT_ID=1
+    networks:
+      - testing_net
+    depends_on:
+      server:
+        condition: service_started
+    
+
+  client_2:
+    container_name: client_2
+    image: client:latest
+    entrypoint: python3 /main.py
+    volumes:
+      - ./data:/data
+      - ./results:/results
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - SERVER_IP=server
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL=INFO
+      - REVIEWS_FILE_PATH=/data/test_rating.csv
+      - BOOKS_FILE_PATH=/data/books_data.csv
+      - BATCH_SIZE=200
+      - CLIENT_ID=2
+    networks:
+      - testing_net
+    depends_on:
+      server:
+        condition: service_started
+    
+
+  client_3:
+    container_name: client_3
+    image: client:latest
+    entrypoint: python3 /main.py
+    volumes:
+      - ./data:/data
+      - ./results:/results
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - SERVER_IP=server
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL=INFO
+      - REVIEWS_FILE_PATH=/data/test_rating.csv
+      - BOOKS_FILE_PATH=/data/books_data.csv
+      - BATCH_SIZE=200
+      - CLIENT_ID=3
     networks:
       - testing_net
     depends_on:
@@ -127,7 +177,9 @@ services:
       - INPUT_QUEUE_OF_BOOKS=towards_preprocessor__preprocessed_books_with_year_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_EXPANDER=towards_expander__preprocessed_books_with_decade_q
       - OUTPUT_QUEUE_OF_BOOKS_1=preprocessed_books_with_decade_q_1
-      - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - OUTPUT_QUEUE_OF_BOOKS_2=preprocessed_books_with_decade_q_2
+      - OUTPUT_QUEUE_OF_BOOKS_3=preprocessed_books_with_decade_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
       - CONTROLLER_NAME=decade_preprocessor
     networks:
       - testing_net
@@ -150,7 +202,9 @@ services:
       - OUTPUT_EXCHANGE=sanitized_reviews_ex
       - INPUT_QUEUE_OF_REVIEWS=scraped_reviews_q
       - OUTPUT_QUEUE_OF_REVIEWS_1=sanitized_reviews_q_1
-      - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - OUTPUT_QUEUE_OF_REVIEWS_2=sanitized_reviews_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS_3=sanitized_reviews_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
       - CONTROLLER_NAME=review_sanitizer
     networks:
       - testing_net
@@ -178,6 +232,56 @@ services:
       - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
       - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
       - CONTROLLER_NAME=merger_1
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  merger_2:
+    container_name: merger_2
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=mergers_outputs_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_2
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_2
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
+      - CONTROLLER_NAME=merger_2
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  merger_3:
+    container_name: merger_3
+    image: merger:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE_OF_REVIEWS=sanitized_reviews_ex
+      - INPUT_EXCHANGE_OF_BOOKS=preprocessed_books_with_decade_ex
+      - OUTPUT_EXCHANGE=mergers_outputs_ex
+      - INPUT_QUEUE_OF_REVIEWS=sanitized_reviews_q_3
+      - INPUT_QUEUE_OF_BOOKS=preprocessed_books_with_decade_q_3
+      - OUTPUT_QUEUE_OF_COMPACT_REVIEWS=merged_compact_reviews_q
+      - OUTPUT_QUEUE_OF_FULL_REVIEWS=merged_full_reviews_q
+      - OUTPUT_QUEUE_OF_BOOKS_CONFIRMS=mergers_confirms_q
+      - CONTROLLER_NAME=merger_3
     networks:
       - testing_net
     volumes:
@@ -271,7 +375,9 @@ services:
       - OUTPUT_EXCHANGE=expanded_authors_ex
       - INPUT_QUEUE_OF_BOOKS=towards_expander__preprocessed_books_with_decade_q
       - OUTPUT_QUEUE_OF_AUTHORS_1=expanded_authors_q_1
-      - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - OUTPUT_QUEUE_OF_AUTHORS_2=expanded_authors_q_2
+      - OUTPUT_QUEUE_OF_AUTHORS_3=expanded_authors_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
       - CONTROLLER_NAME=author_expander
     networks:
       - testing_net
@@ -303,6 +409,48 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  counter_of_decades_per_author_2:
+    container_name: counter_of_decades_per_author_2
+    image: counter_of_decades_per_author:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=expanded_authors_ex
+      - OUTPUT_EXCHANGE=authors_decades_count_ex
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_2
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_2
+      - CONTROLLER_NAME=counter_of_decades_per_author_2
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  counter_of_decades_per_author_3:
+    container_name: counter_of_decades_per_author_3
+    image: counter_of_decades_per_author:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=expanded_authors_ex
+      - OUTPUT_EXCHANGE=authors_decades_count_ex
+      - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_3
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_3
+      - CONTROLLER_NAME=counter_of_decades_per_author_3
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   filter_of_authors_by_decade_1:
     container_name: filter_of_authors_by_decade_1
     image: filter_of_authors_by_decade:latest
@@ -325,6 +473,50 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  filter_of_authors_by_decade_2:
+    container_name: filter_of_authors_by_decade_2
+    image: filter_of_authors_by_decade:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=authors_decades_count_ex
+      - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_2
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
+      - MIN_DECADES_TO_FILTER=10
+      - CONTROLLER_NAME=filter_of_authors_by_decade_2
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  filter_of_authors_by_decade_3:
+    container_name: filter_of_authors_by_decade_3
+    image: filter_of_authors_by_decade:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=authors_decades_count_ex
+      - OUTPUT_EXCHANGE=authors_filtered_by_decade_ex
+      - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_3
+      - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
+      - MIN_DECADES_TO_FILTER=10
+      - CONTROLLER_NAME=filter_of_authors_by_decade_3
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   query2_result_generator:
     container_name: query2_result_generator
     image: query2_result_generator:latest
@@ -337,7 +529,7 @@ services:
       - OUTPUT_EXCHANGE=query_results_ex
       - INPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - OUTPUT_QUEUE_OF_QUERY=query_results_q
-      - FILTERS_QUANTITY=1
+      - FILTERS_QUANTITY=3
       - CONTROLLER_NAME=query2_result_generator
     networks:
       - testing_net
@@ -361,10 +553,12 @@ services:
       - INPUT_EXCHANGE=mergers_outputs_ex
       - OUTPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_compact_reviews_q
-      - NUM_OF_INPUT_WORKERS=1
+      - NUM_OF_INPUT_WORKERS=3
       - DECADE_TO_FILTER=1990
       - OUTPUT_QUEUE_OF_REVIEWS_1=compact_reviews_filtered_by_decade_q_1
-      - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - OUTPUT_QUEUE_OF_REVIEWS_2=compact_reviews_filtered_by_decade_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS_3=compact_reviews_filtered_by_decade_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
       - CONTROLLER_NAME=filter_of_compact_reviews_by_decade
     networks:
       - testing_net
@@ -396,6 +590,48 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  counter_of_reviews_per_book_2:
+    container_name: counter_of_reviews_per_book_2
+    image: counter_of_reviews_per_book:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
+      - OUTPUT_EXCHANGE=review_count_per_book_ex
+      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - CONTROLLER_NAME=counter_of_reviews_per_book_2
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  counter_of_reviews_per_book_3:
+    container_name: counter_of_reviews_per_book_3
+    image: counter_of_reviews_per_book:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=compact_reviews_filtered_by_decade_ex
+      - OUTPUT_EXCHANGE=review_count_per_book_ex
+      - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_3
+      - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - CONTROLLER_NAME=counter_of_reviews_per_book_3
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   filter_of_books_by_review_count:
     container_name: filter_of_books_by_review_count
     image: filter_of_books_by_review_count:latest
@@ -409,7 +645,7 @@ services:
       - INPUT_QUEUE_OF_BOOKS=review_count_per_book_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_QUERY3=towards_query3__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS_TOWARDS_sorter=towards_sorter__books_filtered_by_review_count_q
-      - NUM_OF_COUNTERS=1
+      - NUM_OF_COUNTERS=3
       - MIN_REVIEWS=500
       - CONTROLLER_NAME=filter_of_books_by_review_count
     networks:
@@ -502,9 +738,11 @@ services:
       - OUTPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - INPUT_QUEUE_OF_REVIEWS=merged_full_reviews_q
       - GENRE=fiction
-      - NUM_OF_INPUT_WORKERS=1
+      - NUM_OF_INPUT_WORKERS=3
       - OUTPUT_QUEUE_OF_REVIEWS_1=reviews_filtered_by_book_genre_q_1
-      - NUM_OF_DYN_OUTPUT_QUEUES=1
+      - OUTPUT_QUEUE_OF_REVIEWS_2=reviews_filtered_by_book_genre_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS_3=reviews_filtered_by_book_genre_q_3
+      - NUM_OF_DYN_OUTPUT_QUEUES=3
       - CONTROLLER_NAME=filter_of_merged_reviews_by_book_genre
     networks:
       - testing_net
@@ -515,7 +753,7 @@ services:
         condition: service_healthy
 
   sentiment_analyzer_1:
-    container_name: sentiment_analyzer_1:
+    container_name: sentiment_analyzer_1
     image: sentiment_analyzer:latest
     entrypoint: python3 /main.py
     environment:
@@ -525,6 +763,50 @@ services:
       - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q_1
+      - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
+      - CONTROLLER_NAME=sentiment_analyzer
+      - BATCH_SIZE=200
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  sentiment_analyzer_2:
+    container_name: sentiment_analyzer_2
+    image: sentiment_analyzer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
+      - OUTPUT_EXCHANGE=sentiment_per_book_ex
+      - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q_2
+      - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
+      - CONTROLLER_NAME=sentiment_analyzer
+      - BATCH_SIZE=200
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  sentiment_analyzer_3:
+    container_name: sentiment_analyzer_3
+    image: sentiment_analyzer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INPUT_EXCHANGE=reviews_filtered_by_book_genre_ex
+      - OUTPUT_EXCHANGE=sentiment_per_book_ex
+      - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q_3
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
       - CONTROLLER_NAME=sentiment_analyzer
       - BATCH_SIZE=200
@@ -594,10 +876,80 @@ services:
       - HEALTH_CHECK_INTERVAL=5
       - HEALTH_CHECK_TIMEOUT=1
       - CONTROLLER_NAME=health_checker_1
+      - NUM_OF_HEALTH_CHECKERS=3
     networks:
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /src/monitorable_controllers.txt:/monitorable_controllers.txt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      server:
+        condition: service_started
+
+  health_checker_2:
+    container_name: health_checker_2
+    image: health_checker:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_TIMEOUT=1
+      - CONTROLLER_NAME=health_checker_2
+      - NUM_OF_HEALTH_CHECKERS=3
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /src/monitorable_controllers.txt:/monitorable_controllers.txt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      server:
+        condition: service_started
+
+  health_checker_3:
+    container_name: health_checker_3
+    image: health_checker:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_TIMEOUT=1
+      - CONTROLLER_NAME=health_checker_3
+      - NUM_OF_HEALTH_CHECKERS=3
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /src/monitorable_controllers.txt:/monitorable_controllers.txt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      server:
+        condition: service_started
+
+  killer:
+    container_name: killer
+    image: killer:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=1
+      - LOGGING_LEVEL=INFO
+      - INTERVAL=10
+      - KILL_PERCENTAGE=25
+      - NUM_OF_HEALTH_CHECKERS=3
+    networks:
+      - testing_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /src/monitorable_controllers.txt:/monitorable_controllers.txt
     depends_on:
       rabbitmq:
         condition: service_healthy
