@@ -63,7 +63,8 @@ class AuthorExpander(MonitorableProcess):
 
             seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
             for output_queue, payload in payload_per_controller.items():
-                self.mq_connection_handler.send_message(output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload).encode_to_str())
+                if payload:
+                    self.mq_connection_handler.send_message(output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload).encode_to_str())
             self.update_self_seq_number(body.client_id, seq_num_to_send)
 
 

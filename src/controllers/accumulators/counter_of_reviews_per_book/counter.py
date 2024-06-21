@@ -52,9 +52,9 @@ class CounterOfReviewsPerBook(MonitorableProcess):
         books_reviews = self.state.get(body.client_id, {}).get("books_reviews", {})
         for title,review in books_reviews.items():
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
-            output_msg = ""
-            output_msg += f"{title},\"{review[AUTHORS_IDX]}\",\"{review[SCORE_IDX]}\",{review[DECADE_IDX]},{len(review[SCORE_IDX])}" + '\n'
-            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, output_msg).encode_to_str())
+            payload_to_send = ""
+            payload_to_send += f"{title},\"{review[AUTHORS_IDX]}\",\"{review[SCORE_IDX]}\",{review[DECADE_IDX]},{len(review[SCORE_IDX])}" + '\n'
+            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, payload_to_send).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)
         next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
         self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
