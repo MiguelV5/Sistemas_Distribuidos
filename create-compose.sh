@@ -718,7 +718,7 @@ add_killer(){
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INTERVAL=10
-      - KILL_PERCENTAGE=25
+      - KILL_PERCENTAGE=0
       - NUM_OF_HEALTH_CHECKERS=$HEALTH_CHECKERS
     networks:
       - testing_net

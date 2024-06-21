@@ -70,56 +70,6 @@ services:
         condition: service_started
     
 
-  client_2:
-    container_name: client_2
-    image: client:latest
-    entrypoint: python3 /main.py
-    volumes:
-      - ./data:/data
-      - ./results:/results
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=1
-      - LOGGING_LEVEL=INFO
-      - SERVER_IP=server
-      - SERVER_PORT=8080
-      - LOGGING_LEVEL=INFO
-      - REVIEWS_FILE_PATH=/data/test_rating.csv
-      - BOOKS_FILE_PATH=/data/books_data.csv
-      - BATCH_SIZE=200
-      - CLIENT_ID=2
-    networks:
-      - testing_net
-    depends_on:
-      server:
-        condition: service_started
-    
-
-  client_3:
-    container_name: client_3
-    image: client:latest
-    entrypoint: python3 /main.py
-    volumes:
-      - ./data:/data
-      - ./results:/results
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=1
-      - LOGGING_LEVEL=INFO
-      - SERVER_IP=server
-      - SERVER_PORT=8080
-      - LOGGING_LEVEL=INFO
-      - REVIEWS_FILE_PATH=/data/test_rating.csv
-      - BOOKS_FILE_PATH=/data/books_data.csv
-      - BATCH_SIZE=200
-      - CLIENT_ID=3
-    networks:
-      - testing_net
-    depends_on:
-      server:
-        condition: service_started
-    
-
   book_sanitizer:
     container_name: book_sanitizer
     image: book_sanitizer:latest
@@ -943,7 +893,7 @@ services:
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INTERVAL=10
-      - KILL_PERCENTAGE=25
+      - KILL_PERCENTAGE=0
       - NUM_OF_HEALTH_CHECKERS=3
     networks:
       - testing_net
