@@ -733,6 +733,12 @@ check_params() {
         exit 1
     fi
 
+    local MIN_INSTANCES=1
+    if [ $CLIENTS -lt $MIN_INSTANCES ] || [ $WORKERS -lt $MIN_INSTANCES ] || [ $HEALTH_CHECKERS -lt $MIN_INSTANCES ] ; then
+        echo "The minimum number of instances per configuration is $MIN_INSTANCES"
+        exit 1
+    fi
+
 }
 
 
