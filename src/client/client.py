@@ -12,7 +12,8 @@ from multiprocessing.connection import Connection as PipeConnection
 
 CONTINUE_WITH_REVIEWS_DATA = "CONTINUE"
 CLIENT_RESULTS_BASE_PATH = "./results/client_"
-
+MAX_RESULT_LINES_FOR_RESULTS_LOGS = 50
+MAX_RESULT_BYTES_FOR_RESULTS_LOGS = 500
 
 class Client:
     def __init__(self, server_ip, server_port, reviews_file_path, books_file_path, batch_size, client_id):
@@ -64,11 +65,14 @@ class Client:
                 if received_msg.type == QueryMessageType.CONTINUE:
                     sender_pipe.send(CONTINUE_WITH_REVIEWS_DATA)
                 elif received_msg.type == QueryMessageType.SV_RESULT:
-                    logging.info(f"\t \t  <<< Size of received result: {size_in_lines - 1} rows >>>")
-                    logging.info(f"\t \t  {received_msg.payload}\n")
+                    logging.info(f"\t <<< Size of received result: {size_in_lines - 1} rows >>>")
+                    if size_in_lines <= MAX_RESULT_LINES_FOR_RESULTS_LOGS:
+                        logging.info(f"\t  {received_msg.payload}")
+                    else:
+                        logging.info(f"\t  {received_msg.payload[:MAX_RESULT_BYTES_FOR_RESULTS_LOGS]}...\n \t \t \t \t==========  [...]  ==========\n")
                     self.__save_results_to_file(received_msg.payload)
                 elif received_msg.type == QueryMessageType.SV_FINISHED:
-                    logging.info("[ SERVER FINISHED SENDING RESULTS ]")
+                    logging.info("[ SERVER FINISHED SENDING RESULTS, EXITING... ]")
                     finished_receiving_results = True
                 results_connection_handler.close()
             except Exception as e:

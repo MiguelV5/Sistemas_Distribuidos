@@ -70,7 +70,7 @@ class SentimentAnalyzer(MonitorableProcess):
         payload_current_size = 0
         payload_to_send = ""
         while (remaining_amount_of_books > 0) and (payload_current_size < self.batch_size):
-            title, avg_polarity = self.__pop_average_polarity_of_book()
+            title, avg_polarity = self.__pop_average_polarity_of_book(client_id)
             payload_to_send += f"{title},{avg_polarity}" + "\n"
             payload_current_size += 1
             remaining_amount_of_books -= 1

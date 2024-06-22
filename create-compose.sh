@@ -618,7 +618,7 @@ add_query5_processes() {
       - OUTPUT_EXCHANGE=sentiment_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=reviews_filtered_by_book_genre_q_$i
       - OUTPUT_QUEUE_OF_REVIEWS=sentiment_per_book_q
-      - CONTROLLER_NAME=sentiment_analyzer
+      - CONTROLLER_NAME=sentiment_analyzer_$i
       - BATCH_SIZE=200
     networks:
       - testing_net
@@ -699,7 +699,7 @@ add_health_checkers(){
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /src/monitorable_controllers.txt:/monitorable_controllers.txt
+      - ./src/monitorable_controllers.txt:/monitorable_controllers.txt
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -719,13 +719,13 @@ add_killer(){
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
       - INTERVAL=10
-      - KILL_PERCENTAGE=0
+      - KILL_PERCENTAGE=40
       - NUM_OF_HEALTH_CHECKERS=$HEALTH_CHECKERS
     networks:
       - testing_net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /src/monitorable_controllers.txt:/monitorable_controllers.txt
+      - ./src/monitorable_controllers.txt:/monitorable_controllers.txt
     depends_on:
       rabbitmq:
         condition: service_healthy

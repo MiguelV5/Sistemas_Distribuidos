@@ -97,9 +97,12 @@ class Server(MonitorableProcess):
             msg_for_client = QueryMessage(QueryMessageType.SV_RESULT, body.client_id, body.payload).encode_to_str()
             self.__send_direct_msg_to_client(body.client_id, msg_for_client)
         elif body.type == SystemMessageType.EOF_B or body.type == SystemMessageType.EOF_R:
-            results_sent_to_client = self.state.get(body.client_id, {}).get("results_sent_to_client", 0)
-            self.state[body.client_id].update({"results_sent_to_client": results_sent_to_client + 1})
-            if results_sent_to_client == AMOUNT_OF_QUERY_RESULTS:
+            logging.info(f"Received EOF from [ {body.controller_name} ] for [ client_{body.client_id} ]")
+            results_received_from_sinks = self.state[body.client_id].get("results_sent_to_client", 0) + 1
+            self.state[body.client_id].update({"results_sent_to_client": results_received_from_sinks})
+            logging.info(f"[ {results_received_from_sinks} ] results fully sent to [ client_{body.client_id} ]")
+            if results_received_from_sinks == AMOUNT_OF_QUERY_RESULTS:
+                logging.info(f"Sent all results for [ client_{body.client_id} ]. Sending SV_FINISHED message.\n")
                 msg_for_client = QueryMessage(QueryMessageType.SV_FINISHED, body.client_id).encode_to_str()
                 self.__send_direct_msg_to_client(body.client_id, msg_for_client)
 
@@ -107,7 +110,7 @@ class Server(MonitorableProcess):
     def __process_mergers_confirms(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_B:
             logging.info(f"Received EOF_B confirmation from [ {body.controller_name} ] for [ client_{body.client_id} ]")
-            received_confirms = self.state.get(body.client_id, {}).get("received_mergers_confirms", 1)
+            received_confirms = self.state[body.client_id].get("received_mergers_confirms", 1)
             logging
             should_send_continue_msg = (received_confirms == self.required_merger_confirms)
             if should_send_continue_msg:
