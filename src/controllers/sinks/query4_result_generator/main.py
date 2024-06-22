@@ -10,7 +10,6 @@ def main():
                           config_params["INPUT_QUEUE_OF_BOOKS"], 
                           config_params["OUTPUT_QUEUE_OF_QUERY"],
                           config_params["CONTROLLER_NAME"])
-    logging.info("Starting Generator")
     generator.start()
     
 if __name__ == "__main__":

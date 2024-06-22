@@ -35,6 +35,7 @@ docker-image-build:
 	docker build -f ./src/controllers/sinks/query5_result_generator/Dockerfile -t "query5_result_generator:latest" .
 
 	docker build -f ./src/controllers/health_checker/Dockerfile -t "health_checker:latest" .
+	docker build -f ./src/killer/Dockerfile -t "killer:latest" .
 
 .PHONY: docker-image-build
 

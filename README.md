@@ -53,11 +53,14 @@ make docker-compose-logs
 make docker-compose-down
 ```
 
-Adicionalmente, se incluye un script de bash para creación dinámica del archivo docker-compose.yaml, el cual permite la configuración de la cantidad de workers para los procesos parametrizables:
-(Si no se proveen valores, se toman los valores por defecto de 1 worker)
+Adicionalmente, se incluye un script de bash para creación dinámica del archivo docker-compose.yaml, el cual permite configurar :
+- La cantidad de clientes a levantar
+- La cantidad de workers para los controladores parametrizables 
+- La cantidad de health checkers
+(Si no se proveen valores, se toman los valores por defecto de 1 por parametro)
 
 ```bash
-WORKERS=3 HEALTH_CHECKERS=3 ./create-compose.sh
+CLIENTS=3 WORKERS=3 HEALTH_CHECKERS=3 ./create-compose.sh
 ```
 
 

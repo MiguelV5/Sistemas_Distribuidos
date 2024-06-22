@@ -18,7 +18,6 @@ def main():
 
     init_log(config_params["LOGGING_LEVEL"])
 
-    logging.info("Starting review_sanitizer")
     review_sanitizer = ReviewSanitizer(input_exchange=config_params["INPUT_EXCHANGE"], 
                                        input_queue=config_params["INPUT_QUEUE_OF_REVIEWS"],
                                        output_exchange=config_params["OUTPUT_EXCHANGE"],

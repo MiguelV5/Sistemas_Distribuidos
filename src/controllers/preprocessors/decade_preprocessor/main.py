@@ -18,7 +18,6 @@ def main():
 
     init_log(config_params["LOGGING_LEVEL"])
     
-    logging.info("Starting decade_preprocessor")
     decade_preprocessor = DecadePreprocessor(input_exchange=config_params["INPUT_EXCHANGE"], 
                                              input_queue=config_params["INPUT_QUEUE_OF_BOOKS"],
                                              output_exchange=config_params["OUTPUT_EXCHANGE"],

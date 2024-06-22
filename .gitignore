@@ -1,10 +1,6 @@
 # DATA
-books_data.csv
-books_rating.csv
-test_rating.csv
-
-# Aux
-monitorable_controllers.txt
+*.csv
+*.txt
 
 
 

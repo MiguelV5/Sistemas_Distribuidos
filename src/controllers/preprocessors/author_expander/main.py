@@ -15,7 +15,6 @@ def main():
                               input_queue_of_books=config_params["INPUT_QUEUE_OF_BOOKS"],
                               output_queues=config_params_output_queues,
                               controller_name=config_params["CONTROLLER_NAME"])
-    logging.info("Starting author expander")
     expander.start()
     
 if __name__ == "__main__":

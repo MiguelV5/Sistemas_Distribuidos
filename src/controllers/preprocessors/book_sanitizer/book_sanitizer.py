@@ -4,6 +4,7 @@ import csv
 import io
 from shared import constants
 from shared.monitorable_process import MonitorableProcess
+from shared.protocol_messages import SystemMessage, SystemMessageType
 
 TITLE_IDX = 0
 AUTHORS_IDX = 2
@@ -21,44 +22,57 @@ class BookSanitizer(MonitorableProcess):
                  output_queue: str, 
                  controller_name: str):
         super().__init__(controller_name)
+
         self.output_queue = output_queue
         self.mq_connection_handler = MQConnectionHandler(output_exchange, 
                                                          {output_queue: [output_queue]},
                                                          input_exchange,
                                                          [input_queue])
         
-        self.mq_connection_handler.setup_callback_for_input_queue(input_queue, self.__sanitize_batch_of_books)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue, self.state_handler_callback, self.__process_msg_from_sv)
 
 
-    def __sanitize_batch_of_books(self, ch, method, properties, body):
-        msg = body.decode()
-        if msg == constants.FINISH_MSG:
-            self.mq_connection_handler.send_message(self.output_queue, msg)
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        else:
-            batch_as_csv = csv.reader(io.StringIO(msg), delimiter=',', quotechar='"')
-            batch_to_send = ""
-            for row in batch_as_csv:
-                if len(row) < REQUIRED_SIZE_OF_ROW:
+    def __process_msg_from_sv(self, body: SystemMessage):
+        if body.type == SystemMessageType.EOF_B:
+            self.__handle_eof(body)
+        elif body.type == SystemMessageType.DATA:
+            self.__sanitize_books_and_send(body)
+
+    
+    def __handle_eof(self, body: SystemMessage):
+        logging.info(f"Received EOF_B from [ client_{body.client_id} ]")
+        seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+        msg_to_send = SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str()
+        self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
+        self.update_self_seq_number(body.client_id, seq_num_to_send)
+
+    def __sanitize_books_and_send(self, body: SystemMessage):
+        books_batch = body.get_batch_iter_from_payload()
+        payload_to_send = ""
+        for book in books_batch:
+            if len(book) < REQUIRED_SIZE_OF_ROW:
                     continue
-                title = row[TITLE_IDX]
-                authors = row[AUTHORS_IDX]
-                publisher = row[PUBLISHER_IDX]
-                published_date = row[PUBLISHED_DATE_IDX]
-                categories = row[CATEGORIES_IDX]
-                if not title or not authors or not published_date or not categories:
-                    continue
+            title = book[TITLE_IDX]
+            authors = book[AUTHORS_IDX]
+            publisher = book[PUBLISHER_IDX]
+            published_date = book[PUBLISHED_DATE_IDX]
+            categories = book[CATEGORIES_IDX]
+            if not title or not authors or not published_date or not categories:
+                continue
 
-                title = self.__fix_title_format(title)
-                authors = self.__fix_authors_format(authors)
-                publisher = self.__fix_publisher_format(publisher)
-                categories = self.__fix_categories_format(categories)
+            title = self.__fix_title_format(title)
+            authors = self.__fix_authors_format(authors)
+            publisher = self.__fix_publisher_format(publisher)
+            categories = self.__fix_categories_format(categories)
 
-                batch_to_send += f"{title},\"{authors}\",{publisher},{published_date},\"{categories}\"" + "\n"
-
-            if batch_to_send:
-                self.mq_connection_handler.send_message(self.output_queue, batch_to_send)
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            payload_to_send += self.__format_sanitized_book(title, authors, publisher, published_date, categories)
+        
+        if payload_to_send:
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str()
+            self.mq_connection_handler.send_message(self.output_queue, msg_to_send)
+            self.update_self_seq_number(body.client_id, seq_num_to_send)
+    
 
     def __fix_title_format(self, title):
         return title.replace("\n", " ").replace("\r", "").replace(",", ";").replace('"', "`").replace("'", "`")
@@ -92,6 +106,8 @@ class BookSanitizer(MonitorableProcess):
         fixed_list = fixed_list.replace("',' ", "', '")  # restore original spacing
         return fixed_list
 
+    def __format_sanitized_book(self, title, authors, publisher, published_date, categories):
+        return f"{title},\"{authors}\",{publisher},{published_date},\"{categories}\"" + "\n"
 
 
     def start(self):
