@@ -5,6 +5,9 @@ from shared.monitorable_process import MonitorableProcess
 from shared.protocol_messages import SystemMessage, SystemMessageType
 
 
+AUTHOR_IDX = 0
+DECADE_IDX = 1
+
 class FilterOfAuthorsByDecade(MonitorableProcess):
     def __init__(self, 
                  input_exchange_name: str, 
@@ -31,18 +34,24 @@ class FilterOfAuthorsByDecade(MonitorableProcess):
         
             
     def __filter_authors_by_decades_quantity(self, body: SystemMessage):
-        seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
         logging.debug(f"Received message: {body.payload}")
         if body.type == SystemMessageType.EOF_B:
             logging.info("EOF received. Sending EOF message to output queue")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.update_self_seq_number(body.client_id, seq_num_to_send)
         else:
-            author, decades = body.payload.split(",")
-            if int(decades) >= int(self.min_decades_to_filter):
-                self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, body.payload).encode_to_str())
-                logging.debug(f"Sent message to output queue: {body.payload}")
-            else:
-                logging.debug(f"Author {author} was filtered out. Decades: {decades} < {self.min_decades_to_filter}")
-        self.update_self_seq_number(body.client_id, seq_num_to_send)
+            payload_to_send = ""
+            batch_of_author_decades = body.get_batch_iter_from_payload()
+            for author_decades in batch_of_author_decades:
+                author = author_decades[AUTHOR_IDX]
+                decades = author_decades[DECADE_IDX]
+                if int(decades) >= self.min_decades_to_filter:
+                    payload_to_send += f"{author},{decades}\n"
+            if payload_to_send:
+                seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+                self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str())
+                self.update_self_seq_number(body.client_id, seq_num_to_send)
+
         
        

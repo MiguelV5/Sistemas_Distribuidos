@@ -41,7 +41,7 @@ class Generator(MonitorableProcess):
                 self.update_self_seq_number(body.client_id, next_seq_num)
                 self.state[body.client_id].update({"eofs_received": 0})
         else:
-            self.response_payload += body.payload + "\n"
+            self.response_payload += body.payload
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)

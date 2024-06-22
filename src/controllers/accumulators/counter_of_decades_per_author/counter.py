@@ -14,8 +14,11 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
                  output_exchange: str, 
                  input_queue_of_authors: str, 
                  output_queue_of_authors: str,
+                 batch_size: int,
                  controller_name: str):
         super().__init__(controller_name)
+        self.batch_size = batch_size
+
         self.input_exchange = input_exchange
         self.output_exchange = output_exchange
         self.input_queue_of_authors = input_queue_of_authors
@@ -33,13 +36,8 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         self.mq_connection_handler.start_consuming()
             
     def __count_authors(self, body: SystemMessage):
-        """ 
-        The body is a csv line with the following format in the line: "author, decade" 
-        The counter should count the number of authors per decade and send the result to the output queue.
-        """
-        logging.debug(f"Received message: {body.payload}")
         if body.type == SystemMessageType.EOF_B:
-            logging.info(f"Received EOF_B from [ client_{body.client_id} ]. Sending results and EOF to output queue")
+            logging.info(f"Received EOF_B from [ client_{body.client_id} ]. Sending results to output queue")
             self.__send_results(body.client_id)
         else:
             authors_decades_batch = body.get_batch_iter_from_payload()
@@ -47,18 +45,29 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
                 author = author_decade[AUTHOR_IDX]
                 decade = author_decade[DECADE_IDX]
                 self.__update_authors_decades_per_client(body.client_id, author, decade)
+
         
     def __send_results(self, client_id):
-        for author, decades in self.state[client_id]["authors_decades"].items():
-            seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
-            payload_to_send = ""
-            payload_to_send += author + ',' + str(len(decades))
-            self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.DATA, client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str())
-            self.update_self_seq_number(client_id, seq_num_to_send)
-            
+        payload_current_size = 0
+        payload_to_send = ""
+        authors_decades = list(self.state[client_id]["authors_decades"].items())
+        
+        for i, (author, decades) in enumerate(authors_decades):
+            payload_to_send += f"{author},{len(decades)}\n"
+            payload_current_size += 1
+            if (payload_current_size == self.batch_size) or (i == len(authors_decades) - 1):
+                seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
+                self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.DATA, client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str())
+                self.update_self_seq_number(client_id, seq_num_to_send)
+                payload_to_send = ""
+                payload_current_size = 0
+        
         seq_num_to_send = self.get_seq_num_to_send(client_id, self.controller_name)
-        self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, seq_num_to_send).encode_to_str())   
+        self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.EOF_B, client_id, self.controller_name, seq_num_to_send).encode_to_str())
         self.update_self_seq_number(client_id, seq_num_to_send)
+        self.state[client_id]["authors_decades"] = {}
+        logging.info("Sent EOF message to output queue")
+
         
     def __update_authors_decades_per_client(self, client_id, author, decade):
         if client_id in self.state:

@@ -350,6 +350,7 @@ services:
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_1
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_1
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_decades_per_author_1
     networks:
       - testing_net
@@ -371,6 +372,7 @@ services:
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_2
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_2
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_decades_per_author_2
     networks:
       - testing_net
@@ -392,6 +394,7 @@ services:
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_3
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_3
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_decades_per_author_3
     networks:
       - testing_net
@@ -883,28 +886,6 @@ services:
       rabbitmq:
         condition: service_healthy
       server:
-        condition: service_started
-
-  killer:
-    container_name: killer
-    image: killer:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=1
-      - LOGGING_LEVEL=INFO
-      - INTERVAL=25
-      - KILL_PERCENTAGE=20
-      - NUM_OF_HEALTH_CHECKERS=3
-    networks:
-      - testing_net
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./src/monitorable_controllers.txt:/monitorable_controllers.txt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      health_checker_1:
         condition: service_started
 
 networks:

@@ -9,7 +9,7 @@ def main():
                                      config_params["OUTPUT_EXCHANGE"], 
                                      config_params["INPUT_QUEUE_OF_AUTHORS"], 
                                      config_params["OUTPUT_QUEUE_OF_AUTHORS"], 
-                                     config_params["MIN_DECADES_TO_FILTER"],
+                                     int(config_params["MIN_DECADES_TO_FILTER"]),
                                      config_params["CONTROLLER_NAME"])
     logging.info("Filter of authors by decade started.")
     filter.start()

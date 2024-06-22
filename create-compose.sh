@@ -347,6 +347,7 @@ add_query2_processes() {
       - OUTPUT_EXCHANGE=authors_decades_count_ex
       - INPUT_QUEUE_OF_AUTHORS=expanded_authors_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_decades_per_author_$i
     networks:
       - testing_net
@@ -794,7 +795,7 @@ add_query3_processes
 add_query4_processes
 add_query5_processes
 add_health_checkers
-add_killer
+# add_killer
 add_network
 
 echo ">>>   Successfully generated docker-compose.yaml   <<<"
