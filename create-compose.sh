@@ -458,6 +458,7 @@ add_query3_processes() {
       - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_$i
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_reviews_per_book_$i
     networks:
       - testing_net

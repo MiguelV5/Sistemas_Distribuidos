@@ -6,9 +6,6 @@ import io
 from shared.monitorable_process import MonitorableProcess
 from shared.protocol_messages import SystemMessage, SystemMessageType
 
-TITLE_IDX = 0
-AUTHORS_IDX = 2
-REVIEW_COUNT_IDX = 1
 
 class Generator(MonitorableProcess):
     def __init__(self, 
@@ -42,9 +39,7 @@ class Generator(MonitorableProcess):
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)
         else:
-            reviews = body.get_batch_iter_from_payload()
-            for row in reviews:
-                self.response_payload += f"{row[TITLE_IDX]}, {row[REVIEW_COUNT_IDX]}, \"{row[AUTHORS_IDX]}\"" + "\n"
+            self.response_payload += body.payload
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)

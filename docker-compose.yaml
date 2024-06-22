@@ -534,6 +534,7 @@ services:
       - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_1
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_reviews_per_book_1
     networks:
       - testing_net
@@ -555,6 +556,7 @@ services:
       - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_2
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_reviews_per_book_2
     networks:
       - testing_net
@@ -576,6 +578,7 @@ services:
       - OUTPUT_EXCHANGE=review_count_per_book_ex
       - INPUT_QUEUE_OF_REVIEWS=compact_reviews_filtered_by_decade_q_3
       - OUTPUT_QUEUE_OF_REVIEWS=review_count_per_book_q
+      - BATCH_SIZE=200
       - CONTROLLER_NAME=counter_of_reviews_per_book_3
     networks:
       - testing_net

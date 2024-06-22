@@ -5,7 +5,7 @@ from shared.monitorable_process import MonitorableProcess
 from shared.protocol_messages import SystemMessage, SystemMessageType
 
 TITLE_IDX = 0
-SCORES_IDX = 1
+AVG_SCORE_IDX = 1
 
 class Generator(MonitorableProcess):
     def __init__(self, 
@@ -42,8 +42,7 @@ class Generator(MonitorableProcess):
         else:
             books = eval(body.payload.replace("\"",""))
             for book in books:
-                self.response_payload += f"{book[TITLE_IDX]},{book[SCORES_IDX]}" + "\n"
-            logging.info("Sending Q4 results to output queue")
+                self.response_payload += f"{book[TITLE_IDX]},{book[AVG_SCORE_IDX]}" + "\n"
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, self.response_payload).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)

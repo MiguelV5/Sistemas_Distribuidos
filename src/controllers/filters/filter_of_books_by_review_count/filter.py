@@ -9,7 +9,7 @@ from shared.protocol_messages import SystemMessage, SystemMessageType
 
 TITLE_IDX = 0
 AUTHORS_IDX = 1
-SCORE_IDX = 2
+SCORES_LIST_IDX = 2
 DECADE_IDX = 3
 REVIEW_COUNT_IDX = 4
 
@@ -56,16 +56,20 @@ class FilterByReviewsCount(MonitorableProcess):
                 self.mq_connection_handler.send_message(self.output_queue_towards_sorter, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
                 self.update_self_seq_number(body.client_id, next_seq_num)
         else:
-            review = body.get_batch_iter_from_payload()
-            for row in review:
-                reviews_count = int(row[REVIEW_COUNT_IDX])
+            books = body.get_batch_iter_from_payload()
+            payload_to_send_towards_query3 = ""
+            payload_to_send_towards_sorter = ""
+            for book in books:
+                reviews_count = int(book[REVIEW_COUNT_IDX])
                 if reviews_count >= self.min_reviews:
-                    next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
-                    msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, f"{row[TITLE_IDX]},{reviews_count},\"{row[AUTHORS_IDX]}\"").encode_to_str()
-                    self.mq_connection_handler.send_message(self.output_queue_towards_query3, msg_to_send)
+                    payload_to_send_towards_query3 += f"{book[TITLE_IDX]},{reviews_count},\"{book[AUTHORS_IDX]}\"\n"
+                    payload_to_send_towards_sorter += f"{book[TITLE_IDX]},\"{book[SCORES_LIST_IDX]}\"\n"
 
-                    msg_to_send = SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, f"{row[TITLE_IDX]},\"{row[SCORE_IDX]}\"").encode_to_str()
-                    self.mq_connection_handler.send_message(self.output_queue_towards_sorter, msg_to_send)
-                    self.update_self_seq_number(body.client_id, next_seq_num)
-                else:
-                    logging.debug(f"Discarded message: {row[TITLE_IDX]}. Reviews count: {row[REVIEW_COUNT_IDX]} < {self.min_reviews}")
+            if payload_to_send_towards_query3 and payload_to_send_towards_sorter:
+                next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
+
+                self.mq_connection_handler.send_message(self.output_queue_towards_query3, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, payload_to_send_towards_query3).encode_to_str())
+                self.update_self_seq_number(body.client_id, next_seq_num)
+                self.mq_connection_handler.send_message(self.output_queue_towards_sorter, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, next_seq_num, payload_to_send_towards_sorter).encode_to_str())
+
+                self.update_self_seq_number(body.client_id, next_seq_num)

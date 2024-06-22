@@ -48,19 +48,19 @@ class Sorter(MonitorableProcess):
             self.state[body.client_id]["best_books"] = []
         else:
             books = body.get_batch_iter_from_payload()
-            for row in books:
-                scores = eval(row[SCORES_IDX])
+            for book in books:
+                scores = eval(book[SCORES_IDX])
                 scores = list(map(int, scores))
                 avg_score = sum(scores) / len(scores)
                 if len(self.state[body.client_id].get("best_books",[])) < self.required_top_of_books:
                     best_books = self.state[body.client_id].get("best_books", [])
-                    best_books.append((row[TITLE_IDX], avg_score))
+                    best_books.append((book[TITLE_IDX], avg_score))
                     best_books.sort(key=lambda x: x[SCORES_IDX], reverse=True)
                     self.state[body.client_id].update({"best_books": best_books})
                 else:
                     if avg_score > self.state[body.client_id].get("best_books",[])[-1][SCORES_IDX]:
                         best_books = self.state[body.client_id].get("best_books", [])
-                        best_books.append((row[TITLE_IDX], avg_score))
+                        best_books.append((book[TITLE_IDX], avg_score))
                         best_books.sort(key=lambda x: x[SCORES_IDX], reverse=True)
                         best_books.pop()
                         self.state[body.client_id].update({"best_books": best_books})
