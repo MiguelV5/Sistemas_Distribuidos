@@ -796,7 +796,7 @@ add_query3_processes
 add_query4_processes
 add_query5_processes
 add_health_checkers
-# add_killer
+add_killer
 add_network
 
 echo ">>>   Successfully generated docker-compose.yaml   <<<"
