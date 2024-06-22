@@ -9,7 +9,6 @@ def main():
         output_queues.append(f"OUTPUT_QUEUE_OF_REVIEWS_{i}")
     config_params_output_queues = init_configs(output_queues)
     init_log(config_params["LOGGING_LEVEL"])
-    logging.info("Filter of Merged Reviews by Book Genre started.")
     filter = FilterReviewByBookGenre(config_params["INPUT_EXCHANGE"], 
                                      config_params["OUTPUT_EXCHANGE"], 
                                      config_params["INPUT_QUEUE_OF_REVIEWS"], 

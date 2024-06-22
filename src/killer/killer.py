@@ -29,7 +29,7 @@ class Killer:
                     else:
                         controllers_to_kill.append(controller)
      
-            logging.info(f"\t \t \t [[ KILLING NODES ]]:\n \t \t{controllers_to_kill}")
+            logging.info(f"\n \n \t \t <<< KILLING NODES >>>:\n  {controllers_to_kill}\n")
             for controller in controllers_to_kill:
                 try: 
                     docker.APIClient().kill(container=controller)

@@ -6,7 +6,6 @@ def main():
     config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "OUTPUT_QUEUE_OF_BOOKS_TOWARDS_PREPROC", "OUTPUT_QUEUE_OF_BOOKS_TOWARDS_FILTER", "CONTROLLER_NAME"])
     init_log(config_params["LOGGING_LEVEL"])
 
-    logging.info("Starting decade_preprocessor")
     decade_preprocessor = YearPreprocessor(input_exchange=config_params["INPUT_EXCHANGE"], 
                                            input_queue=config_params["INPUT_QUEUE_OF_BOOKS"],
                                            output_exchange=config_params["OUTPUT_EXCHANGE"],

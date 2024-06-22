@@ -16,7 +16,6 @@ def main():
                                             decade_to_filter=int(config_params["DECADE_TO_FILTER"]),
                                             num_of_input_workers=int(config_params["NUM_OF_INPUT_WORKERS"]),
                                             controller_name=config_params["CONTROLLER_NAME"])
-    logging.info("Starting filter")
     filter.start()
     
 if __name__ == "__main__":

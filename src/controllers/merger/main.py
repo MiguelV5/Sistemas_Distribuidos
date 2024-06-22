@@ -14,7 +14,6 @@ def main():
                     config_params["OUTPUT_QUEUE_OF_FULL_REVIEWS"],
                     config_params["OUTPUT_QUEUE_OF_BOOKS_CONFIRMS"],
                     config_params["CONTROLLER_NAME"])
-    logging.info("Merger started")
     merger.start()
 
 

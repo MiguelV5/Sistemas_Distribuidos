@@ -12,7 +12,6 @@ def main():
                                       int(config_params["BATCH_SIZE"]),
                                       config_params["CONTROLLER_NAME"])
     counter.start()
-    logging.info("Counter started")
     
 if __name__ == "__main__":
     main()

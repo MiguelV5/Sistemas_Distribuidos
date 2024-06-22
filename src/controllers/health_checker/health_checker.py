@@ -21,7 +21,7 @@ class HealthChecker(MonitorableProcess):
         self.controller_name = controller_name
         self.socket_connection_handler = None
         self.num_of_healthcheckers = num_of_healthcheckers
-        self.health_checker_idx = int(controller_name.split("_")[-1])
+        self.health_checker_id = int(controller_name.split("_")[-1])
        
     def start(self):
         controllers = []
@@ -52,17 +52,18 @@ class HealthChecker(MonitorableProcess):
                 controllers_to_check.append(controller)
             elif not controller.startswith("health_checker"):
                 hash_val = hash(controller) % self.num_of_healthcheckers
-                if hash_val == self.health_checker_idx:
+                selected_id = hash_val + 1
+                if selected_id == self.health_checker_id:
                     controllers_to_check.append(controller)
-        logging.info(f"Controllers to check: {controllers_to_check}")  
+        logging.info(f"[HEALTH_CHECKER_{self.health_checker_id}] Controllers to check: {controllers_to_check} (total: {len(controllers_to_check)})")  
         return controllers_to_check
             
                 
             
     def __get_health_checker_to_monitor(self):
-        if self.health_checker_idx == self.num_of_healthcheckers:
+        if self.health_checker_id == self.num_of_healthcheckers:
             return "health_checker_1"
-        return f"health_checker_{self.health_checker_idx + 1}"    
+        return f"health_checker_{self.health_checker_id + 1}"    
 
     def __check_controllers_health(self, controller: str):
         while True:
@@ -86,7 +87,7 @@ class HealthChecker(MonitorableProcess):
     
     def __revive_controller(self, controller: str):
         docker.APIClient().start(controller)
-        logging.info(f"Controller {controller} has been restarted")
+        logging.info(f"[HEALTH_CHECKER_{self.health_checker_id}] Controller {controller} has been REVIVED")
         
         
         

@@ -11,7 +11,6 @@ def main():
                                         output_queue_of_authors=config_params["OUTPUT_QUEUE_OF_AUTHORS"],
                                         batch_size=config_params["BATCH_SIZE"],
                                         controller_name=config_params["CONTROLLER_NAME"])
-    logging.info("Starting counter")
     counter.start()
     
 if __name__ == "__main__":

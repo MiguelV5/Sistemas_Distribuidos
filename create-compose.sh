@@ -720,7 +720,7 @@ add_killer(){
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INTERVAL=25
+      - INTERVAL=40
       - KILL_PERCENTAGE=20
       - NUM_OF_HEALTH_CHECKERS=$HEALTH_CHECKERS
     networks:

@@ -11,7 +11,6 @@ def main():
                                      config_params["OUTPUT_QUEUE_OF_AUTHORS"], 
                                      int(config_params["MIN_DECADES_TO_FILTER"]),
                                      config_params["CONTROLLER_NAME"])
-    logging.info("Filter of authors by decade started.")
     filter.start()
     
 if __name__ == "__main__":

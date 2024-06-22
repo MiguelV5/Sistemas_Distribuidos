@@ -12,7 +12,6 @@ def main():
                                   num_of_counters=config_params["NUM_OF_COUNTERS"],
                                   controller_name=config_params["CONTROLLER_NAME"])
     filter.start()
-    logging.info("Filter of books by review count started")
 
 if __name__ == "__main__":
     main()

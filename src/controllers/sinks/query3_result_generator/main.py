@@ -11,7 +11,6 @@ def main():
                           output_queue=config_params["OUTPUT_QUEUE_OF_QUERY"],
                           controller_name=config_params["CONTROLLER_NAME"])
     generator.start()
-    logging.info("Query3 result generator started")
     
 if __name__ == "__main__":
     main()

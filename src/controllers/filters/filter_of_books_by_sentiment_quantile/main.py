@@ -5,7 +5,6 @@ import logging
 def main():
     config_params = init_configs(["LOGGING_LEVEL", "INPUT_EXCHANGE", "OUTPUT_EXCHANGE", "INPUT_QUEUE_OF_BOOKS", "OUTPUT_QUEUE_OF_BOOKS", "QUANTILE", "BATCH_SIZE", "CONTROLLER_NAME", "NUM_OF_SENTIMENT_ANALYZERS"])
     init_log(config_params["LOGGING_LEVEL"])
-    logging.info("Filter of Books by Sentiment Quantile started")
     filter = FilterBySentimentQuantile(config_params["INPUT_EXCHANGE"], 
                                        config_params["OUTPUT_EXCHANGE"], 
                                        config_params["INPUT_QUEUE_OF_BOOKS"], 
