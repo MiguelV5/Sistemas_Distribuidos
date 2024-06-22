@@ -44,21 +44,23 @@ class FilterByGenreAndYear(MonitorableProcess):
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
             
         else:
-            batch = body.get_batch_iter_from_payload()
-            for row in batch:
-                title = row[TITLE_IDX]
-                authors = row[AUTHORS_IDX]
-                publisher = row[PUBLISHER_IDX]
-                year_str = row[YEAR_IDX]
-                categories = row[CATEGORIES_IDX]
+            books = body.get_batch_iter_from_payload()
+            payload_to_send = ""
+            for book in books:
+                title = book[TITLE_IDX]
+                authors = book[AUTHORS_IDX]
+                publisher = book[PUBLISHER_IDX]
+                year_str = book[YEAR_IDX]
+                categories = book[CATEGORIES_IDX]
                 if int(year_str) >= self.min_year_to_filter and \
                         int(year_str) <= self.max_year_to_filter and \
                         self.genre_to_filter in categories:
-                    seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
-                    msg_to_send = f"{title},\"{authors}\",{publisher},{year_str}" + "\n"            
-                    self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, msg_to_send).encode_to_str())
-                    self.update_self_seq_number(body.client_id, seq_num_to_send)
-                    
+                    payload_to_send += f"{title},\"{authors}\",{publisher},{year_str}" + "\n"    
+            if payload_to_send:
+                seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+                self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.DATA, body.client_id, self.controller_name, seq_num_to_send, payload_to_send).encode_to_str())
+                self.update_self_seq_number(body.client_id, seq_num_to_send)
+
        
     def start(self):
         self.mq_connection_handler.channel.start_consuming()
