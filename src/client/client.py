@@ -65,7 +65,7 @@ class Client:
                 if received_msg.type == QueryMessageType.CONTINUE:
                     sender_pipe.send(CONTINUE_WITH_REVIEWS_DATA)
                 elif received_msg.type == QueryMessageType.SV_RESULT:
-                    logging.info(f"\t <<< Size of received result: {size_in_lines - 1} rows >>>")
+                    logging.info(f"\t [[[ Size of received result: {size_in_lines - 1} rows ]]]")
                     if size_in_lines <= MAX_RESULT_LINES_FOR_RESULTS_LOGS:
                         logging.info(f"\t  {received_msg.payload}")
                     else:

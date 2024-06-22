@@ -11,3 +11,6 @@ def main():
                     int(config_params["KILL_PERCENTAGE"]),
                     int(config_params["NUM_OF_HEALTH_CHECKERS"]))
     killer.start()
+
+if __name__ == "__main__":
+    main()

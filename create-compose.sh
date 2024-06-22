@@ -691,7 +691,7 @@ add_health_checkers(){
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_INTERVAL=1
       - HEALTH_CHECK_TIMEOUT=1
       - CONTROLLER_NAME=health_checker_$i
       - NUM_OF_HEALTH_CHECKERS=$HEALTH_CHECKERS
@@ -718,8 +718,8 @@ add_killer(){
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INTERVAL=10
-      - KILL_PERCENTAGE=40
+      - INTERVAL=25
+      - KILL_PERCENTAGE=20
       - NUM_OF_HEALTH_CHECKERS=$HEALTH_CHECKERS
     networks:
       - testing_net
@@ -729,7 +729,7 @@ add_killer(){
     depends_on:
       rabbitmq:
         condition: service_healthy
-      server:
+      health_checker_1:
         condition: service_started" >> docker-compose.yaml
 }
 
@@ -746,21 +746,19 @@ networks:
 }
 
 check_params() {
-    # WORKERS: Number of workers or replicas per process.
-    # HEALTH_CHECKERS: Number of [Health Checker] processes.
 
     if [ -z "$CLIENTS" ]; then
-        echo "Using default values for CLIENTS=1"
+        echo "Using default value for CLIENTS=1"
         export CLIENTS=1
     fi
 
     if [ -z "$WORKERS" ]; then
-        echo "Using default values for WORKERS=1"
+        echo "Using default value for WORKERS=1"
         export WORKERS=1
     fi
 
     if [ -z "$HEALTH_CHECKERS" ]; then
-        echo "Using default values for HEALTH_CHECKERS=1"
+        echo "Using default value for HEALTH_CHECKERS=1"
         export HEALTH_CHECKERS=1
     fi
     

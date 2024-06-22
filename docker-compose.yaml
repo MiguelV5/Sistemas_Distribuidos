@@ -824,10 +824,10 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_INTERVAL=1
       - HEALTH_CHECK_TIMEOUT=1
       - CONTROLLER_NAME=health_checker_1
-      - NUM_OF_HEALTH_CHECKERS=5
+      - NUM_OF_HEALTH_CHECKERS=3
     networks:
       - testing_net
     volumes:
@@ -847,10 +847,10 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_INTERVAL=1
       - HEALTH_CHECK_TIMEOUT=1
       - CONTROLLER_NAME=health_checker_2
-      - NUM_OF_HEALTH_CHECKERS=5
+      - NUM_OF_HEALTH_CHECKERS=3
     networks:
       - testing_net
     volumes:
@@ -870,56 +870,10 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - HEALTH_CHECK_INTERVAL=5
+      - HEALTH_CHECK_INTERVAL=1
       - HEALTH_CHECK_TIMEOUT=1
       - CONTROLLER_NAME=health_checker_3
-      - NUM_OF_HEALTH_CHECKERS=5
-    networks:
-      - testing_net
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./src/monitorable_controllers.txt:/monitorable_controllers.txt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      server:
-        condition: service_started
-
-  health_checker_4:
-    container_name: health_checker_4
-    image: health_checker:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=1
-      - LOGGING_LEVEL=INFO
-      - HEALTH_CHECK_INTERVAL=5
-      - HEALTH_CHECK_TIMEOUT=1
-      - CONTROLLER_NAME=health_checker_4
-      - NUM_OF_HEALTH_CHECKERS=5
-    networks:
-      - testing_net
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./src/monitorable_controllers.txt:/monitorable_controllers.txt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      server:
-        condition: service_started
-
-  health_checker_5:
-    container_name: health_checker_5
-    image: health_checker:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=1
-      - LOGGING_LEVEL=INFO
-      - HEALTH_CHECK_INTERVAL=5
-      - HEALTH_CHECK_TIMEOUT=1
-      - CONTROLLER_NAME=health_checker_5
-      - NUM_OF_HEALTH_CHECKERS=5
+      - NUM_OF_HEALTH_CHECKERS=3
     networks:
       - testing_net
     volumes:
@@ -939,9 +893,9 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONHASHSEED=1
       - LOGGING_LEVEL=INFO
-      - INTERVAL=10
-      - KILL_PERCENTAGE=40
-      - NUM_OF_HEALTH_CHECKERS=5
+      - INTERVAL=25
+      - KILL_PERCENTAGE=20
+      - NUM_OF_HEALTH_CHECKERS=3
     networks:
       - testing_net
     volumes:
@@ -950,7 +904,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      server:
+      health_checker_1:
         condition: service_started
 
 networks:
