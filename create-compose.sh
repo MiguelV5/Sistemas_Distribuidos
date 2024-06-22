@@ -645,6 +645,7 @@ add_query5_processes() {
       - QUANTILE=0.9
       - CONTROLLER_NAME=filter_of_books_by_sentiment_quantile
       - BATCH_SIZE=200
+      - NUM_OF_SENTIMENT_ANALYZERS=$WORKERS
     networks:
       - testing_net
     volumes:

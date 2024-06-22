@@ -23,10 +23,10 @@ class Generator(MonitorableProcess):
             input_exchange_name=input_exchange_name, 
             input_queues_to_recv_from=[input_queue_name]
         )
-        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.state_handler_callback, self.__accumulate_results)
+        self.mq_connection_handler.setup_callbacks_for_input_queue(input_queue_name, self.state_handler_callback, self.__format_and_send_results)
         
             
-    def __accumulate_results(self, body: SystemMessage):
+    def __format_and_send_results(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_R:
             logging.info(f"Received EOF_R from [ client_{body.client_id} ]")
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)

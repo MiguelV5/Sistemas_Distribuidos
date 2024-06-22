@@ -1,7 +1,3 @@
-# TO BE REMOVED
-FINISH_MSG = "EOF"
-
-
 CLIENT_RESULTS_PORT = 12345
 
 PAYLOAD_HEADER_Q1 = "[Q1 Results]:  (Title, Authors, Publisher, Publication Year)\n"
