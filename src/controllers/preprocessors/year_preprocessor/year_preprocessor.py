@@ -38,6 +38,12 @@ class YearPreprocessor(MonitorableProcess):
     def __process_msg_from_sanitizer(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_B:
             self.__handle_eof(body)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue_towards_preproc, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.mq_connection_handler.send_message(self.output_queue_towards_filter, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             self.__apply_preprocessing_to_batch_and_send(body)
 

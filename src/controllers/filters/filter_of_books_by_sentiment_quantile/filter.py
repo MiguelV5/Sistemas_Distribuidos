@@ -40,6 +40,11 @@ class FilterBySentimentQuantile(MonitorableProcess):
                 logging.info(f"Received all EOFs from [ client_{body.client_id} ].")
                 self.__handle_final_eof(body.client_id)
                 self.state[body.client_id].update({"eofs_received": 0})
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             batch_of_books_with_avg_polarity = body.get_batch_iter_from_payload()
             for book in batch_of_books_with_avg_polarity:
@@ -50,7 +55,9 @@ class FilterBySentimentQuantile(MonitorableProcess):
         
     def __handle_final_eof(self, client_id):
         polarity_at_quantile = self.__get_polarity_at_required_quantile(client_id)
-        logging.info(f"([ client_{client_id} ]); [ {polarity_at_quantile} ] is the value of avg polarity for the required [ {self.quantile} ] quantile")
+
+        if polarity_at_quantile is not None:
+            logging.info(f"([ client_{client_id} ]); [ {polarity_at_quantile} ] is the value of avg polarity for the required [ {self.quantile} ] quantile")
         
         sorted_books_by_polarity: list[tuple[str, float]] = self.state[client_id].get("sorted_books_by_polarity", [])
         remaining_amount_of_books = len(sorted_books_by_polarity)
@@ -102,6 +109,9 @@ class FilterBySentimentQuantile(MonitorableProcess):
     
     def __get_polarity_at_required_quantile(self, client_id):
         sorted_books_by_polarity: list[tuple[str, float]] = self.state[client_id].get("sorted_books_by_polarity", [])
+        if len(sorted_books_by_polarity) == 0:
+            return None
+
         avg_polarities = [book[AVG_POLARITY_IDX] for book in sorted_books_by_polarity]
         polarity_at_quantile = np.quantile(avg_polarities, self.quantile)
         return polarity_at_quantile

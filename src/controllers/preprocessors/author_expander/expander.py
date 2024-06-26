@@ -49,6 +49,12 @@ class AuthorExpander(MonitorableProcess):
                 self.mq_connection_handler.send_message(queue_name, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
             logging.info("Sent EOF message to output queues")
             self.update_self_seq_number(body.client_id, seq_num_to_send)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            for output_queue in self.output_queues.keys():
+                self.mq_connection_handler.send_message(output_queue, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             books_batch = body.get_batch_iter_from_payload()
             payload_per_controller = {queue_name: "" for queue_name in self.output_queues.keys()}

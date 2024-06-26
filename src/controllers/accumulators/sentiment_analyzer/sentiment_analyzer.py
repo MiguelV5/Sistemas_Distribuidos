@@ -55,6 +55,11 @@ class SentimentAnalyzer(MonitorableProcess):
         if body.type == SystemMessageType.EOF_R:
             logging.info(f"Received EOF_R from [ client_{body.client_id} ]")
             self.__handle_eof_reviews(body.client_id)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             reviews = body.get_batch_iter_from_payload()
             for review in reviews:
@@ -66,7 +71,7 @@ class SentimentAnalyzer(MonitorableProcess):
             
         
     def __handle_eof_reviews(self, client_id):
-        remaining_amount_of_books = len(self.books_state[client_id])
+        remaining_amount_of_books = len(self.books_state.get(client_id, {}))
         payload_current_size = 0
         payload_to_send = ""
         while (remaining_amount_of_books > 0) and (payload_current_size < self.batch_size):

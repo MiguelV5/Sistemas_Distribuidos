@@ -35,6 +35,12 @@ class ReviewSanitizer(MonitorableProcess):
     def __process_msg_from_sv(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_R:
             self.__handle_eof(body)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            for output_queue in self.output_queues:
+                self.mq_connection_handler.send_message(output_queue, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         elif body.type == SystemMessageType.DATA:
             self.__sanitize_reviews_and_send(body)
 

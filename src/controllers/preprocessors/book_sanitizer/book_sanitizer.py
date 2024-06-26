@@ -35,6 +35,11 @@ class BookSanitizer(MonitorableProcess):
     def __process_msg_from_sv(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_B:
             self.__handle_eof(body)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         elif body.type == SystemMessageType.DATA:
             self.__sanitize_books_and_send(body)
 

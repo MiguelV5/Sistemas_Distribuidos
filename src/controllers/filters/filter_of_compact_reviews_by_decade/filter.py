@@ -48,10 +48,16 @@ class FilterOfCompactReviewsByDecade(MonitorableProcess):
             self.state[body.client_id].update({"eofs_received": client_eofs_received})
             if client_eofs_received == self.num_of_input_workers:
                 next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
-                for queue_name in self.output_queues:
+                for queue_name in self.output_queues.keys():
                     self.mq_connection_handler.send_message(queue_name, SystemMessage(SystemMessageType.EOF_R, body.client_id, self.controller_name, next_seq_num).encode_to_str())
                 logging.info("Received all EOFs. Sending to all output queues.")
                 self.update_self_seq_number(body.client_id, next_seq_num)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            for output_queue in self.output_queues.keys():
+                seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+                self.mq_connection_handler.send_message(output_queue, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             reviews = body.get_batch_iter_from_payload()
             payload_per_controller = {queue_name: "" for queue_name in self.output_queues.keys()}

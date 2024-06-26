@@ -29,6 +29,9 @@ class Generator(MonitorableProcess):
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)
             self.mq_connection_handler.send_message(self.output_queue, SystemMessage(SystemMessageType.EOF_B, body.client_id, self.controller_name, next_seq_num).encode_to_str())
             self.update_self_seq_number(body.client_id, next_seq_num)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            self.state[body.client_id] = {}  
         else: 
             self.response_payload += body.payload
             next_seq_num = self.get_seq_num_to_send(body.client_id, self.controller_name)

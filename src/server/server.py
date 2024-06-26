@@ -22,6 +22,7 @@ class Server(MonitorableProcess):
                  mergers_quantity):
         self.controller_name_for_system_msgs = "server"
         self.state = {}
+        self.clients_ip_mapping = {}
         self.state_file_path = f"{self.controller_name_for_system_msgs}_state.json"
         self.seq_num_for_system_msgs = 1
 
@@ -122,9 +123,11 @@ class Server(MonitorableProcess):
 
     def __send_direct_msg_to_client(self, client_id, msg_for_client):
         client_name = f"client_{client_id}"
-        client_responses_sock = SocketConnectionHandler.connect_and_create(client_name, constants.CLIENT_RESULTS_PORT)
-        client_responses_sock.send_message(msg_for_client)
-
+        try:
+            client_responses_sock = SocketConnectionHandler.connect_and_create(client_name, constants.CLIENT_RESULTS_PORT)
+            client_responses_sock.send_message(msg_for_client)
+        except Exception as e:
+            logging.info(f"Client [ {client_name} ] was disconnected")
     
     # ==============================================================================================================
 
@@ -137,7 +140,8 @@ class Server(MonitorableProcess):
                                                     None,
                                                     None)
         try:
-            connection_handler = SocketConnectionHandler.create_from_socket(self.client_sock)  
+            connection_handler = SocketConnectionHandler.create_from_socket(self.client_sock)
+            self.clients_ip_mapping[connection_handler.host] = None
             self.__handle_client_msgs(connection_handler, output_queues_handler)
         except Exception as e:
             logging.error("Error handling client connection: {}".format(str(e)))
@@ -154,6 +158,7 @@ class Server(MonitorableProcess):
             self.finished_with_client_data = False
             while not self.finished_with_client_data:
                 client_msg = QueryMessage.decode_from_str(client_connection_handler.read_message())
+                self.clients_ip_mapping[client_connection_handler.host] = client_msg.client_id
                 response_for_client = QueryMessage(QueryMessageType.DATA_ACK, client_msg.client_id).encode_to_str()
                 if client_msg.type == QueryMessageType.EOF_B:
                     response_for_client = QueryMessage(QueryMessageType.WAIT_FOR_SV, client_msg.client_id).encode_to_str()
@@ -175,10 +180,12 @@ class Server(MonitorableProcess):
                     client_connection_handler.send_message(response_for_client)
 
                 self.seq_num_for_system_msgs += 1
-        except OSError as e:
-            logging.info(f"Client disconnected: {client_connection_handler.host}")           
         except Exception as e:
-            raise e
-
+            if self.clients_ip_mapping[client_connection_handler.host]:
+                client_id = self.clients_ip_mapping[client_connection_handler.host]
+                logging.info(f"Client disconnected: client_{client_id}") 
+                self.seq_num_for_system_msgs += 1
+                output_queues_handler.send_message(self.output_queue_of_books, SystemMessage(SystemMessageType.ABORT, client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str())
+                output_queues_handler.send_message(self.output_queue_of_reviews, SystemMessage(SystemMessageType.ABORT, client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str())
 
 

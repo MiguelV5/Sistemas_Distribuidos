@@ -84,7 +84,8 @@ class MonitorableProcess:
             
         if received_msg.controller_seq_num <= latest_seq_num_from_controller:
             ch.basic_ack(delivery_tag=method.delivery_tag)
-            logging.info(f"[DUPLICATE DETECTED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
+            if received_msg.type != SystemMessageType.ABORT:
+                logging.info(f"[DUPLICATE DETECTED]: client: {received_msg.client_id} controller: {received_msg.controller_name} seq num: {received_msg.controller_seq_num}")
         else:
             inner_processor(received_msg)
             logging.debug(f"[PROCESSED MESSAGE]: type {received_msg.type} from client {received_msg.client_id} with received seq num {received_msg.controller_seq_num}")

@@ -43,6 +43,7 @@ class SystemMessageType(Enum):
     DATA = 3
     HEALTH_CHECK = 4
     ALIVE = 5
+    ABORT = 6
 
 class SystemMessage:
     def __init__(self, msg_type: Enum, client_id: int, controller_name: str, controller_seq_num: int, payload: str = ""):

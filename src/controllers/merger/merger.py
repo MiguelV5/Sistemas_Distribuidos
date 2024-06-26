@@ -66,6 +66,12 @@ class Merger(MonitorableProcess):
     def __handle_books_preprocessors_msgs(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_B:
             self.__handdle_eof_books(body.client_id)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             self.__handle_incoming_books_data(body)
 
@@ -91,6 +97,12 @@ class Merger(MonitorableProcess):
     def __handle_review_preprocessor_msgs(self, body: SystemMessage):
         if body.type == SystemMessageType.EOF_R:
             self.__handle_eof_reviews(body.client_id)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue_of_compact_reviews, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.mq_connection_handler.send_message(self.output_queue_of_full_reviews, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             self.__handle_incoming_reviews_data(body)
 

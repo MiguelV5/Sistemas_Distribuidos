@@ -39,6 +39,11 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
         if body.type == SystemMessageType.EOF_B:
             logging.info(f"Received EOF_B from [ client_{body.client_id} ]. Sending results to output queue")
             self.__send_results(body.client_id)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue_of_authors, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             authors_decades_batch = body.get_batch_iter_from_payload()
             for author_decade in authors_decades_batch:

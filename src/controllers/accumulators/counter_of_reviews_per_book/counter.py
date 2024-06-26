@@ -43,6 +43,11 @@ class CounterOfReviewsPerBook(MonitorableProcess):
         if body.type == SystemMessageType.EOF_R:
             logging.info(f"Received EOF_R from [ client_{body.client_id} ]. Sending results to output queue.")
             self.__send_results(body)
+        elif body.type == SystemMessageType.ABORT:
+            logging.info(f"[ABORT RECEIVED]: client: {body.client_id}")
+            seq_num_to_send = self.get_seq_num_to_send(body.client_id, self.controller_name)
+            self.mq_connection_handler.send_message(self.output_queue_name, SystemMessage(SystemMessageType.ABORT, body.client_id, self.controller_name, seq_num_to_send).encode_to_str())
+            self.state[body.client_id] = {}
         else:
             reviews = body.get_batch_iter_from_payload()
             for row in reviews:
