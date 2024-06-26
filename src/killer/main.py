@@ -1,15 +1,22 @@
 import logging
-from shared.initializers import init_configs
-from shared.initializers import init_log
+from shared.initializers import init_log 
 from killer import Killer
+from argparse import ArgumentParser
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--interval", type=int, required=True)
+    parser.add_argument("--kill_percentage", type=int, required=True)
+    parser.add_argument("--num_of_health_checkers", type=int, required=True)
+    return parser.parse_args()
 
 def main():
-    config_params = init_configs(["LOGGING_LEVEL", "INTERVAL", "KILL_PERCENTAGE", "NUM_OF_HEALTH_CHECKERS"])
-    init_log(config_params["LOGGING_LEVEL"])
+    config_params = parse_args()
+    init_log("INFO")
     logging.info("Starting Killer")
-    killer = Killer(int(config_params["INTERVAL"]), 
-                    int(config_params["KILL_PERCENTAGE"]),
-                    int(config_params["NUM_OF_HEALTH_CHECKERS"]))
+    killer = Killer(int(config_params.interval), 
+                    int(config_params.kill_percentage),
+                    int(config_params.num_of_health_checkers))
     killer.start()
 
 if __name__ == "__main__":

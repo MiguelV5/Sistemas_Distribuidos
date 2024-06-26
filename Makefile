@@ -53,3 +53,18 @@ docker-compose-logs:
 	docker compose -f docker-compose.yaml logs -f
 .PHONY: docker-compose-logs
 
+killer-run:
+	docker build -f ./src/killer/Dockerfile -t "killer:latest" .
+	docker run -it --rm --name=killer \
+	--network=host \
+	-v ./src/controllers/health_checker/monitorable_controllers.txt:/monitorable_controllers.txt \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	killer:latest \
+	--interval $(INTERVAL) --kill_percentage $(KILL_PERCENTAGE) --num_of_health_checkers $(NUM_OF_HEALTH_CHECKERS)
+	docker attach killer
+	docker logs killer
+.PHONY: killer-run
+
+killer-stop:
+	docker stop killer
+

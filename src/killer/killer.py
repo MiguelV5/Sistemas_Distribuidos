@@ -16,7 +16,6 @@ class Killer:
         with open(CONTROLLERS_NAMES_PATH, 'r') as file:
             controllers = file.read().splitlines()
         while True:
-            time.sleep(self.interval)  
             health_checkers_to_kill = 0
             controllers_to_kill = []
             for controller in controllers:
@@ -28,6 +27,7 @@ class Killer:
                             controllers_to_kill.append(controller)
                     else:
                         controllers_to_kill.append(controller)
+            time.sleep(self.interval)
      
             logging.info(f"\n \n \t \t <<< KILLING NODES >>>:\n  {controllers_to_kill}\n")
             for controller in controllers_to_kill:

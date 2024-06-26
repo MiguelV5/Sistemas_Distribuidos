@@ -710,30 +710,6 @@ add_health_checkers(){
   done
 }
 
-add_killer(){
-  echo "
-  killer:
-    container_name: killer
-    image: killer:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONHASHSEED=1
-      - LOGGING_LEVEL=INFO
-      - INTERVAL=40
-      - KILL_PERCENTAGE=20
-      - NUM_OF_HEALTH_CHECKERS=$HEALTH_CHECKERS
-    networks:
-      - testing_net
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./src/monitorable_controllers.txt:/monitorable_controllers.txt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      health_checker_1:
-        condition: service_started" >> docker-compose.yaml
-}
 
 
 add_network() {
@@ -796,7 +772,6 @@ add_query3_processes
 add_query4_processes
 add_query5_processes
 add_health_checkers
-add_killer
 add_network
 
 echo ">>>   Successfully generated docker-compose.yaml   <<<"

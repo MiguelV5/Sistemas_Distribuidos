@@ -3,4 +3,4 @@ RUN pip install --upgrade pip && pip3 install docker
 
 COPY src/killer /
 COPY src/shared /shared
-ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["python3", "./main.py"]
