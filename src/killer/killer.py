@@ -1,3 +1,4 @@
+import signal
 import docker
 import random
 import time
@@ -9,7 +10,12 @@ class Killer:
     def __init__(self, interval, kill_percentage, num_of_healthcheckers):
         self.interval = interval
         self.kill_percentage = kill_percentage
-        self.max_health_checkers_to_kill = num_of_healthcheckers - 1        
+        self.max_health_checkers_to_kill = num_of_healthcheckers - 1
+        signal.signal(signal.SIGTERM, self.__handle_shutdown)
+        
+    def __handle_shutdown(self, signum, frame):
+        logging.info("Shutting down killer")
+        
 
     def start(self):
         controllers = []

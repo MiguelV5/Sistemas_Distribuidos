@@ -54,10 +54,13 @@ docker-compose-logs:
 .PHONY: docker-compose-logs
 
 killer-run:
+	@test -n "$(INTERVAL)" || (echo 'An INTERVAL is required' && exit 1)
+	@test -n "$(KILL_PERCENTAGE)" || (echo 'A KILL_PERCENTAGE is required' && exit 1)
+	@test -n "$(NUM_OF_HEALTH_CHECKERS)" || (echo 'NUM_OF_HEALTH_CHECKERS is required' && exit 1)
 	docker build -f ./src/killer/Dockerfile -t "killer:latest" .
 	docker run -it --rm --name=killer \
 	--network=host \
-	-v ./src/controllers/health_checker/monitorable_controllers.txt:/monitorable_controllers.txt \
+	-v ./src/monitorable_controllers.txt:/monitorable_controllers.txt \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	killer:latest \
 	--interval $(INTERVAL) --kill_percentage $(KILL_PERCENTAGE) --num_of_health_checkers $(NUM_OF_HEALTH_CHECKERS)

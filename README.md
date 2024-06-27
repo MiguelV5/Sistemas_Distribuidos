@@ -61,7 +61,7 @@ Adicionalmente, se incluye un script de bash para creación dinámica del archiv
   (Si no se proveen valores, se toman los valores por defecto de 1 por parametro)
 
 ```bash
-CLIENTS=3 WORKERS=3 HEALTH_CHECKERS=3 ./create-compose.sh
+CLIENTS=3 WORKERS=5 HEALTH_CHECKERS=5 ./create-compose.sh
 ```
 
 Para realizar las pruebas de tolerancia a falla del sistema, se incluye un target en el Makefile para levantar a un "killer" de los procesos internos del sistema distribuido. Configurando:
@@ -71,7 +71,7 @@ Para realizar las pruebas de tolerancia a falla del sistema, se incluye un targe
 - Número de health checkers del sistema
 
 ```bash
-make killer-run INTERVAL=40 KILL_PERCENTAGE=20 NUM_OF_HEALTH_CHECKERS=5
+INTERVAL=40 KILL_PERCENTAGE=15 NUM_OF_HEALTH_CHECKERS=5 make killer-run
 ```
 
 ## Informe
