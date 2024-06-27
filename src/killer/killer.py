@@ -28,9 +28,10 @@ class Killer:
                 if random.randint(0, 100) < self.kill_percentage:
                     # do not kill all healthcheckers
                     if controller.startswith("health_checker"):
-                        if health_checkers_to_kill < self.max_health_checkers_to_kill:
-                            health_checkers_to_kill += 1
-                            controllers_to_kill.append(controller)
+                        if not controller.startswith("health_checker_1"):
+                            if health_checkers_to_kill < self.max_health_checkers_to_kill:
+                                health_checkers_to_kill += 1
+                                controllers_to_kill.append(controller)
                     else:
                         controllers_to_kill.append(controller)
             time.sleep(self.interval)

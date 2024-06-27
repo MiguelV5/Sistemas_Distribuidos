@@ -84,7 +84,7 @@ class Client:
         for i, payload_header in enumerate(constants.PAYLOAD_HEADERS):
             if results_payload.startswith(payload_header):
                 file_path += f"query{i+1}.csv"
-                results_payload = results_payload.lstrip(payload_header)
+                results_payload = results_payload.removeprefix(payload_header)
                 break
         
         with open(file_path, 'a') as file:
