@@ -184,8 +184,9 @@ class Server(MonitorableProcess):
             if self.clients_ip_mapping[client_connection_handler.host]:
                 client_id = self.clients_ip_mapping[client_connection_handler.host]
                 logging.info(f"Client disconnected: client_{client_id}") 
-                self.seq_num_for_system_msgs += 1
-                output_queues_handler.send_message(self.output_queue_of_books, SystemMessage(SystemMessageType.ABORT, client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str())
-                output_queues_handler.send_message(self.output_queue_of_reviews, SystemMessage(SystemMessageType.ABORT, client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str())
+                if not self.finished_with_client_data:
+                    self.seq_num_for_system_msgs += 1
+                    output_queues_handler.send_message(self.output_queue_of_books, SystemMessage(SystemMessageType.ABORT, client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str())
+                    output_queues_handler.send_message(self.output_queue_of_reviews, SystemMessage(SystemMessageType.ABORT, client_id, self.controller_name_for_system_msgs, self.seq_num_for_system_msgs).encode_to_str())
 
 
