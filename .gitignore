@@ -1,7 +1,6 @@
 # DATA
 data/
 results/
-docker-compose.yaml
 *.csv
 *.txt
 

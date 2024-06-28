@@ -72,7 +72,7 @@ add_clients() {
       - SERVER_IP=server
       - SERVER_PORT=8080
       - LOGGING_LEVEL=INFO
-      - REVIEWS_FILE_PATH=/data/test_rating.csv
+      - REVIEWS_FILE_PATH=/data/books_rating.csv
       - BOOKS_FILE_PATH=/data/books_data.csv
       - BATCH_SIZE=200
       - CLIENT_ID=$i
@@ -359,11 +359,11 @@ add_query2_processes() {
     done
 
     for ((i=1; i<=$WORKERS; i++)); do
-        echo "filter_of_authors_by_decade_$i" >> src/monitorable_controllers.txt
+        echo "filter_of_authors_by_decade_count_$i" >> src/monitorable_controllers.txt
         echo "
-  filter_of_authors_by_decade_$i:
-    container_name: filter_of_authors_by_decade_$i
-    image: filter_of_authors_by_decade:latest
+  filter_of_authors_by_decade_count_$i:
+    container_name: filter_of_authors_by_decade_count_$i
+    image: filter_of_authors_by_decade_count:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
@@ -374,7 +374,7 @@ add_query2_processes() {
       - INPUT_QUEUE_OF_AUTHORS=authors_decades_count_q_$i
       - OUTPUT_QUEUE_OF_AUTHORS=authors_filtered_by_decade_q
       - MIN_DECADES_TO_FILTER=10
-      - CONTROLLER_NAME=filter_of_authors_by_decade_$i
+      - CONTROLLER_NAME=filter_of_authors_by_decade_count_$i
     networks:
       - testing_net
     volumes:
@@ -523,12 +523,12 @@ add_query3_processes() {
 
 
 add_query4_processes() {
-    echo "sorter_of_books_by_review_count" >> src/monitorable_controllers.txt
+    echo "sorter_of_books_by_score_average" >> src/monitorable_controllers.txt
     echo "query4_result_generator" >> src/monitorable_controllers.txt
     echo "
-  sorter_of_books_by_review_count:
-    container_name: sorter_of_books_by_review_count
-    image: sorter_of_books_by_review_count:latest
+  sorter_of_books_by_score_average:
+    container_name: sorter_of_books_by_score_average
+    image: sorter_of_books_by_score_average:latest
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
@@ -539,7 +539,7 @@ add_query4_processes() {
       - INPUT_QUEUE_OF_BOOKS=towards_sorter__books_filtered_by_review_count_q
       - OUTPUT_QUEUE_OF_BOOKS=top_books_by_review_count_q
       - TOP_OF_BOOKS=10
-      - CONTROLLER_NAME=sorter_of_books_by_review_count
+      - CONTROLLER_NAME=sorter_of_books_by_score_average
     networks:
       - testing_net
     volumes:

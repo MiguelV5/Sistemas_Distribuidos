@@ -18,7 +18,7 @@ docker-image-build:
 	
 	docker build -f ./src/controllers/preprocessors/author_expander/Dockerfile -t "author_expander:latest" .
 	docker build -f ./src/controllers/accumulators/counter_of_decades_per_author/Dockerfile -t "counter_of_decades_per_author:latest" .
-	docker build -f ./src/controllers/filters/filter_of_authors_by_decade/Dockerfile -t "filter_of_authors_by_decade:latest" .
+	docker build -f ./src/controllers/filters/filter_of_authors_by_decade_count/Dockerfile -t "filter_of_authors_by_decade_count:latest" .
 	docker build -f ./src/controllers/sinks/query2_result_generator/Dockerfile -t "query2_result_generator:latest" .
 
 	docker build -f ./src/controllers/filters/filter_of_compact_reviews_by_decade/Dockerfile -t "filter_of_compact_reviews_by_decade:latest" .
@@ -26,7 +26,7 @@ docker-image-build:
 	docker build -f ./src/controllers/filters/filter_of_books_by_review_count/Dockerfile -t "filter_of_books_by_review_count:latest" .
 	docker build -f ./src/controllers/sinks/query3_result_generator/Dockerfile -t "query3_result_generator:latest" .
 
-	docker build -f ./src/controllers/filters/sorter_of_books_by_review_count/Dockerfile -t "sorter_of_books_by_review_count:latest" .
+	docker build -f ./src/controllers/filters/sorter_of_books_by_score_average/Dockerfile -t "sorter_of_books_by_score_average:latest" .
 	docker build -f ./src/controllers/sinks/query4_result_generator/Dockerfile -t "query4_result_generator:latest" .
 
 	docker build -f ./src/controllers/filters/filter_of_merged_reviews_by_book_genre/Dockerfile -t "filter_of_merged_reviews_by_book_genre:latest" .

@@ -8,7 +8,7 @@ from shared.protocol_messages import SystemMessage, SystemMessageType
 AUTHOR_IDX = 0
 DECADE_IDX = 1
 
-class FilterOfAuthorsByDecade(MonitorableProcess):
+class FilterOfAuthorsByDecadesCount(MonitorableProcess):
     def __init__(self, 
                  input_exchange_name: str, 
                  output_exchange_name: str, 
