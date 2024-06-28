@@ -55,7 +55,7 @@ class CounterOfDecadesPerAuthor(MonitorableProcess):
     def __send_results(self, client_id):
         payload_current_size = 0
         payload_to_send = ""
-        authors_decades = list(self.state[client_id]["authors_decades"].items())
+        authors_decades = list(self.state[client_id].get("authors_decades", {}).items())
         
         for i, (author, decades) in enumerate(authors_decades):
             payload_to_send += f"{author},{len(decades)}\n"
