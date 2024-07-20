@@ -19,6 +19,10 @@
 | [Erick Martinez](https://github.com/erick12m) | 103745 |
 | [Miguel Vasquez](https://github.com/MiguelV5) | 107378 |
 
+
+> [!NOTE] 
+> Link al repositorio original de entregas: [Distributed Books Analyzer](https://github.com/erick12m/distributed-books-analyzer)
+
 ---
 
 ## Introducción
