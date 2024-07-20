@@ -15,19 +15,19 @@ services:
       retries: 5
       start_period: 20s
 
-  producer:
-    build:
-      context: ./producer
-      dockerfile: producer.dockerfile
-    networks:
-      - testing_net
-    environment:
-      - PYTHONUNBUFFERED=1
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+  # producer:
+  #   build:
+  #     context: ./producer
+  #     dockerfile: producer.dockerfile
+  #   networks:
+  #     - testing_net
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
 
-  consumer1:
+  consumer:
     build:
       context: ./consumer
       dockerfile: consumer.dockerfile
@@ -37,20 +37,6 @@ services:
       - PYTHONUNBUFFERED=1
       - CONSUMER_ID=1
       - LOG_SEVERITY=info
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  consumer2:
-    build:
-      context: ./consumer
-      dockerfile: consumer.dockerfile
-    networks:
-      - testing_net
-    environment:
-      - PYTHONUNBUFFERED=1
-      - CONSUMER_ID=2
-      - LOG_SEVERITY=error
     depends_on:
       rabbitmq:
         condition: service_healthy
