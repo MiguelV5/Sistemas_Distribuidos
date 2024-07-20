@@ -1,0 +1,6 @@
+**/*.yaml
+**/*.csv
+**/*.zip
+**/Dockerfile
+**/*.pdf
+**/*.png
